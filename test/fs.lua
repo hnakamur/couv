@@ -6,23 +6,23 @@ local loop = uv.loop.default()
 local exports = {}
 
 exports['fs.open.sync.OK'] = function(test)
-  local ok, fd = pcall(fs.open, loop, '../test/fs.lua', 'r', '0666')
-  test.ok(ok)
+  local err, fd = fs.open(loop, '../test/fs.lua', 'r', '0666')
+  test.is_nil(err)
   test.is_number(fd)
   test.done()
 end
 
 exports['fs.open.sync.ENOENT'] = function(test)
-  local ok, err = pcall(fs.open, loop, 'not_exist_file', 'r', '0666')
-  test.ok(not ok)
+  local err, fd = fs.open(loop, 'not_exist_file', 'r', '0666')
   test.equal(err, 'ENOENT')
+  test.is_nil(fd)
   test.done()
 end
 
 exports['fs.open.async.OK'] = function(test)
   coroutine.wrap(function()
-    local ok, fd = fs.open(loop, '../test/fs.lua', 'r', '0666')
-    test.ok(ok)
+    local err, fd = fs.open(loop, '../test/fs.lua', 'r', '0666')
+    test.is_nil(err)
     test.is_number(fd)
     test.done()
   end)()
@@ -32,9 +32,9 @@ end
 
 exports['fs.open.async.ENOENT'] = function(test)
   coroutine.wrap(function()
-    local ok, err = fs.open(loop, 'non_exist_file', 'r', '0666')
-    test.ok(not ok)
+    local err, fd = fs.open(loop, 'non_exist_file', 'r', '0666')
     test.equal(err, 'ENOENT')
+    test.is_nil(fd)
     test.done()
   end)()
 

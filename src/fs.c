@@ -65,6 +65,7 @@ static int fs_checkmode(lua_State *L, int index, int default_value) {
 
 static void fs_common_callback(uv_fs_t* req) {
   lua_State *L = req->data;
+  int nresults;
 
 #if 0
   /* release coroutine */
@@ -74,15 +75,16 @@ static void fs_common_callback(uv_fs_t* req) {
 #endif
 
   if (req->errorno) {
-    lua_pushboolean(L, 0);
     lua_pushstring(L, luv_uv_errname(req->errorno));
+    nresults = 1;
   } else {
-    lua_pushboolean(L, 1);
+    lua_pushnil(L);
     lua_pushnumber(L, req->result);
+    nresults = 2;
   }
   uv_fs_req_cleanup(req);
   free(req);
-  lua_resume(L, 2);
+  lua_resume(L, nresults);
 }
 
 static int fs_open(lua_State *L) {
@@ -100,11 +102,13 @@ static int fs_open(lua_State *L) {
     uv_fs_req_cleanup(&req);
     if (r < 0) {
       int errcode = uv_last_error(*loop).code;
-      return luaL_error(L, luv_uv_errname(errcode));
+      lua_pushstring(L, luv_uv_errname(errcode));
+      return 1;
     }
 
+    lua_pushnil(L);
     lua_pushnumber(L, r);
-    return 1;
+    return 2;
   } else {
     uv_fs_t *req;
 
