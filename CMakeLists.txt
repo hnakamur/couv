@@ -8,6 +8,7 @@ set(CMAKE_BUILD_TYPE Debug)
 add_subdirectory(deps/uv)
 include_directories(deps/uv/include)
 set(SRCS
+  src/auxlib.c
   src/fs.c
   src/loop.c
   src/yaluv.c

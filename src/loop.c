@@ -1,4 +1,7 @@
-#include "yaluv_priv.h"
+#include <lauxlib.h>
+#include <uv.h>
+#include "auxlib.h"
+#include "loop.h"
 
 static int loop_default(lua_State *L) {
   uv_loop_t **loop = (uv_loop_t **)lua_newuserdata(L, sizeof(uv_loop_t *));
@@ -9,14 +12,14 @@ static int loop_default(lua_State *L) {
 }
 
 static int loop_run(lua_State *L) {
-  uv_loop_t **loop = luv_checkloop(L, 1);
-  uv_run(*loop);
+  uv_loop_t *loop = luv_checkloop(L, 1);
+  uv_run(loop);
   return 0;
 }
 
 static int loop_run_once(lua_State *L) {
-  uv_loop_t **loop = luv_checkloop(L, 1);
-  int r = uv_run_once(*loop);
+  uv_loop_t *loop = luv_checkloop(L, 1);
+  int r = uv_run_once(loop);
   lua_pushnumber(L, r);
   return 1;
 }

@@ -1,12 +1,10 @@
-#include "yaluv_priv.h"
-
-/*
-typedef struct luv_fs_s {
-  lua_State *L;
-  int req_ref;
-  uv_fs_t req;
-} luv_fs_t;
-*/
+#include <lauxlib.h>
+#include <stdlib.h>
+#include <string.h>
+#include <uv.h>
+#include "auxlib.h"
+#include "loop.h"
+#include "fs.h"
 
 typedef struct flag_mapping_s {
   char *name;
@@ -63,19 +61,12 @@ static int fs_checkmode(lua_State *L, int index, int default_value) {
   return mode;
 }
 
-static void fs_common_callback(uv_fs_t* req) {
-  lua_State *L = req->data;
+static int fs_common_push_results(lua_State *L, uv_fs_t* req) {
   int nresults;
-
-#if 0
-  /* release coroutine */
-  lua_pushthread(L);
-  lua_pushnil(L);
-  lua_rawset(L, LUA_REGISTRYINDEX);
-#endif
-
-  if (req->errorno) {
-    lua_pushstring(L, luv_uv_errname(req->errorno));
+  int is_async = req->cb != NULL;
+  int errcode = is_async ? req->errorno : uv_last_error(req->loop).code;
+  if (errcode) {
+    lua_pushstring(L, luvL_uv_errname(errcode));
     nresults = 1;
   } else {
     lua_pushnil(L);
@@ -83,47 +74,35 @@ static void fs_common_callback(uv_fs_t* req) {
     nresults = 2;
   }
   uv_fs_req_cleanup(req);
-  free(req);
-  lua_resume(L, nresults);
+  if (is_async) {
+    free(req);
+    lua_resume(L, nresults);
+  }
+  return nresults;
+}
+
+static void fs_common_callback(uv_fs_t* req) {
+  fs_common_push_results((lua_State *)req->data, req);
+}
+
+static uv_fs_t *alloc_fs_req(lua_State *L) {
+  uv_fs_t *req = (uv_fs_t *)malloc(sizeof(uv_fs_t));
+  req->data = L;
+  return req;
 }
 
 static int fs_open(lua_State *L) {
-  uv_loop_t **loop = luv_checkloop(L, 1);
+  uv_loop_t *loop = luv_checkloop(L, 1);
   const char *path = luaL_checkstring(L, 2);
   int flags = fs_checkflags(L, 3);
   int mode = fs_checkmode(L, 4, 0666);
-  int is_mainthread = lua_pushthread(L);
-  if (is_mainthread) {
+  if (luvL_is_in_mainthread(L)) {
     uv_fs_t req;
-    int r;
-
-    lua_pop(L, 1);
-    r = uv_fs_open(*loop, &req, path, flags, mode, NULL);
-    uv_fs_req_cleanup(&req);
-    if (r < 0) {
-      int errcode = uv_last_error(*loop).code;
-      lua_pushstring(L, luv_uv_errname(errcode));
-      return 1;
-    }
-
-    lua_pushnil(L);
-    lua_pushnumber(L, r);
-    return 2;
+    uv_fs_open(loop, &req, path, flags, mode, NULL);
+    return fs_common_push_results(L, &req);
   } else {
-    uv_fs_t *req;
-
-#if 1
-    lua_pop(L, 1);
-#else
-    /* map coroutine to a pointer to prevent gc */
-    lua_pushlightuserdata(L, L);
-    lua_rawset(L, LUA_REGISTRYINDEX);
-#endif
-
-    req = (uv_fs_t *)malloc(sizeof(uv_fs_t));
-    req->data = L;
-
-    uv_fs_open(*loop, req, path, flags, mode, fs_common_callback);
+    uv_fs_t *req = alloc_fs_req(L);
+    uv_fs_open(loop, req, path, flags, mode, fs_common_callback);
     return lua_yield(L, 0);
   }
 }
