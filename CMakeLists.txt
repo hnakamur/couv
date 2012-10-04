@@ -8,6 +8,8 @@ set(CMAKE_BUILD_TYPE Debug)
 add_subdirectory(deps/uv)
 include_directories(deps/uv/include)
 set(SRCS
+  src/fs.c
+  src/loop.c
   src/yaluv.c
 )
 install_lua_module(yaluv ${SRCS})
@@ -16,4 +18,4 @@ set_property(SOURCE ${SRCS} PROPERTY
 set_property(SOURCE ${SRCS} PROPERTY
   COMPILE_FLAGS "--std=c89 -pedantic -Wall -Wextra -Wno-unused-parameter")
 add_checkit_test(test/*.lua)
-target_link_libraries(yaluv uv rt)
+target_link_libraries(yaluv uv pthread rt)
