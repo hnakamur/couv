@@ -287,14 +287,14 @@ static const char *fs_req_type_name(uv_fs_type type) {
 static int fs_common_push_results(lua_State *L, uv_fs_t* req) {
   int nresults;
   uv_statbuf_t *stat_buf;
-  int is_async = req->cb != NULL;
-  int errcode = is_async ? req->errorno : uv_last_error(req->loop).code;
 #if 0
 printf("req=%x, req->fs_type=%s, is_async=%d, errcode=%d\n", (unsigned long)req, fs_req_type_name(req->fs_type), is_async, errcode);
 printf("errno=%d, loop last errcode=%d\n", req->errorno, uv_last_error(req->loop).code);
 printf("req->path=%s\n", req->path);
 #endif
-  if (errcode) {
+  if (req->result < 0) {
+    int is_async = req->cb != NULL;
+    int errcode = is_async ? req->errorno : uv_last_error(req->loop).code;
     lua_pushstring(L, luvL_uv_errname(errcode));
     nresults = 1;
   } else {
