@@ -355,8 +355,8 @@ static uv_fs_t *fs_alloc_req(lua_State *L) {
 }
 
 static int fs_close(lua_State *L) {
-  uv_loop_t *loop = luv_checkloop(L, 1);
-  int fd = luaL_checkint(L, 2);
+  uv_loop_t *loop = luv_loop(L);
+  int fd = luaL_checkint(L, 1);
   if (luvL_is_in_mainthread(L)) {
     uv_fs_t req;
     uv_fs_close(loop, &req, fd, NULL);
@@ -369,10 +369,10 @@ static int fs_close(lua_State *L) {
 }
 
 static int fs_open(lua_State *L) {
-  uv_loop_t *loop = luv_checkloop(L, 1);
-  const char *path = luaL_checkstring(L, 2);
-  int flags = fs_checkflags(L, 3);
-  int mode = fs_checkmode(L, 4, 0666);
+  uv_loop_t *loop = luv_loop(L);
+  const char *path = luaL_checkstring(L, 1);
+  int flags = fs_checkflags(L, 2);
+  int mode = fs_checkmode(L, 3, 0666);
   if (luvL_is_in_mainthread(L)) {
     uv_fs_t req;
     uv_fs_open(loop, &req, path, flags, mode, NULL);
@@ -385,8 +385,8 @@ static int fs_open(lua_State *L) {
 }
 
 static int fs_stat(lua_State *L) {
-  uv_loop_t *loop = luv_checkloop(L, 1);
-  const char *path = luaL_checkstring(L, 2);
+  uv_loop_t *loop = luv_loop(L);
+  const char *path = luaL_checkstring(L, 1);
   if (luvL_is_in_mainthread(L)) {
     uv_fs_t req;
     uv_fs_stat(loop, &req, path, NULL);
