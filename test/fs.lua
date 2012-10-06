@@ -12,6 +12,10 @@ exports['fs.open.sync.OK'] = function(test)
   err = fs.close(fd)
   test.is_nil(err)
 
+  -- try to close twice
+  err = fs.close(fd)
+  test.equal(err, 'EBADF')
+
   test.done()
 end
 
