@@ -367,6 +367,7 @@ static int fs_open(lua_State *L) {
   const char *path = luaL_checkstring(L, 2);
   int flags = fs_checkflags(L, 3);
   int mode = fs_checkmode(L, 4, 0666);
+  int r;
   if (luvL_is_in_mainthread(L)) {
     uv_fs_t req;
 printf("open sync path=%s, req=%lx\n", path, (unsigned long)&req);
@@ -382,7 +383,11 @@ printf("open sync path=%s, req=%lx\n", path, (unsigned long)&req);
   } else {
     uv_fs_t *req = alloc_fs_req(L);
 printf("open async path=%s, req=%lx\n", path, (unsigned long)req);
-    uv_fs_open(loop, req, path, flags, mode, fs_common_callback);
+    r = uv_fs_open(loop, req, path, flags, mode, fs_common_callback);
+    if (r < 0) {
+      lua_pushstring(L, luvL_uv_errname(uv_last_error(req->loop).code));
+      return 1;
+    }
     return lua_yield(L, 0);
   }
 }
@@ -390,6 +395,7 @@ printf("open async path=%s, req=%lx\n", path, (unsigned long)req);
 static int fs_stat(lua_State *L) {
   uv_loop_t *loop = luv_checkloop(L, 1);
   const char *path = luaL_checkstring(L, 2);
+  int r;
   if (luvL_is_in_mainthread(L)) {
     uv_fs_t req;
 printf("fs_stat sync path=%s, req=%lx\n", path, (unsigned long)&req);
@@ -398,7 +404,11 @@ printf("fs_stat sync path=%s, req=%lx\n", path, (unsigned long)&req);
   } else {
     uv_fs_t *req = alloc_fs_req(L);
 printf("fs_stat async path=%s, req=%lx\n", path, (unsigned long)req);
-    uv_fs_stat(loop, req, path, fs_common_callback);
+    r = uv_fs_stat(loop, req, path, fs_common_callback);
+    if (r < 0) {
+      lua_pushstring(L, luvL_uv_errname(uv_last_error(req->loop).code));
+      return 1;
+    }
     return lua_yield(L, 0);
   }
 }
