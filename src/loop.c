@@ -6,7 +6,7 @@
 static int loop_default(lua_State *L) {
   uv_loop_t **loop = (uv_loop_t **)lua_newuserdata(L, sizeof(uv_loop_t *));
   *loop = uv_default_loop();
-  luaL_getmetatable(L, LOOP_MTBL_NAME);
+  luaL_getmetatable(L, LUV_LOOP_MTBL_NAME);
   lua_setmetatable(L, -2);
   return 1;
 }
@@ -39,7 +39,7 @@ int luaopen_yaluv_loop(lua_State *L) {
   lua_createtable(L, 0, ARRAY_SIZE(loop_functions) - 1);
   luaL_register(L, NULL, loop_functions);
 
-  luaL_newmetatable(L, LOOP_MTBL_NAME);
+  luaL_newmetatable(L, LUV_LOOP_MTBL_NAME);
   luaL_register(L, NULL, loop_methods);
   lua_setfield(L, -1, "__index");
 

@@ -10,4 +10,8 @@ const char *luvL_uv_errname(int uv_errcode);
 #define container_of(ptr, type, member) \
   ((type *) ((char *) (ptr) - offsetof(type, member)))
 
+#define luvL_SET_FIELD(L, name, type, val) \
+  lua_push##type(L, val);                  \
+  lua_setfield(L, -2, #name)
+
 #endif /* _AUXLIB_H */
