@@ -241,49 +241,6 @@ static int fs_push_readdir_results(lua_State *L, int entry_count,
   return 1;
 }
 
-/*
- * fs_req_type_name for debugging.
- */
-
-#define FS_TYPE_MAP(XX) \
-  XX(UNKNOWN) \
-  XX(CUSTOM) \
-  XX(OPEN) \
-  XX(CLOSE) \
-  XX(READ) \
-  XX(WRITE) \
-  XX(SENDFILE) \
-  XX(STAT) \
-  XX(LSTAT) \
-  XX(FSTAT) \
-  XX(FTRUNCATE) \
-  XX(UTIME) \
-  XX(FUTIME) \
-  XX(CHMOD) \
-  XX(FCHMOD) \
-  XX(FSYNC) \
-  XX(FDATASYNC) \
-  XX(UNLINK) \
-  XX(RMDIR) \
-  XX(MKDIR) \
-  XX(RENAME) \
-  XX(READDIR) \
-  XX(LINK) \
-  XX(SYMLINK) \
-  XX(READLINK) \
-  XX(CHOWN) \
-  XX(FCHOWN)
-
-#define FS_TYPENAME_GEN(name) \
-  case UV_FS_##name: return #name;
-
-static const char *fs_req_type_name(uv_fs_type type) {
-  switch (type) {
-  FS_TYPE_MAP(FS_TYPENAME_GEN);
-  default: return "UNKNOWN";
-  }
-}
-
 static int fs_push_common_results(lua_State *L, uv_fs_t* req) {
   int nresults;
   if (req->result < 0) {
