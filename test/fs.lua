@@ -1,4 +1,3 @@
-local coroutine = require 'coroutine'
 local uv = require 'yaluv'
 local fs = uv.fs
 local loop = uv.loop.default()
@@ -24,7 +23,7 @@ exports['fs.open.sync.ENOENT'] = function(test)
 end
 
 exports['fs.open.async.OK'] = function(test)
-  local co = coroutine.create(function()
+  coroutine.wrap(function()
     local err, fd = fs.open(loop, '../test/fs.lua', 'r', '0666')
     test.is_nil(err)
     test.is_number(fd)
@@ -33,20 +32,18 @@ exports['fs.open.async.OK'] = function(test)
     test.is_nil(err)
 
     test.done()
-  end)
-  coroutine.resume(co)
+  end)()
 
   loop:run()
 end
 
 exports['fs.open.async.ENOENT'] = function(test)
-  local co = coroutine.create(function()
+  coroutine.wrap(function()
     local err, fd = fs.open(loop, 'non_exist_file', 'r', '0666')
     test.equal(err, 'ENOENT')
     test.is_nil(fd)
     test.done()
-  end)
-  coroutine.resume(co)
+  end)()
 
   loop:run()
 end
@@ -59,16 +56,15 @@ exports['fs.stat.sync'] = function(test)
   test.done()
 end
 
---[[
 exports['fs.stat.async'] = function(test)
   coroutine.wrap(function()
     local err, stat = fs.stat(loop, '../test/fs.lua')
-    test.ok(stat.isFile())
+    test.is_nil(err)
+    test.ok(stat:isFile())
     test.done()
   end)()
 
   loop:run()
 end
-]]
 
 return exports
