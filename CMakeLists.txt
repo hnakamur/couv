@@ -9,6 +9,7 @@ add_subdirectory(deps/uv)
 include_directories(deps/uv/include)
 set(SRCS
   src/auxlib.c
+  src/buffer.c
   src/fs.c
   src/loop.c
   src/yaluv.c
