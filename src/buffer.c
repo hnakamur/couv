@@ -3,22 +3,21 @@
 #include "auxlib.h"
 #include "buffer.h"
 
-typedef struct luv_buffer_s {
-  int length;
-  int buf_ref;
-  char *buf;
-} luv_buffer_t;
-
-#define LUV_BUFFER_MTBL_NAME "luv.Buffer"
-#define luv_checkbuffer(L, index) \
-    (luv_buffer_t *)luaL_checkudata(L, index, LUV_BUFFER_MTBL_NAME)
-
-#define luv_argcheckindex(L, arg_index, index, min, max) \
-  luaL_argcheck(L, min <= index && index <= max, arg_index, \
-      "index out of range");
-
 #define FLOAT_SIZE ((int)sizeof(float))
 #define DOUBLE_SIZE ((int)sizeof(double))
+
+const char *luv_checkbuforstr(lua_State *L, int index, size_t *length) {
+  int type = lua_type(L, index);
+  if (type == LUA_TSTRING) {
+    return lua_tolstring(L, index, length);
+  } else if (luvL_checkmetatablename(L, index, LUV_BUFFER_MTBL_NAME)) {
+    luv_buffer_t *buffer = (luv_buffer_t *)lua_touserdata(L, index);
+    *length = buffer->length;
+    return buffer->buf;
+  } else {
+    luaL_argerror(L, index, "must be string or Buffer");
+  }
+}
 
 static void memcpy_le(char *src, char *dst, int length) {
   int i;

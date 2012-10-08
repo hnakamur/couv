@@ -1,6 +1,7 @@
 local uv = require 'yaluv'
 local fs = uv.fs
 local loop = uv.loop
+local Buffer = uv.Buffer
 
 local exports = {}
 
@@ -65,6 +66,58 @@ exports['fs.stat.async'] = function(test)
     local err, stat = fs.stat('../test/fs.lua')
     test.is_nil(err)
     test.ok(stat:isFile())
+    test.done()
+  end)()
+
+  loop.get():run()
+end
+
+exports['fs.write_and_read.sync'] = function(test)
+  local path = '_test_fs.write_and_read.sync'
+  local err, fd = fs.open(path, 'w', '0666')
+  test.is_nil(err)
+  local str = 'Hello, libuv!\n'
+  local n
+  err, n = fs.write(fd, str)
+  test.is_nil(err)
+  test.equal(n, #str)
+  err = fs.close(fd)
+  test.is_nil(err)
+
+  err, fd = fs.open(path, 'r')
+  test.is_nil(err)
+  local buf = Buffer.new(#str)
+  err, n = fs.read(fd, buf)
+  test.is_nil(err)
+  test.equal(buf:toString(), str)
+  err = fs.close(fd)
+  test.is_nil(err)
+
+  test.done()
+end
+
+exports['fs.write_and_read.async'] = function(test)
+  coroutine.wrap(function()
+    local path = '_test_fs.write_and_read.async'
+    local err, fd = fs.open(path, 'w', '0666')
+    test.is_nil(err)
+    local str = 'Hello, libuv!\n'
+    local n
+    err, n = fs.write(fd, str)
+    test.is_nil(err)
+    test.equal(n, #str)
+    err = fs.close(fd)
+    test.is_nil(err)
+
+    err, fd = fs.open(path, 'r')
+    test.is_nil(err)
+    local buf = Buffer.new(#str)
+    err, n = fs.read(fd, buf)
+    test.is_nil(err)
+    test.equal(buf:toString(), str)
+    err = fs.close(fd)
+    test.is_nil(err)
+
     test.done()
   end)()
 
