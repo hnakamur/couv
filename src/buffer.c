@@ -12,18 +12,29 @@ typedef struct luv_buffer_s {
 #define luv_checkbuffer(L, index) \
     (luv_buffer_t *)luaL_checkudata(L, index, LUV_BUFFER_MTBL_NAME)
 
-static void checkarg_index(lua_State *L, luv_buffer_t *buffer,
-    int arg_index, int index) {
-  luaL_argcheck(L, 1 <= index && index <= buffer->length, arg_index,
+static char *get_start_ptr(lua_State *L, int index, luv_buffer_t **buf_ptr) {
+  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  int start = luaL_optint(L, index, 1);
+  luaL_argcheck(L, 1 <= start && start <= buffer->length, index,
       "index out of range");
+  if (buf_ptr)
+    *buf_ptr = buffer;
+  return buffer->buf + start - 1;
 }
 
-static void checkarg_first_last(lua_State *L, luv_buffer_t *buffer,
-    int first_index, int last_index, int first, int last) {
-  checkarg_index(L, buffer, first_index, first);
-  checkarg_index(L, buffer, last_index, last);
-  luaL_argcheck(L, first <= last, last_index,
-      "last must be greater than or equal to first");
+static char *get_start_ptr_and_length(lua_State *L, int index, int *length,
+    luv_buffer_t **buf_ptr) {
+  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  int start = luaL_optint(L, index, 1);
+  int end = luaL_optint(L, index + 1, buffer->length);
+  luaL_argcheck(L, 1 <= start && start <= buffer->length, index,
+      "index out of range");
+  luaL_argcheck(L, start <= end && end <= buffer->length , index + 1,
+      "index out of range");
+  *length = end - start + 1;
+  if (buf_ptr)
+    *buf_ptr = buffer;
+  return buffer->buf + start - 1;
 }
 
 static int buffer_gc(lua_State *L) {
@@ -33,11 +44,8 @@ static int buffer_gc(lua_State *L) {
 }
 
 static int buffer_readUInt8(lua_State *L) {
-  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
-  int index = luaL_checkint(L, 2);
-  checkarg_index(L, buffer, 2, index);
-
-  lua_pushnumber(L, ((unsigned char *)buffer->buf)[index - 1]);
+  char *p = get_start_ptr(L, 2, NULL);
+  lua_pushnumber(L, *(unsigned char *)p);
   return 1;
 }
 
@@ -52,12 +60,9 @@ static int buffer_index(lua_State *L) {
 }
 
 static int buffer_writeUInt8(lua_State *L) {
-  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
-  int index = luaL_checkint(L, 2);
-  int byte = luaL_checkint(L, 3);
-  checkarg_index(L, buffer, 2, index);
-
-  ((unsigned char *)buffer->buf)[index - 1] = (unsigned char)byte;
+  char *p = get_start_ptr(L, 2, NULL);
+  lua_Integer byte = luaL_checkinteger(L, 3);
+  *(unsigned char *)p = (unsigned char)byte;
   return 0;
 }
 
@@ -68,29 +73,28 @@ static int buffer_length(lua_State *L) {
 }
 
 static int buffer_slice(lua_State *L) {
-  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
-  int first = luaL_optint(L, 2, 1);
-  int last = luaL_optint(L, 3, buffer->length);
+  luv_buffer_t *buffer;
+  int length;
+  char *p = get_start_ptr_and_length(L, 2, &length, &buffer);
   luv_buffer_t *slice;
-  checkarg_first_last(L, buffer, 2, 3, first, last);
 
   slice = (luv_buffer_t *)lua_newuserdata(L, sizeof(luv_buffer_t));
   luaL_getmetatable(L, LUV_BUFFER_MTBL_NAME);
   lua_setmetatable(L, -2);
-  slice->length = last - first + 1;
-  slice->buf = buffer->buf + first - 1;
+
+  slice->length = length;
+  slice->buf = p;
+
   lua_rawgeti(L, LUA_REGISTRYINDEX, buffer->buf_ref);
   slice->buf_ref = luaL_ref(L, LUA_REGISTRYINDEX);
   return 1;
 }
 
 static int buffer_to_string(lua_State *L) {
-  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
-  int first = luaL_optint(L, 2, 1);
-  int last = luaL_optint(L, 3, buffer->length);
-  checkarg_first_last(L, buffer, 2, 3, first, last);
+  int length;
+  char *p = get_start_ptr_and_length(L, 2, &length, NULL);
 
-  lua_pushlstring(L, buffer->buf + first - 1, last - first + 1);
+  lua_pushlstring(L, p, length);
   return 1;
 }
 

@@ -64,4 +64,45 @@ exports['Buffer.slice'] = function(test)
   test.done()
 end
 
+exports['Buffer.toString'] = function(test)
+  local buf = Buffer.new(3)
+  buf[1] = 97
+  buf[2] = 98
+  buf[3] = 99
+  test.equal(buf:toString(1, 1), 'a')
+  test.equal(buf:toString(1, 2), 'ab')
+  test.equal(buf:toString(2, 2), 'b')
+  test.equal(buf:toString(2), 'bc')
+  test.equal(buf:toString(3), 'c')
+  test.equal(buf:toString(3, 3), 'c')
+
+  local ok, err = pcall(function()
+    buf:toString(0)
+  end)
+  test.ok(not ok)
+  test.ok(string.find(err,
+      "bad argument #1 to 'toString' (index out of range)", 1, true))
+
+  local ok, err = pcall(buf.toString, buf, 0)
+  test.ok(not ok)
+  test.ok(string.find(err,
+      "bad argument #2 to '?' (index out of range)", 1, true))
+
+  local ok, err = pcall(function()
+    buf:toString(1, 4)
+  end)
+  test.ok(not ok)
+  test.ok(string.find(err,
+      "bad argument #2 to 'toString' (index out of range)", 1, true))
+
+  local ok, err = pcall(function()
+    buf:toString(2, 1)
+  end)
+  test.ok(not ok)
+  test.ok(string.find(err,
+      "bad argument #2 to 'toString' (index out of range)", 1, true))
+
+  test.done()
+end
+
 return exports
