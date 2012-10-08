@@ -539,18 +539,90 @@ static int buffer_is_buffer(lua_State *L) {
 }
 
 static int buffer_new(lua_State *L) {
-  int length = luaL_checkint(L, 1);
-  luv_buffer_t *buffer = (luv_buffer_t *)lua_newuserdata(L,
-      sizeof(luv_buffer_t));
+  luv_buffer_t *buffer;
+  size_t length;
+  const char *str = NULL;
+  int arg1_type = lua_type(L, 1);
+  if (arg1_type == LUA_TNUMBER) {
+    length = (size_t)lua_tonumber(L, 1);
+  } else if (arg1_type == LUA_TSTRING) {
+    str = lua_tolstring(L, 1, &length);
+  } else {
+    luaL_argerror(L, 1, "must be integer or string");
+  }
+
+  buffer = (luv_buffer_t *)lua_newuserdata(L, sizeof(luv_buffer_t));
   luaL_getmetatable(L, LUV_BUFFER_MTBL_NAME);
   lua_setmetatable(L, -2);
   buffer->length = length;
   buffer->buf = (char *)lua_newuserdata(L, length);
+  if (str)
+    memcpy(buffer->buf, str, length);
   buffer->buf_ref = luaL_ref(L, LUA_REGISTRYINDEX);
   return 1;
 }
 
+static int buffer_concat(lua_State *L) {
+  int i;
+  int n;
+  int total_length;
+  luv_buffer_t *buffer;
+  luv_buffer_t *target;
+  char *dst;
+  int len;
+
+  luaL_checktype(L, 1, LUA_TTABLE);
+  total_length = luaL_optint(L, 2, 0);
+  n = lua_objlen(L, 1);
+
+  luaL_getmetatable(L, LUV_BUFFER_MTBL_NAME);
+  /* stack: mtbl [total_length] list */
+
+  if (total_length == 0) {
+    for (i = 1; i <= n; ++i) {
+      lua_rawgeti(L, 1, i);
+      buffer = (luv_buffer_t *)lua_touserdata(L, -1);
+      if (lua_getmetatable(L, -1) && lua_rawequal(L, -1, -3)) {
+        total_length += buffer->length;
+        lua_pop(L, 2);
+      } else {
+        return luaL_argerror(L, 1, "must be an array (table) of buffers");
+      }
+    }
+  }
+
+  lua_pushcfunction(L, buffer_new);
+  lua_pushnumber(L, total_length);
+  lua_call(L, 1, 1);
+  /* stack: target mtbl [total_length] list */
+  target = (luv_buffer_t *)lua_touserdata(L, -1);
+  dst = target->buf;
+
+  for (i = 1; i <= n && total_length > 0;
+      ++i, dst += len, total_length -= len) {
+    lua_rawgeti(L, 1, i);
+    buffer = (luv_buffer_t *)lua_touserdata(L, -1);
+    /* stack: buf target mtbl [total_length] list */
+    if (lua_getmetatable(L, -1) && lua_rawequal(L, -1, -4)) {
+      /* stack: mtbl2 buf target mtbl [total_length] list */
+      len = buffer->length;
+      if (len > total_length)
+        len = total_length;
+      memmove(dst, buffer->buf, len);
+      lua_pop(L, 2);
+      /* stack: target mtbl [total_length] list */
+    } else {
+      return luaL_argerror(L, 1, "must be an array (table) of buffers");
+    }
+  }
+  /* stack: target mtbl [total_length] list */
+  lua_remove(L, -2);
+  /* stack: target [total_length] list */
+  return 1;
+}
+
 static const struct luaL_Reg buffer_functions[] = {
+  { "concat", buffer_concat },
   { "isBuffer", buffer_is_buffer },
   { "new", buffer_new },
   { NULL, NULL }

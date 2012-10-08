@@ -1,4 +1,5 @@
 #include <uv.h>
+#include <lauxlib.h>
 #include "auxlib.h"
 
 int luvL_is_in_mainthread(lua_State *L) {
@@ -9,7 +10,7 @@ int luvL_is_in_mainthread(lua_State *L) {
 
 int luvL_checkmetatablename(lua_State *L, int index, const char *tname) {
   if (lua_getmetatable(L, index)) {
-    lua_getfield(L, LUA_REGISTRYINDEX, tname);
+    luaL_getmetatable(L, tname);
     if (lua_rawequal(L, -1, -2)) {
       lua_pop(L, 2);
       return 1;

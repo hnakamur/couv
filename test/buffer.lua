@@ -6,6 +6,23 @@ local exports = {}
 exports['Buffer.new'] = function(test)
   local buf = Buffer.new(2)
   test.equal(type(buf), 'userdata')
+
+  buf = Buffer.new('abc')
+  test.equal(type(buf), 'userdata')
+  test.equal(buf[1], 97)
+  test.equal(buf[2], 98)
+  test.equal(buf[3], 99)
+
+  test.done()
+end
+
+exports['Buffer.concat'] = function(test)
+  local buf = Buffer.concat{Buffer.new('ab'), Buffer.new('c'), Buffer.new('de')}
+  test.equal(buf:toString(), 'abcde')
+
+  buf = Buffer.concat({Buffer.new('ab'), Buffer.new('c'), Buffer.new('de')}, 4)
+  test.equal(buf:toString(), 'abcd')
+
   test.done()
 end
 
