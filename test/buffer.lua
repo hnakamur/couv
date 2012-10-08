@@ -210,17 +210,17 @@ end
 
 exports['Buffer.readFloatBE'] = function(test)
   local buf = Buffer.new(4)
-  buf[1] = 0x3f
+  buf[1] = 0x3F
   buf[2] = 0x80
   buf[3] = 0x00
   buf[4] = 0x00
   test.equal(buf:readFloatBE(1), 1)
 
-  buf[1] = 0xc0
+  buf[1] = 0xC0
   buf[2] = 0x00
   test.equal(buf:readFloatBE(1), -2)
 
-  buf[1] = 0x3e
+  buf[1] = 0x3E
   buf[2] = 0x20
   buf[3] = 0x00
   buf[4] = 0x00
@@ -235,7 +235,7 @@ exports['Buffer.readFloatBE'] = function(test)
   test.ok(math.abs(buf:readFloatBE(1) - max) / max < eps)
 
   local ok, err = pcall(function()
-    buf:readFloatBE(3)
+    buf:readFloatBE(2)
   end)
   test.ok(not ok)
   test.ok(string.find(err,
@@ -249,17 +249,17 @@ exports['Buffer.readFloatLE'] = function(test)
   buf[1] = 0x00
   buf[2] = 0x00
   buf[3] = 0x80
-  buf[4] = 0x3f
+  buf[4] = 0x3F
   test.equal(buf:readFloatLE(1), 1)
 
   buf[3] = 0x00
-  buf[4] = 0xc0
+  buf[4] = 0xC0
   test.equal(buf:readFloatLE(1), -2)
 
   buf[1] = 0x00
   buf[3] = 0x00
   buf[3] = 0x20
-  buf[4] = 0x3e
+  buf[4] = 0x3E
   test.equal(buf:readFloatLE(1), 0.15625)
 
   buf[1] = 0xFF
@@ -271,11 +271,113 @@ exports['Buffer.readFloatLE'] = function(test)
   test.ok(math.abs(buf:readFloatLE(1) - max) / max < eps)
 
   local ok, err = pcall(function()
-    buf:readFloatLE(3)
+    buf:readFloatLE(2)
   end)
   test.ok(not ok)
   test.ok(string.find(err,
       "bad argument #1 to 'readFloatLE' (index out of range)", 1, true))
+
+  test.done()
+end
+
+exports['Buffer.readDoubleBE'] = function(test)
+  local buf = Buffer.new(8)
+  buf[1] = 0x3F
+  buf[2] = 0xF0
+  buf[3] = 0x00
+  buf[4] = 0x00
+  buf[5] = 0x00
+  buf[6] = 0x00
+  buf[7] = 0x00
+  buf[8] = 0x00
+  test.equal(buf:readDoubleBE(1), 1)
+
+  buf[8] = 0x01
+  test.equal(buf:readDoubleBE(1), 1.0000000000000002)
+
+  buf[8] = 0x02
+  test.equal(buf:readDoubleBE(1), 1.0000000000000004)
+
+  buf[1] = 0x40
+  buf[2] = 0x00
+  buf[3] = 0x00
+  buf[4] = 0x00
+  buf[5] = 0x00
+  buf[6] = 0x00
+  buf[7] = 0x00
+  buf[8] = 0x00
+  test.equal(buf:readDoubleBE(1), 2)
+
+  buf[1] = 0xC0
+  test.equal(buf:readDoubleBE(1), -2)
+
+  buf[1] = 0x7F
+  buf[2] = 0xEF
+  buf[3] = 0xFF
+  buf[4] = 0xFF
+  buf[5] = 0xFF
+  buf[6] = 0xFF
+  buf[7] = 0xFF
+  buf[8] = 0xFF
+  test.equal(buf:readDoubleBE(1), 1.7976931348623157e+308)
+
+  local ok, err = pcall(function()
+    buf:readDoubleBE(2)
+  end)
+  test.ok(not ok)
+  test.ok(string.find(err,
+      "bad argument #1 to 'readDoubleBE' (index out of range)", 1, true))
+
+  test.done()
+end
+
+exports['Buffer.readDoubleLE'] = function(test)
+  local buf = Buffer.new(8)
+  buf[1] = 0x00
+  buf[2] = 0x00
+  buf[3] = 0x00
+  buf[4] = 0x00
+  buf[5] = 0x00
+  buf[6] = 0x00
+  buf[7] = 0xF0
+  buf[8] = 0x3F
+  test.equal(buf:readDoubleLE(1), 1)
+
+  buf[1] = 0x01
+  test.equal(buf:readDoubleLE(1), 1.0000000000000002)
+
+  buf[1] = 0x02
+  test.equal(buf:readDoubleLE(1), 1.0000000000000004)
+
+  buf[1] = 0x00
+  buf[2] = 0x00
+  buf[3] = 0x00
+  buf[4] = 0x00
+  buf[5] = 0x00
+  buf[6] = 0x00
+  buf[7] = 0x00
+  buf[8] = 0x40
+  test.equal(buf:readDoubleLE(1), 2)
+
+  buf[8] = 0xC0
+  test.equal(buf:readDoubleLE(1), -2)
+
+  buf[1] = 0xFF
+  buf[2] = 0xFF
+  buf[3] = 0xFF
+  buf[4] = 0xFF
+  buf[5] = 0xFF
+  buf[6] = 0xFF
+  buf[7] = 0xEF
+  buf[8] = 0x7F
+  test.equal(buf:readDoubleLE(1), 1.7976931348623157e+308)
+
+  local ok, err = pcall(function()
+    buf:readDoubleLE(2)
+  end)
+  test.ok(not ok)
+  test.ok(string.find(err,
+      "bad argument #1 to 'readDoubleLE' (index out of range)", 1, true))
 
   test.done()
 end
