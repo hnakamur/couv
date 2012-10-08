@@ -107,46 +107,46 @@ static int buffer_read_uint32be(lua_State *L) {
 }
 
 static int buffer_read_float_le(lua_State *L) {
-  float val;
+  float value;
   luv_buffer_t *buffer = luv_checkbuffer(L, 1);
   int position = luaL_checkint(L, 2);
   luv_argcheckindex(L, 2, position, 1, buffer->length - (FLOAT_SIZE - 1));
 
-  memcpy_le(&buffer->buf[position - 1], (char *)&val, FLOAT_SIZE);
-  lua_pushnumber(L, val);
+  memcpy_le(&buffer->buf[position - 1], (char *)&value, FLOAT_SIZE);
+  lua_pushnumber(L, value);
   return 1;
 }
 
 static int buffer_read_float_be(lua_State *L) {
-  float val;
+  float value;
   luv_buffer_t *buffer = luv_checkbuffer(L, 1);
   int position = luaL_checkint(L, 2);
   luv_argcheckindex(L, 2, position, 1, buffer->length - (FLOAT_SIZE - 1));
 
-  memcpy_be(&buffer->buf[position - 1], (char *)&val, FLOAT_SIZE);
-  lua_pushnumber(L, val);
+  memcpy_be(&buffer->buf[position - 1], (char *)&value, FLOAT_SIZE);
+  lua_pushnumber(L, value);
   return 1;
 }
 
 static int buffer_read_double_le(lua_State *L) {
-  double val;
+  double value;
   luv_buffer_t *buffer = luv_checkbuffer(L, 1);
   int position = luaL_checkint(L, 2);
   luv_argcheckindex(L, 2, position, 1, buffer->length - (DOUBLE_SIZE - 1));
 
-  memcpy_le(&buffer->buf[position - 1], (char *)&val, DOUBLE_SIZE);
-  lua_pushnumber(L, val);
+  memcpy_le(&buffer->buf[position - 1], (char *)&value, DOUBLE_SIZE);
+  lua_pushnumber(L, value);
   return 1;
 }
 
 static int buffer_read_double_be(lua_State *L) {
-  double val;
+  double value;
   luv_buffer_t *buffer = luv_checkbuffer(L, 1);
   int position = luaL_checkint(L, 2);
   luv_argcheckindex(L, 2, position, 1, buffer->length - (DOUBLE_SIZE - 1));
 
-  memcpy_be(&buffer->buf[position - 1], (char *)&val, DOUBLE_SIZE);
-  lua_pushnumber(L, val);
+  memcpy_be(&buffer->buf[position - 1], (char *)&value, DOUBLE_SIZE);
+  lua_pushnumber(L, value);
   return 1;
 }
 
@@ -167,6 +167,102 @@ static int buffer_write_uint8(lua_State *L) {
   luv_argcheckindex(L, 2, position, 1, buffer->length);
 
   *(unsigned char *)&buffer->buf[position - 1] = (unsigned char)byte;
+  return 0;
+}
+
+static int buffer_write_uint16le(lua_State *L) {
+  unsigned char *q;
+  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  int position = luaL_checkint(L, 2);
+  unsigned int value = (unsigned int)luaL_checkinteger(L, 3);
+  luv_argcheckindex(L, 2, position, 1, buffer->length - 1);
+
+  q = (unsigned char *)&buffer->buf[position - 1];
+  *q++ = value & 0xFF;
+  *q++ = value >> 8;
+  return 0;
+}
+
+static int buffer_write_uint16be(lua_State *L) {
+  unsigned char *q;
+  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  int position = luaL_checkint(L, 2);
+  unsigned int value = (unsigned int)luaL_checkinteger(L, 3);
+  luv_argcheckindex(L, 2, position, 1, buffer->length - 1);
+
+  q = (unsigned char *)&buffer->buf[position - 1];
+  *q++ = value >> 8;
+  *q++ = value & 0xFF;
+  return 0;
+}
+
+static int buffer_write_uint32le(lua_State *L) {
+  unsigned char *q;
+  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  int position = luaL_checkint(L, 2);
+  unsigned int value = (unsigned int)luaL_checkinteger(L, 3);
+  luv_argcheckindex(L, 2, position, 1, buffer->length - 3);
+
+  q = (unsigned char *)&buffer->buf[position - 1];
+  *q++ = value & 0xFF;
+  *q++ = (value >> 8) & 0xFF;
+  *q++ = (value >> 16) & 0xFF;
+  *q++ = value >> 24;
+  return 0;
+}
+
+static int buffer_write_uint32be(lua_State *L) {
+  unsigned char *q;
+  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  int position = luaL_checkint(L, 2);
+  unsigned int value = (unsigned int)luaL_checkinteger(L, 3);
+  luv_argcheckindex(L, 2, position, 1, buffer->length - 3);
+
+  q = (unsigned char *)&buffer->buf[position - 1];
+  *q++ = value >> 24;
+  *q++ = (value >> 16) & 0xFF;
+  *q++ = (value >> 8) & 0xFF;
+  *q++ = value & 0xFF;
+  return 0;
+}
+
+static int buffer_write_float_le(lua_State *L) {
+  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  int position = luaL_checkint(L, 2);
+  float value = (float)luaL_checknumber(L, 3);
+  luv_argcheckindex(L, 2, position, 1, buffer->length - (FLOAT_SIZE - 1));
+
+  memcpy_le((char *)&value, &buffer->buf[position - 1], FLOAT_SIZE);
+  return 0;
+}
+
+static int buffer_write_float_be(lua_State *L) {
+  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  int position = luaL_checkint(L, 2);
+  float value = (float)luaL_checknumber(L, 3);
+  luv_argcheckindex(L, 2, position, 1, buffer->length - (FLOAT_SIZE - 1));
+
+  memcpy_be((char *)&value, &buffer->buf[position - 1], FLOAT_SIZE);
+  return 0;
+}
+
+static int buffer_write_double_le(lua_State *L) {
+  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  int position = luaL_checkint(L, 2);
+  double value = (double)luaL_checknumber(L, 3);
+  luv_argcheckindex(L, 2, position, 1, buffer->length - (DOUBLE_SIZE - 1));
+
+  memcpy_le((char *)&value, &buffer->buf[position - 1], DOUBLE_SIZE);
+  return 0;
+}
+
+static int buffer_write_double_be(lua_State *L) {
+  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  int position = luaL_checkint(L, 2);
+  double value = (double)luaL_checknumber(L, 3);
+  luv_argcheckindex(L, 2, position, 1, buffer->length - (DOUBLE_SIZE - 1));
+
+  memcpy_be((char *)&value, &buffer->buf[position - 1], DOUBLE_SIZE);
   return 0;
 }
 
@@ -213,18 +309,26 @@ static const struct luaL_Reg buffer_methods[] = {
   { "__len", buffer_length },
   { "__newindex", buffer_write_uint8 },
   { "length", buffer_length },
-  { "readDoubleLE", buffer_read_double_le },
   { "readDoubleBE", buffer_read_double_be },
-  { "readFloatLE", buffer_read_float_le },
+  { "readDoubleLE", buffer_read_double_le },
   { "readFloatBE", buffer_read_float_be },
+  { "readFloatLE", buffer_read_float_le },
   { "readUInt8", buffer_read_uint8 },
-  { "readUInt16LE", buffer_read_uint16le },
   { "readUInt16BE", buffer_read_uint16be },
-  { "readUInt32LE", buffer_read_uint32le },
+  { "readUInt16LE", buffer_read_uint16le },
   { "readUInt32BE", buffer_read_uint32be },
+  { "readUInt32LE", buffer_read_uint32le },
   { "slice", buffer_slice },
   { "toString", buffer_to_string },
+  { "writeDoubleBE", buffer_write_double_be },
+  { "writeDoubleLE", buffer_write_double_le },
+  { "writeFloatBE", buffer_write_float_be },
+  { "writeFloatLE", buffer_write_float_le },
   { "writeUInt8", buffer_write_uint8 },
+  { "writeUInt16BE", buffer_write_uint16be },
+  { "writeUInt16LE", buffer_write_uint16le },
+  { "writeUInt32BE", buffer_write_uint32be },
+  { "writeUInt32LE", buffer_write_uint32le },
   { NULL, NULL }
 };
 
