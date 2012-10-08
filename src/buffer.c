@@ -26,7 +26,7 @@ static void checkarg_first_last(lua_State *L, luv_buffer_t *buffer,
       "last must be greater than or equal to first");
 }
 
-static int buffer__gc(lua_State *L) {
+static int buffer_gc(lua_State *L) {
   luv_buffer_t *buffer = luv_checkbuffer(L, 1);
   luaL_unref(L, LUA_REGISTRYINDEX, buffer->buf_ref);
   return 0;
@@ -51,7 +51,7 @@ static int buffer_index(lua_State *L) {
   return buffer_readUInt8(L);
 }
 
-static int buffer__newindex(lua_State *L) {
+static int buffer_writeUInt8(lua_State *L) {
   luv_buffer_t *buffer = luv_checkbuffer(L, 1);
   int index = luaL_checkint(L, 2);
   int byte = luaL_checkint(L, 3);
@@ -61,7 +61,7 @@ static int buffer__newindex(lua_State *L) {
   return 0;
 }
 
-static int buffer__len(lua_State *L) {
+static int buffer_length(lua_State *L) {
   luv_buffer_t *buffer = luv_checkbuffer(L, 1);
   lua_pushnumber(L, buffer->length);
   return 1;
@@ -95,13 +95,15 @@ static int buffer_to_string(lua_State *L) {
 }
 
 static const struct luaL_Reg buffer_methods[] = {
-  { "__gc", buffer__gc },
+  { "__gc", buffer_gc },
   { "__index", buffer_index },
-  { "__len", buffer__len },
-  { "__newindex", buffer__newindex },
+  { "__len", buffer_length },
+  { "__newindex", buffer_writeUInt8 },
+  { "length", buffer_length },
   { "readUInt8", buffer_readUInt8 },
   { "slice", buffer_slice },
   { "toString", buffer_to_string },
+  { "writeUInt8", buffer_writeUInt8 },
   { NULL, NULL }
 };
 
