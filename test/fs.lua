@@ -93,6 +93,9 @@ exports['fs.write_and_read.sync'] = function(test)
   err = fs.close(fd)
   test.is_nil(err)
 
+  err = fs.unlink(path)
+  test.is_nil(err)
+
   test.done()
 end
 
@@ -116,6 +119,195 @@ exports['fs.write_and_read.async'] = function(test)
     test.is_nil(err)
     test.equal(buf:toString(), str)
     err = fs.close(fd)
+    test.is_nil(err)
+
+    err = fs.unlink(path)
+    test.is_nil(err)
+
+    test.done()
+  end)()
+
+  loop.get():run()
+end
+
+exports['fs.unlink.sync'] = function(test)
+  local path = '_test_fs.unlink.sync'
+  local err, fd = fs.open(path, 'w', '0666')
+  test.is_nil(err)
+  err = fs.close(fd)
+  test.is_nil(err)
+
+  err = fs.unlink(path)
+  test.is_nil(err)
+
+  test.done()
+end
+
+exports['fs.unlink.async'] = function(test)
+  coroutine.wrap(function()
+    local path = '_test_fs.unlink.async'
+    local err, fd = fs.open(path, 'w', '0666')
+    test.is_nil(err)
+    err = fs.close(fd)
+    test.is_nil(err)
+
+    err = fs.unlink(path)
+    test.is_nil(err)
+
+    test.done()
+  end)()
+
+  loop.get():run()
+end
+
+exports['fs.mkdir_rmdir.sync'] = function(test)
+  local path = '_test_fs_mkdir_rmdir.sync'
+  local err = fs.mkdir(path)
+  test.is_nil(err)
+
+  local stat
+  err, stat = fs.stat(path)
+  test.ok(stat:isDirectory())
+
+  err = fs.rmdir(path)
+  test.is_nil(err)
+
+  test.done()
+end
+
+exports['fs.mkdir_rmdir.async'] = function(test)
+  coroutine.wrap(function()
+    local path = '_test_fs_mkdir_rmdir.async'
+    local err = fs.mkdir(path)
+    test.is_nil(err)
+
+    local stat
+    err, stat = fs.stat(path)
+    test.ok(stat:isDirectory())
+
+    err = fs.rmdir(path)
+    test.is_nil(err)
+
+    test.done()
+  end)()
+
+  loop.get():run()
+end
+
+exports['fs.rename_dir.sync'] = function(test)
+  local oldPath = '_test_fs_rename_dir.sync.old'
+  local newPath = '_test_fs_rename_dir.sync.new'
+
+  test.ok(not fs.exists(oldPath))
+  test.ok(not fs.exists(newPath))
+
+  local err = fs.mkdir(oldPath)
+  test.is_nil(err)
+  test.ok(fs.exists(oldPath))
+  test.ok(not fs.exists(newPath))
+
+  err = fs.rename(oldPath, newPath)
+  test.is_nil(err)
+  test.ok(not fs.exists(oldPath))
+  test.ok(fs.exists(newPath))
+
+  err = fs.rmdir(newPath)
+  test.is_nil(err)
+
+  test.done()
+end
+
+--[[ TODO: investigate why this test blocks.
+exports['fs.rename_dir.async'] = function(test)
+  coroutine.wrap(function()
+    local oldPath = '_test_fs_rename_dir.async.old'
+    local newPath = '_test_fs_rename_dir.async.new'
+
+    test.ok(not fs.exists(oldPath))
+    test.ok(not fs.exists(newPath))
+
+    local err = fs.mkdir(oldPath)
+    test.is_nil(err)
+    test.ok(fs.exists(oldPath))
+    test.ok(not fs.exists(newPath))
+
+    err = fs.rename(oldPath, newPath)
+    test.is_nil(err)
+    test.ok(not fs.exists(oldPath))
+    test.ok(fs.exists(newPath))
+
+    err = fs.rmdir(newPath)
+    test.is_nil(err)
+
+    test.done()
+  end)()
+
+  loop.get():run()
+end
+]]
+
+exports['fs.ftruncate.sync'] = function(test)
+  local path = '_test_fs_ftruncate.sync'
+  local err, fd = fs.open(path, 'w', '0666')
+  test.is_nil(err)
+  local str = 'Hello, libuv!\n'
+  local n
+  err, n = fs.write(fd, str)
+  test.is_nil(err)
+
+  err = fs.ftruncate(fd, 5)
+  test.is_nil(err)
+
+  local stat
+  err, stat = fs.stat(path)
+  test.is_nil(err)
+  test.equal(stat:size(), 5)
+
+  err = fs.ftruncate(fd)
+  test.is_nil(err)
+
+  err, stat = fs.stat(path)
+  test.is_nil(err)
+  test.equal(stat:size(), 0)
+
+  err = fs.close(fd)
+  test.is_nil(err)
+
+  err = fs.unlink(path)
+  test.is_nil(err)
+
+  test.done()
+end
+
+exports['fs.ftruncate.async'] = function(test)
+  coroutine.wrap(function()
+    local path = '_test_fs_ftruncate.async'
+    local err, fd = fs.open(path, 'w', '0666')
+    test.is_nil(err)
+    local str = 'Hello, libuv!\n'
+    local n
+    err, n = fs.write(fd, str)
+    test.is_nil(err)
+
+    err = fs.ftruncate(fd, 5)
+    test.is_nil(err)
+
+    local stat
+    err, stat = fs.stat(path)
+    test.is_nil(err)
+    test.equal(stat:size(), 5)
+
+    err = fs.ftruncate(fd)
+    test.is_nil(err)
+
+    err, stat = fs.stat(path)
+    test.is_nil(err)
+    test.equal(stat:size(), 0)
+
+    err = fs.close(fd)
+    test.is_nil(err)
+
+    err = fs.unlink(path)
     test.is_nil(err)
 
     test.done()
