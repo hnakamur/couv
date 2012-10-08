@@ -19,6 +19,34 @@ typedef struct luv_buffer_s {
 #define FLOAT_SIZE ((int)sizeof(float))
 #define DOUBLE_SIZE ((int)sizeof(double))
 
+static void memcpy_le(unsigned char *src, unsigned char *dst, int length) {
+  int i;
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+  for (i = 0; i < length; ++i)
+    *dst++ = *src++;
+#elif __BYTE_ORDER == __BIG_ENDIAN
+  src += length - 1;
+  for (i = 0; i < length; ++i)
+    *dst++ = *src--;
+#else
+#error
+#endif
+}
+
+static void memcpy_be(unsigned char *src, unsigned char *dst, int length) {
+  int i;
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+  src += length - 1;
+  for (i = 0; i < length; ++i)
+    *dst++ = *src--;
+#elif __BYTE_ORDER == __BIG_ENDIAN
+  for (i = 0; i < length; ++i)
+    *dst++ = *src++;
+#else
+#error
+#endif
+}
+
 static int buffer_gc(lua_State *L) {
   luv_buffer_t *buffer = luv_checkbuffer(L, 1);
   luaL_unref(L, LUA_REGISTRYINDEX, buffer->buf_ref);
@@ -79,97 +107,49 @@ static int buffer_read_uint32be(lua_State *L) {
 }
 
 static int buffer_read_float_le(lua_State *L) {
-  unsigned char *p;
   float val;
-  unsigned char *q = (unsigned char *)&val;
-  int i;
   luv_buffer_t *buffer = luv_checkbuffer(L, 1);
   int position = luaL_checkint(L, 2);
   luv_argcheckindex(L, 2, position, 1, buffer->length - (FLOAT_SIZE - 1));
 
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-  p = (unsigned char *)&buffer->buf[position - 1];
-  for (i = 0; i < FLOAT_SIZE; ++i)
-    *q++ = *p++;
-#elif __BYTE_ORDER == __BIG_ENDIAN
-  p = (unsigned char *)&buffer->buf[position - 1 + FLOAT_SIZE - 1];
-  for (i = 0; i < FLOAT_SIZE; ++i)
-    *q++ = *p--;
-#else
-#error
-#endif
+  memcpy_le((unsigned char *)&buffer->buf[position - 1], (unsigned char *)&val,
+      FLOAT_SIZE);
   lua_pushnumber(L, val);
   return 1;
 }
 
 static int buffer_read_float_be(lua_State *L) {
-  unsigned char *p;
   float val;
-  unsigned char *q = (unsigned char *)&val;
-  int i;
   luv_buffer_t *buffer = luv_checkbuffer(L, 1);
   int position = luaL_checkint(L, 2);
   luv_argcheckindex(L, 2, position, 1, buffer->length - (FLOAT_SIZE - 1));
 
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-  p = (unsigned char *)&buffer->buf[position - 1 + FLOAT_SIZE - 1];
-  for (i = 0; i < FLOAT_SIZE; ++i)
-    *q++ = *p--;
-#elif __BYTE_ORDER == __BIG_ENDIAN
-  p = (unsigned char *)&buffer->buf[position - 1];
-  for (i = 0; i < FLOAT_SIZE; ++i)
-    *q++ = *p++;
-#else
-#error
-#endif
+  memcpy_be((unsigned char *)&buffer->buf[position - 1], (unsigned char *)&val,
+      FLOAT_SIZE);
   lua_pushnumber(L, val);
   return 1;
 }
 
 static int buffer_read_double_le(lua_State *L) {
-  unsigned char *p;
   double val;
-  unsigned char *q = (unsigned char *)&val;
-  int i;
   luv_buffer_t *buffer = luv_checkbuffer(L, 1);
   int position = luaL_checkint(L, 2);
   luv_argcheckindex(L, 2, position, 1, buffer->length - (DOUBLE_SIZE - 1));
 
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-  p = (unsigned char *)&buffer->buf[position - 1];
-  for (i = 0; i < DOUBLE_SIZE; ++i)
-    *q++ = *p++;
-#elif __BYTE_ORDER == __BIG_ENDIAN
-  p = (unsigned char *)&buffer->buf[position - 1 + DOUBLE_SIZE - 1];
-  for (i = 0; i < DOUBLE_SIZE; ++i)
-    *q++ = *p--;
-#else
-#error
-#endif
+  memcpy_le((unsigned char *)&buffer->buf[position - 1], (unsigned char *)&val,
+      DOUBLE_SIZE);
   lua_pushnumber(L, val);
   return 1;
 }
 
 static int buffer_read_double_be(lua_State *L) {
-  unsigned char *p;
   double val;
-  unsigned char *q = (unsigned char *)&val;
-  int i;
   luv_buffer_t *buffer = luv_checkbuffer(L, 1);
   int position = luaL_checkint(L, 2);
   luv_argcheckindex(L, 2, position, 1, buffer->length - (DOUBLE_SIZE - 1));
 
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-  p = (unsigned char *)&buffer->buf[position - 1 + DOUBLE_SIZE - 1];
-  for (i = 0; i < DOUBLE_SIZE; ++i)
-    *q++ = *p--;
-#elif __BYTE_ORDER == __BIG_ENDIAN
-  p = (unsigned char *)&buffer->buf[position - 1];
-  for (i = 0; i < DOUBLE_SIZE; ++i)
-    *q++ = *p++;
-#else
-#error
-#endif
+  memcpy_be((unsigned char *)&buffer->buf[position - 1], (unsigned char *)&val,
+      DOUBLE_SIZE);
   lua_pushnumber(L, val);
   return 1;
 }
