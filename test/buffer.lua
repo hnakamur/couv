@@ -116,6 +116,57 @@ exports['Buffer.toString'] = function(test)
   test.done()
 end
 
+exports['Buffer.readUInt8'] = function(test)
+  local buf = Buffer.new(4)
+  buf[1] = 97
+  buf[2] = 98
+  buf[3] = 99
+  test.equal(buf:readUInt8(1), 97)
+  test.equal(buf:readUInt8(2), 98)
+  test.equal(buf:readUInt8(3), 99)
+  buf[1] = 0
+  test.equal(buf:readUInt8(1), 0)
+  buf[1] = 255
+  test.equal(buf:readUInt8(1), 255)
+  test.done()
+end
+
+exports['Buffer.writeUInt8'] = function(test)
+  local buf = Buffer.new(4)
+  buf:writeUInt8(1, 97)
+  buf:writeUInt8(2, 98)
+  buf:writeUInt8(3, 99)
+  test.equal(buf[1], 97)
+  test.equal(buf[2], 98)
+  test.equal(buf[3], 99)
+
+  buf:writeUInt8(1, 0)
+  test.equal(buf[1], 0)
+
+  buf:writeUInt8(1, 255)
+  test.equal(buf[1], 255)
+  test.done()
+end
+
+exports['Buffer.readInt8'] = function(test)
+  local buf = Buffer.new(4)
+  buf[1] = 97
+  buf[2] = 98
+  buf[3] = 127
+  test.equal(buf:readInt8(1), 97)
+  test.equal(buf:readInt8(2), 98)
+  test.equal(buf:readInt8(3), 127)
+  buf[1] = 0
+  test.equal(buf:readInt8(1), 0)
+  buf[1] = 255
+  test.equal(buf:readInt8(1), -1)
+  buf[1] = 254
+  test.equal(buf:readInt8(1), -2)
+  buf[1] = 128
+  test.equal(buf:readInt8(1), -128)
+  test.done()
+end
+
 exports['Buffer.readUInt16LE'] = function(test)
   local buf = Buffer.new(3)
   buf[1] = 0x12
@@ -134,6 +185,40 @@ exports['Buffer.readUInt16LE'] = function(test)
   test.ok(not ok)
   test.ok(string.find(err,
       "bad argument #1 to 'readUInt16LE' (index out of range)", 1, true))
+
+  test.done()
+end
+
+exports['Buffer.readInt16LE'] = function(test)
+  local buf = Buffer.new(3)
+  buf[1] = 0x12
+  buf[2] = 0x34
+  buf[3] = 0x56
+  test.equal(buf:readInt16LE(1), 0x3412)
+  test.equal(buf:readInt16LE(2), 0x5634)
+
+  buf[1] = 0xFF
+  buf[2] = 0x7F
+  test.equal(buf:readInt16LE(1), 32767)
+
+  buf[1] = 0x00
+  buf[2] = 0x80
+  test.equal(buf:readInt16LE(1), -32768)
+
+  buf[1] = 0xFF
+  buf[2] = 0xFF
+  test.equal(buf:readInt16LE(1), -1)
+
+  buf[1] = 0xFE
+  buf[2] = 0xFF
+  test.equal(buf:readInt16LE(1), -2)
+
+  local ok, err = pcall(function()
+    buf:readInt16LE(3)
+  end)
+  test.ok(not ok)
+  test.ok(string.find(err,
+      "bad argument #1 to 'readInt16LE' (index out of range)", 1, true))
 
   test.done()
 end
@@ -176,6 +261,40 @@ exports['Buffer.readUInt16BE'] = function(test)
   test.ok(not ok)
   test.ok(string.find(err,
       "bad argument #1 to 'readUInt16BE' (index out of range)", 1, true))
+
+  test.done()
+end
+
+exports['Buffer.readInt16BE'] = function(test)
+  local buf = Buffer.new(3)
+  buf[1] = 0x12
+  buf[2] = 0x34
+  buf[3] = 0x56
+  test.equal(buf:readInt16BE(1), 0x1234)
+  test.equal(buf:readInt16BE(2), 0x3456)
+
+  buf[1] = 0x7F
+  buf[2] = 0xFF
+  test.equal(buf:readInt16BE(1), 32767)
+
+  buf[1] = 0x80
+  buf[2] = 0x00
+  test.equal(buf:readInt16BE(1), -32768)
+
+  buf[1] = 0xFF
+  buf[2] = 0xFF
+  test.equal(buf:readInt16BE(1), -1)
+
+  buf[1] = 0xFF
+  buf[2] = 0xFE
+  test.equal(buf:readInt16BE(1), -2)
+
+  local ok, err = pcall(function()
+    buf:readInt16BE(3)
+  end)
+  test.ok(not ok)
+  test.ok(string.find(err,
+      "bad argument #1 to 'readInt16BE' (index out of range)", 1, true))
 
   test.done()
 end
@@ -224,6 +343,48 @@ exports['Buffer.readUInt32LE'] = function(test)
   test.done()
 end
 
+exports['Buffer.readInt32LE'] = function(test)
+  local buf = Buffer.new(4)
+  buf[1] = 0x12
+  buf[2] = 0x34
+  buf[3] = 0x56
+  buf[4] = 0x78
+  test.equal(buf:readInt32LE(1), 0x78563412)
+
+  buf[1] = 0xFF
+  buf[2] = 0xFF
+  buf[3] = 0xFF
+  buf[4] = 0xFF
+  test.equal(buf:readInt32LE(1), -1)
+
+  buf[1] = 0xFE
+  buf[2] = 0xFF
+  buf[3] = 0xFF
+  buf[4] = 0xFF
+  test.equal(buf:readInt32LE(1), -2)
+
+  buf[1] = 0xFF
+  buf[2] = 0xFF
+  buf[3] = 0xFF
+  buf[4] = 0x7F
+  test.equal(buf:readInt32LE(1), 2147483647)
+
+  buf[1] = 0x00
+  buf[2] = 0x00
+  buf[3] = 0x00
+  buf[4] = 0x80
+  test.equal(buf:readInt32LE(1), -2147483648)
+
+  local ok, err = pcall(function()
+    buf:readInt32LE(2)
+  end)
+  test.ok(not ok)
+  test.ok(string.find(err,
+      "bad argument #1 to 'readInt32LE' (index out of range)", 1, true))
+
+  test.done()
+end
+
 exports['Buffer.writeUInt32LE'] = function(test)
   local buf = Buffer.new(4)
   buf:writeUInt32LE(1, 0x12345678)
@@ -268,6 +429,48 @@ exports['Buffer.readUInt32BE'] = function(test)
   test.ok(not ok)
   test.ok(string.find(err,
       "bad argument #1 to 'readUInt32BE' (index out of range)", 1, true))
+
+  test.done()
+end
+
+exports['Buffer.readInt32BE'] = function(test)
+  local buf = Buffer.new(4)
+  buf[1] = 0x78
+  buf[2] = 0x56
+  buf[3] = 0x34
+  buf[4] = 0x12
+  test.equal(buf:readInt32BE(1), 0x78563412)
+
+  buf[1] = 0xFF
+  buf[2] = 0xFF
+  buf[3] = 0xFF
+  buf[4] = 0xFF
+  test.equal(buf:readInt32BE(1), -1)
+
+  buf[1] = 0xFF
+  buf[2] = 0xFF
+  buf[3] = 0xFF
+  buf[4] = 0xFE
+  test.equal(buf:readInt32BE(1), -2)
+
+  buf[1] = 0x7F
+  buf[2] = 0xFF
+  buf[3] = 0xFF
+  buf[4] = 0xFF
+  test.equal(buf:readInt32BE(1), 2147483647)
+
+  buf[1] = 0x80
+  buf[2] = 0x00
+  buf[3] = 0x00
+  buf[4] = 0x00
+  test.equal(buf:readInt32BE(1), -2147483648)
+
+  local ok, err = pcall(function()
+    buf:readInt32BE(2)
+  end)
+  test.ok(not ok)
+  test.ok(string.find(err,
+      "bad argument #1 to 'readInt32BE' (index out of range)", 1, true))
 
   test.done()
 end

@@ -106,6 +106,73 @@ static int buffer_read_uint32be(lua_State *L) {
   return 1;
 }
 
+static int buffer_read_int8(lua_State *L) {
+  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  int position = luaL_checkint(L, 2);
+  luv_argcheckindex(L, 2, position, 1, buffer->length);
+
+  lua_pushnumber(L, buffer->buf[position - 1]);
+  return 1;
+}
+
+static int buffer_read_int16le(lua_State *L) {
+  int value;
+  unsigned char *p;
+  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  int position = luaL_checkint(L, 2);
+  luv_argcheckindex(L, 2, position, 1, buffer->length - 1);
+
+  p = (unsigned char *)&buffer->buf[position - 1];
+  value = p[1] << 8 | p[0];
+  if (value >= 0x8000)
+    value = -(0xFFFF - value + 1);
+  lua_pushnumber(L, value);
+  return 1;
+}
+
+static int buffer_read_int16be(lua_State *L) {
+  int value;
+  unsigned char *p;
+  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  int position = luaL_checkint(L, 2);
+  luv_argcheckindex(L, 2, position, 1, buffer->length - 1);
+
+  p = (unsigned char *)&buffer->buf[position - 1];
+  value = p[0] << 8 | p[1];
+  if (value >= 0x8000)
+    value = -(0xFFFF - value + 1);
+  lua_pushnumber(L, value);
+  return 1;
+}
+
+static int buffer_read_int32le(lua_State *L) {
+  unsigned int value;
+  unsigned char *p;
+  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  int position = luaL_checkint(L, 2);
+  luv_argcheckindex(L, 2, position, 1, buffer->length - 3);
+
+  p = (unsigned char *)&buffer->buf[position - 1];
+  value = p[3] << 24 | p[2] << 16 | p[1] << 8 | p[0];
+  lua_pushnumber(L, value >= 0x80000000
+      ? -(int)(0xFFFFFFFF - value + 1) : (int)value);
+  return 1;
+}
+
+static int buffer_read_int32be(lua_State *L) {
+  unsigned int value;
+  unsigned char *p;
+  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  int position = luaL_checkint(L, 2);
+  luv_argcheckindex(L, 2, position, 1, buffer->length - 3);
+
+  p = (unsigned char *)&buffer->buf[position - 1];
+  value = p[0] << 24 | p[1] << 16 | p[2] << 8 | p[3];
+  lua_pushnumber(L, value >= 0x80000000 ?
+      -(int)(0xFFFFFFFF - value + 1) : (int)value);
+  return 1;
+}
+
 static int buffer_read_float_le(lua_State *L) {
   float value;
   luv_buffer_t *buffer = luv_checkbuffer(L, 1);
@@ -313,6 +380,11 @@ static const struct luaL_Reg buffer_methods[] = {
   { "readDoubleLE", buffer_read_double_le },
   { "readFloatBE", buffer_read_float_be },
   { "readFloatLE", buffer_read_float_le },
+  { "readInt8", buffer_read_int8 },
+  { "readInt16BE", buffer_read_int16be },
+  { "readInt16LE", buffer_read_int16le },
+  { "readInt32BE", buffer_read_int32be },
+  { "readInt32LE", buffer_read_int32le },
   { "readUInt8", buffer_read_uint8 },
   { "readUInt16BE", buffer_read_uint16be },
   { "readUInt16LE", buffer_read_uint16le },
