@@ -10,7 +10,7 @@ exports['Buffer.new'] = function(test)
   test.done()
 end
 
-exports['Buffer.index'] = function(test)
+exports['Buffer.__newindex'] = function(test)
   local buf = Buffer.new(4)
   buf[1] = 97
   buf[2] = 98
@@ -18,11 +18,17 @@ exports['Buffer.index'] = function(test)
   test.equal(buf:readUInt8(1), 97)
   test.equal(buf:readUInt8(2), 98)
   test.equal(buf:readUInt8(3), 99)
---[[TODO: fix implementation
+  test.done()
+end
+
+exports['Buffer.__index'] = function(test)
+  local buf = Buffer.new(4)
+  buf[1] = 97
+  buf[2] = 98
+  buf[3] = 99
   test.equal(buf[1], 97)
   test.equal(buf[2], 98)
   test.equal(buf[3], 99)
---]]
   test.done()
 end
 

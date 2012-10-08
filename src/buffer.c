@@ -41,6 +41,16 @@ static int buffer_readUInt8(lua_State *L) {
   return 1;
 }
 
+static int buffer_index(lua_State *L) {
+  const char *key = luaL_checkstring(L, 2);
+  lua_getmetatable(L, 1);
+  lua_getfield(L, -1, key);
+  if (!lua_isnil(L, -1))
+    return 1;
+  lua_pop(L, 1);
+  return buffer_readUInt8(L);
+}
+
 static int buffer__newindex(lua_State *L) {
   luv_buffer_t *buffer = luv_checkbuffer(L, 1);
   int index = luaL_checkint(L, 2);
@@ -86,7 +96,7 @@ static int buffer_to_string(lua_State *L) {
 
 static const struct luaL_Reg buffer_methods[] = {
   { "__gc", buffer__gc },
-  { "__index", buffer_readUInt8 },
+  { "__index", buffer_index },
   { "__len", buffer__len },
   { "__newindex", buffer__newindex },
   { "readUInt8", buffer_readUInt8 },
@@ -113,13 +123,12 @@ static const struct luaL_Reg buffer_functions[] = {
 };
 
 int luaopen_yaluv_buffer(lua_State *L) {
-  lua_createtable(L, 0, ARRAY_SIZE(buffer_functions) - 1);
-  luaL_register(L, NULL, buffer_functions);
-
   luaL_newmetatable(L, LUV_BUFFER_MTBL_NAME);
   luaL_register(L, NULL, buffer_methods);
-  lua_setfield(L, -1, "__index");
+  lua_pop(L, 1);
 
+  lua_createtable(L, 0, ARRAY_SIZE(buffer_functions) - 1);
+  luaL_register(L, NULL, buffer_functions);
   lua_setfield(L, -2, "Buffer");
   return 1;
 }
