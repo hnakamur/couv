@@ -208,4 +208,76 @@ exports['Buffer.readUInt32BE'] = function(test)
   test.done()
 end
 
+exports['Buffer.readFloatBE'] = function(test)
+  local buf = Buffer.new(4)
+  buf[1] = 0x3f
+  buf[2] = 0x80
+  buf[3] = 0x00
+  buf[4] = 0x00
+  test.equal(buf:readFloatBE(1), 1)
+
+  buf[1] = 0xc0
+  buf[2] = 0x00
+  test.equal(buf:readFloatBE(1), -2)
+
+  buf[1] = 0x3e
+  buf[2] = 0x20
+  buf[3] = 0x00
+  buf[4] = 0x00
+  test.equal(buf:readFloatBE(1), 0.15625)
+
+  buf[1] = 0x7F
+  buf[2] = 0x7F
+  buf[3] = 0xFF
+  buf[4] = 0xFF
+  local max = 3.4028234663853e+38
+  local eps = 1e-14
+  test.ok(math.abs(buf:readFloatBE(1) - max) / max < eps)
+
+  local ok, err = pcall(function()
+    buf:readFloatBE(3)
+  end)
+  test.ok(not ok)
+  test.ok(string.find(err,
+      "bad argument #1 to 'readFloatBE' (index out of range)", 1, true))
+
+  test.done()
+end
+
+exports['Buffer.readFloatLE'] = function(test)
+  local buf = Buffer.new(4)
+  buf[1] = 0x00
+  buf[2] = 0x00
+  buf[3] = 0x80
+  buf[4] = 0x3f
+  test.equal(buf:readFloatLE(1), 1)
+
+  buf[3] = 0x00
+  buf[4] = 0xc0
+  test.equal(buf:readFloatLE(1), -2)
+
+  buf[1] = 0x00
+  buf[3] = 0x00
+  buf[3] = 0x20
+  buf[4] = 0x3e
+  test.equal(buf:readFloatLE(1), 0.15625)
+
+  buf[1] = 0xFF
+  buf[2] = 0xFF
+  buf[3] = 0x7F
+  buf[4] = 0x7F
+  local max = 3.4028234663853e+38
+  local eps = 1e-14
+  test.ok(math.abs(buf:readFloatLE(1) - max) / max < eps)
+
+  local ok, err = pcall(function()
+    buf:readFloatLE(3)
+  end)
+  test.ok(not ok)
+  test.ok(string.find(err,
+      "bad argument #1 to 'readFloatLE' (index out of range)", 1, true))
+
+  test.done()
+end
+
 return exports

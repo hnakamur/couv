@@ -16,6 +16,8 @@ typedef struct luv_buffer_s {
   luaL_argcheck(L, min <= index && index <= max, arg_index, \
       "index out of range");
 
+#define FLOAT_SIZE ((int)sizeof(float))
+
 static int buffer_gc(lua_State *L) {
   luv_buffer_t *buffer = luv_checkbuffer(L, 1);
   luaL_unref(L, LUA_REGISTRYINDEX, buffer->buf_ref);
@@ -72,6 +74,54 @@ static int buffer_read_uint32be(lua_State *L) {
 
   p = (unsigned char *)&buffer->buf[position - 1];
   lua_pushnumber(L, (unsigned)p[0] << 24 | p[1] << 16 | p[2] << 8 | p[3]);
+  return 1;
+}
+
+static int buffer_read_float_le(lua_State *L) {
+  unsigned char *p;
+  float val;
+  unsigned char *q = (unsigned char *)&val;
+  int i;
+  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  int position = luaL_checkint(L, 2);
+  luv_argcheckindex(L, 2, position, 1, buffer->length - (FLOAT_SIZE - 1));
+
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+  p = (unsigned char *)&buffer->buf[position - 1];
+  for (i = 0; i < FLOAT_SIZE; ++i)
+    *q++ = *p++;
+#elif __BYTE_ORDER == __BIG_ENDIAN
+  p = (unsigned char *)&buffer->buf[position - 1 + FLOAT_SIZE - 1];
+  for (i = 0; i < FLOAT_SIZE; ++i)
+    *q++ = *p--;
+#else
+#error
+#endif
+  lua_pushnumber(L, val);
+  return 1;
+}
+
+static int buffer_read_float_be(lua_State *L) {
+  unsigned char *p;
+  float val;
+  unsigned char *q = (unsigned char *)&val;
+  int i;
+  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  int position = luaL_checkint(L, 2);
+  luv_argcheckindex(L, 2, position, 1, buffer->length - (FLOAT_SIZE - 1));
+
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+  p = (unsigned char *)&buffer->buf[position - 1 + FLOAT_SIZE - 1];
+  for (i = 0; i < FLOAT_SIZE; ++i)
+    *q++ = *p--;
+#elif __BYTE_ORDER == __BIG_ENDIAN
+  p = (unsigned char *)&buffer->buf[position - 1];
+  for (i = 0; i < FLOAT_SIZE; ++i)
+    *q++ = *p++;
+#else
+#error
+#endif
+  lua_pushnumber(L, val);
   return 1;
 }
 
@@ -138,6 +188,8 @@ static const struct luaL_Reg buffer_methods[] = {
   { "__len", buffer_length },
   { "__newindex", buffer_write_uint8 },
   { "length", buffer_length },
+  { "readFloatLE", buffer_read_float_le },
+  { "readFloatBE", buffer_read_float_be },
   { "readUInt8", buffer_read_uint8 },
   { "readUInt16LE", buffer_read_uint16le },
   { "readUInt16BE", buffer_read_uint16be },
