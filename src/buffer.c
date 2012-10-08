@@ -19,7 +19,7 @@ typedef struct luv_buffer_s {
 #define FLOAT_SIZE ((int)sizeof(float))
 #define DOUBLE_SIZE ((int)sizeof(double))
 
-static void memcpy_le(unsigned char *src, unsigned char *dst, int length) {
+static void memcpy_le(char *src, char *dst, int length) {
   int i;
 #if __BYTE_ORDER == __LITTLE_ENDIAN
   for (i = 0; i < length; ++i)
@@ -33,7 +33,7 @@ static void memcpy_le(unsigned char *src, unsigned char *dst, int length) {
 #endif
 }
 
-static void memcpy_be(unsigned char *src, unsigned char *dst, int length) {
+static void memcpy_be(char *src, char *dst, int length) {
   int i;
 #if __BYTE_ORDER == __LITTLE_ENDIAN
   src += length - 1;
@@ -112,8 +112,7 @@ static int buffer_read_float_le(lua_State *L) {
   int position = luaL_checkint(L, 2);
   luv_argcheckindex(L, 2, position, 1, buffer->length - (FLOAT_SIZE - 1));
 
-  memcpy_le((unsigned char *)&buffer->buf[position - 1], (unsigned char *)&val,
-      FLOAT_SIZE);
+  memcpy_le(&buffer->buf[position - 1], (char *)&val, FLOAT_SIZE);
   lua_pushnumber(L, val);
   return 1;
 }
@@ -124,8 +123,7 @@ static int buffer_read_float_be(lua_State *L) {
   int position = luaL_checkint(L, 2);
   luv_argcheckindex(L, 2, position, 1, buffer->length - (FLOAT_SIZE - 1));
 
-  memcpy_be((unsigned char *)&buffer->buf[position - 1], (unsigned char *)&val,
-      FLOAT_SIZE);
+  memcpy_be(&buffer->buf[position - 1], (char *)&val, FLOAT_SIZE);
   lua_pushnumber(L, val);
   return 1;
 }
@@ -136,8 +134,7 @@ static int buffer_read_double_le(lua_State *L) {
   int position = luaL_checkint(L, 2);
   luv_argcheckindex(L, 2, position, 1, buffer->length - (DOUBLE_SIZE - 1));
 
-  memcpy_le((unsigned char *)&buffer->buf[position - 1], (unsigned char *)&val,
-      DOUBLE_SIZE);
+  memcpy_le(&buffer->buf[position - 1], (char *)&val, DOUBLE_SIZE);
   lua_pushnumber(L, val);
   return 1;
 }
@@ -148,8 +145,7 @@ static int buffer_read_double_be(lua_State *L) {
   int position = luaL_checkint(L, 2);
   luv_argcheckindex(L, 2, position, 1, buffer->length - (DOUBLE_SIZE - 1));
 
-  memcpy_be((unsigned char *)&buffer->buf[position - 1], (unsigned char *)&val,
-      DOUBLE_SIZE);
+  memcpy_be(&buffer->buf[position - 1], (char *)&val, DOUBLE_SIZE);
   lua_pushnumber(L, val);
   return 1;
 }
