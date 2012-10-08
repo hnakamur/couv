@@ -9,6 +9,72 @@ exports['Buffer.new'] = function(test)
   test.done()
 end
 
+exports['Buffer.fill'] = function(test)
+  local buf = Buffer.new(3)
+  buf:fill(97, 1, 2)
+  test.equal(buf[1], 97)
+  test.equal(buf[2], 97)
+  test.done()
+end
+
+exports['Buffer.write'] = function(test)
+  local buf = Buffer.new(3)
+  test.equal(buf:write('abc', 1), 3)
+  test.equal(buf[1], 97)
+  test.equal(buf[2], 98)
+  test.equal(buf[3], 99)
+
+  buf:fill(0)
+  test.equal(buf:write('abc', 1, 2), 2)
+  test.equal(buf[1], 97)
+  test.equal(buf[2], 98)
+  test.equal(buf[3], 0)
+
+  buf:fill(0)
+  test.equal(buf:write('ab', 1, 3), 2)
+  test.equal(buf[1], 97)
+  test.equal(buf[2], 98)
+  test.equal(buf[3], 0)
+
+  test.done()
+end
+
+exports['Buffer.copy'] = function(test)
+  local buf1 = Buffer.new(4)
+  local buf2 = Buffer.new(3)
+  buf1[1] = 97
+  buf1[2] = 98
+  buf1[3] = 99
+  buf1[4] = 100
+
+  test.equal(buf1:copy(buf2, 2, 3, 4), 2)
+  test.equal(buf2[2], 99)
+  test.equal(buf2[3], 100)
+
+  test.equal(buf1:copy(buf1, 2, 3, 4), 2)
+  test.equal(buf1[1], 97)
+  test.equal(buf1[2], 99)
+  test.equal(buf1[3], 100)
+  test.equal(buf1[4], 100)
+
+  buf1[1] = 97
+  buf1[2] = 98
+  buf1[3] = 99
+  buf1[4] = 100
+  test.equal(buf1:copy(buf2, 2, 2, 4), 2)
+  test.equal(buf2[2], 98)
+  test.equal(buf2[3], 99)
+
+  test.done()
+end
+
+exports['Buffer.isBuffer'] = function(test)
+  local buf = Buffer.new(2)
+  test.ok(Buffer.isBuffer(buf))
+  test.ok(not Buffer.isBuffer('string'))
+  test.done()
+end
+
 exports['Buffer.length'] = function(test)
   local buf = Buffer.new(3)
   test.equal(buf:length(), 3)

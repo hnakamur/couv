@@ -1,3 +1,4 @@
+#include <string.h>
 #include <lauxlib.h>
 #include "auxlib.h"
 #include "buffer.h"
@@ -429,6 +430,18 @@ static int buffer_slice(lua_State *L) {
   return 1;
 }
 
+static int buffer_fill(lua_State *L) {
+  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  int byte = luaL_checkint(L, 2);
+  int first = luaL_optint(L, 3, 1);
+  int last = luaL_optint(L, 4, buffer->length);
+  luv_argcheckindex(L, 3, first, 1, buffer->length);
+  luv_argcheckindex(L, 4, last, first, buffer->length);
+
+  memset(buffer->buf + first - 1, byte, last - first + 1);
+  return 0;
+}
+
 static int buffer_to_string(lua_State *L) {
   luv_buffer_t *buffer = luv_checkbuffer(L, 1);
   int first = luaL_optint(L, 2, 1);
@@ -440,11 +453,51 @@ static int buffer_to_string(lua_State *L) {
   return 1;
 }
 
+static int buffer_copy(lua_State *L) {
+  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  luv_buffer_t *target = luv_checkbuffer(L, 2);
+  int target_first = luaL_optint(L, 3, 1);
+  int source_first = luaL_optint(L, 4, 1);
+  int source_last = luaL_optint(L, 5, buffer->length);
+  int length;
+  luv_argcheckindex(L, 3, target_first, 1, target->length);
+  luv_argcheckindex(L, 4, source_first, 1, buffer->length);
+  luv_argcheckindex(L, 5, source_last, source_first, buffer->length);
+
+  length = source_last - source_first + 1;
+  if (length > target->length - target_first + 1)
+    length = target->length - target_first + 1;
+  if (length > 0)
+    memmove(&target->buf[target_first - 1],
+        &buffer->buf[source_first - 1], length);
+  lua_pushnumber(L, length);
+  return 1;
+}
+
+static int buffer_write(lua_State *L) {
+  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  size_t str_len;
+  const char *str = luaL_checklstring(L, 2, &str_len);
+  int position = luaL_optint(L, 3, 1);
+  int length = luaL_optint(L, 4, buffer->length - position + 1);
+  luv_argcheckindex(L, 3, position, 1, buffer->length);
+  luv_argcheckindex(L, 4, length, 0, buffer->length - position + 1);
+
+  if (length > (int)str_len)
+    length = (int)str_len;
+  if (length > 0)
+    memcpy(&buffer->buf[position - 1], str, length);
+  lua_pushnumber(L, length);
+  return 1;
+}
+
 static const struct luaL_Reg buffer_methods[] = {
   { "__gc", buffer_gc },
   { "__index", buffer_index },
   { "__len", buffer_length },
   { "__newindex", buffer_write_uint8 },
+  { "copy", buffer_copy },
+  { "fill", buffer_fill },
   { "length", buffer_length },
   { "readDoubleBE", buffer_read_double_be },
   { "readDoubleLE", buffer_read_double_le },
@@ -462,6 +515,7 @@ static const struct luaL_Reg buffer_methods[] = {
   { "readUInt32LE", buffer_read_uint32le },
   { "slice", buffer_slice },
   { "toString", buffer_to_string },
+  { "write", buffer_write },
   { "writeDoubleBE", buffer_write_double_be },
   { "writeDoubleLE", buffer_write_double_le },
   { "writeFloatBE", buffer_write_float_be },
@@ -479,6 +533,11 @@ static const struct luaL_Reg buffer_methods[] = {
   { NULL, NULL }
 };
 
+static int buffer_is_buffer(lua_State *L) {
+  lua_pushboolean(L, luvL_checkmetatablename(L, 1, LUV_BUFFER_MTBL_NAME));
+  return 1;
+}
+
 static int buffer_new(lua_State *L) {
   int length = luaL_checkint(L, 1);
   luv_buffer_t *buffer = (luv_buffer_t *)lua_newuserdata(L,
@@ -492,6 +551,7 @@ static int buffer_new(lua_State *L) {
 }
 
 static const struct luaL_Reg buffer_functions[] = {
+  { "isBuffer", buffer_is_buffer },
   { "new", buffer_new },
   { NULL, NULL }
 };
