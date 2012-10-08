@@ -35,6 +35,27 @@ exports['Buffer.writeUInt8'] = function(test)
   test.done()
 end
 
+exports['Buffer.writeInt8'] = function(test)
+  local buf = Buffer.new(3)
+  test.equal(type(buf), 'userdata')
+  buf:writeInt8(1, 97)
+  test.equal(buf[1], 97)
+
+  buf:writeInt8(1, 0)
+  test.equal(buf[1], 0)
+
+  buf:writeInt8(1, 127)
+  test.equal(buf[1], 0x7F)
+
+  buf:writeInt8(1, -128)
+  test.equal(buf[1], 0x80)
+
+  buf:writeInt8(1, -1)
+  test.equal(buf[1], 0xFF)
+
+  test.done()
+end
+
 exports['Buffer.__newindex'] = function(test)
   local buf = Buffer.new(4)
   buf[1] = 97
@@ -223,6 +244,34 @@ exports['Buffer.readInt16LE'] = function(test)
   test.done()
 end
 
+exports['Buffer.writeInt16LE'] = function(test)
+  local buf = Buffer.new(2)
+  buf:writeInt16LE(1, 0x3412)
+  test.equal(buf[1], 0x12)
+  test.equal(buf[2], 0x34)
+
+  buf:writeInt16LE(1, -32768)
+  test.equal(buf[1], 0x00)
+  test.equal(buf[2], 0x80)
+
+  buf:writeInt16LE(1, -1)
+  test.equal(buf[1], 0xFF)
+  test.equal(buf[2], 0xFF)
+
+  buf:writeInt16LE(1, -2)
+  test.equal(buf[1], 0xFE)
+  test.equal(buf[2], 0xFF)
+
+  local ok, err = pcall(function()
+    buf:writeInt16LE(2, 0x3412)
+  end)
+  test.ok(not ok)
+  test.ok(string.find(err,
+      "bad argument #1 to 'writeInt16LE' (index out of range)", 1, true))
+
+  test.done()
+end
+
 exports['Buffer.writeUInt16LE'] = function(test)
   local buf = Buffer.new(4)
   buf:writeUInt16LE(1, 0x1234)
@@ -295,6 +344,34 @@ exports['Buffer.readInt16BE'] = function(test)
   test.ok(not ok)
   test.ok(string.find(err,
       "bad argument #1 to 'readInt16BE' (index out of range)", 1, true))
+
+  test.done()
+end
+
+exports['Buffer.writeInt16BE'] = function(test)
+  local buf = Buffer.new(2)
+  buf:writeInt16BE(1, 0x3412)
+  test.equal(buf[1], 0x34)
+  test.equal(buf[2], 0x12)
+
+  buf:writeInt16BE(1, -32768)
+  test.equal(buf[1], 0x80)
+  test.equal(buf[2], 0x00)
+
+  buf:writeInt16BE(1, -1)
+  test.equal(buf[1], 0xFF)
+  test.equal(buf[2], 0xFF)
+
+  buf:writeInt16BE(1, -2)
+  test.equal(buf[1], 0xFF)
+  test.equal(buf[2], 0xFE)
+
+  local ok, err = pcall(function()
+    buf:writeInt16BE(2, 0x3412)
+  end)
+  test.ok(not ok)
+  test.ok(string.find(err,
+      "bad argument #1 to 'writeInt16BE' (index out of range)", 1, true))
 
   test.done()
 end
@@ -385,6 +462,48 @@ exports['Buffer.readInt32LE'] = function(test)
   test.done()
 end
 
+exports['Buffer.writeInt32LE'] = function(test)
+  local buf = Buffer.new(4)
+  buf:writeInt32LE(1, 0x78563412)
+  test.equal(buf[1], 0x12)
+  test.equal(buf[2], 0x34)
+  test.equal(buf[3], 0x56)
+  test.equal(buf[4], 0x78)
+
+  buf:writeInt32LE(1, -1)
+  test.equal(buf[1], 0xFF)
+  test.equal(buf[2], 0xFF)
+  test.equal(buf[3], 0xFF)
+  test.equal(buf[4], 0xFF)
+
+  buf:writeInt32LE(1, -2)
+  test.equal(buf[1], 0xFE)
+  test.equal(buf[2], 0xFF)
+  test.equal(buf[3], 0xFF)
+  test.equal(buf[4], 0xFF)
+
+  buf:writeInt32LE(1, 2147483647)
+  test.equal(buf[1], 0xFF)
+  test.equal(buf[2], 0xFF)
+  test.equal(buf[3], 0xFF)
+  test.equal(buf[4], 0x7F)
+
+  buf:writeInt32LE(1, -2147483648)
+  test.equal(buf[1], 0x00)
+  test.equal(buf[2], 0x00)
+  test.equal(buf[3], 0x00)
+  test.equal(buf[4], 0x80)
+
+  local ok, err = pcall(function()
+    buf:writeInt32LE(2, 0)
+  end)
+  test.ok(not ok)
+  test.ok(string.find(err,
+      "bad argument #1 to 'writeInt32LE' (index out of range)", 1, true))
+
+  test.done()
+end
+
 exports['Buffer.writeUInt32LE'] = function(test)
   local buf = Buffer.new(4)
   buf:writeUInt32LE(1, 0x12345678)
@@ -471,6 +590,48 @@ exports['Buffer.readInt32BE'] = function(test)
   test.ok(not ok)
   test.ok(string.find(err,
       "bad argument #1 to 'readInt32BE' (index out of range)", 1, true))
+
+  test.done()
+end
+
+exports['Buffer.writeInt32BE'] = function(test)
+  local buf = Buffer.new(4)
+  buf:writeInt32BE(1, 0x78563412)
+  test.equal(buf[1], 0x78)
+  test.equal(buf[2], 0x56)
+  test.equal(buf[3], 0x34)
+  test.equal(buf[4], 0x12)
+
+  buf:writeInt32BE(1, -1)
+  test.equal(buf[1], 0xFF)
+  test.equal(buf[2], 0xFF)
+  test.equal(buf[3], 0xFF)
+  test.equal(buf[4], 0xFF)
+
+  buf:writeInt32BE(1, -2)
+  test.equal(buf[1], 0xFF)
+  test.equal(buf[2], 0xFF)
+  test.equal(buf[3], 0xFF)
+  test.equal(buf[4], 0xFE)
+
+  buf:writeInt32BE(1, 2147483647)
+  test.equal(buf[1], 0x7F)
+  test.equal(buf[2], 0xFF)
+  test.equal(buf[3], 0xFF)
+  test.equal(buf[4], 0xFF)
+
+  buf:writeInt32BE(1, -2147483648)
+  test.equal(buf[1], 0x80)
+  test.equal(buf[2], 0x00)
+  test.equal(buf[3], 0x00)
+  test.equal(buf[4], 0x00)
+
+  local ok, err = pcall(function()
+    buf:writeInt32BE(2, 0)
+  end)
+  test.ok(not ok)
+  test.ok(string.find(err,
+      "bad argument #1 to 'writeInt32BE' (index out of range)", 1, true))
 
   test.done()
 end

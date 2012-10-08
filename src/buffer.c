@@ -293,6 +293,76 @@ static int buffer_write_uint32be(lua_State *L) {
   return 0;
 }
 
+static int buffer_write_int8(lua_State *L) {
+  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  int position = luaL_checkint(L, 2);
+  int byte = luaL_checkint(L, 3);
+  luv_argcheckindex(L, 2, position, 1, buffer->length);
+
+  buffer->buf[position - 1] = (char)byte;
+  return 0;
+}
+
+static int buffer_write_int16le(lua_State *L) {
+  unsigned char *q;
+  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  int position = luaL_checkint(L, 2);
+  int value = luaL_checkinteger(L, 3);
+  unsigned int uvalue = value < 0 ? 0x10000 + value : value;
+  luv_argcheckindex(L, 2, position, 1, buffer->length - 1);
+
+  q = (unsigned char *)&buffer->buf[position - 1];
+  *q++ = uvalue & 0xFF;
+  *q++ = uvalue >> 8;
+  return 0;
+}
+
+static int buffer_write_int16be(lua_State *L) {
+  unsigned char *q;
+  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  int position = luaL_checkint(L, 2);
+  int value = luaL_checkinteger(L, 3);
+  unsigned int uvalue = value < 0 ? 0x10000 + value : value;
+  luv_argcheckindex(L, 2, position, 1, buffer->length - 1);
+
+  q = (unsigned char *)&buffer->buf[position - 1];
+  *q++ = uvalue >> 8;
+  *q++ = uvalue & 0xFF;
+  return 0;
+}
+
+static int buffer_write_int32le(lua_State *L) {
+  unsigned char *q;
+  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  int position = luaL_checkint(L, 2);
+  int value = luaL_checkinteger(L, 3);
+  unsigned int uvalue = value < 0 ? 0x100000000 + value : value;
+  luv_argcheckindex(L, 2, position, 1, buffer->length - 3);
+
+  q = (unsigned char *)&buffer->buf[position - 1];
+  *q++ = uvalue & 0xFF;
+  *q++ = (uvalue >> 8) & 0xFF;
+  *q++ = (uvalue >> 16) & 0xFF;
+  *q++ = uvalue >> 24;
+  return 0;
+}
+
+static int buffer_write_int32be(lua_State *L) {
+  unsigned char *q;
+  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  int position = luaL_checkint(L, 2);
+  int value = luaL_checkinteger(L, 3);
+  unsigned int uvalue = value < 0 ? 0x100000000 + value : value;
+  luv_argcheckindex(L, 2, position, 1, buffer->length - 3);
+
+  q = (unsigned char *)&buffer->buf[position - 1];
+  *q++ = uvalue >> 24;
+  *q++ = (uvalue >> 16) & 0xFF;
+  *q++ = (uvalue >> 8) & 0xFF;
+  *q++ = uvalue & 0xFF;
+  return 0;
+}
+
 static int buffer_write_float_le(lua_State *L) {
   luv_buffer_t *buffer = luv_checkbuffer(L, 1);
   int position = luaL_checkint(L, 2);
@@ -396,6 +466,11 @@ static const struct luaL_Reg buffer_methods[] = {
   { "writeDoubleLE", buffer_write_double_le },
   { "writeFloatBE", buffer_write_float_be },
   { "writeFloatLE", buffer_write_float_le },
+  { "writeInt8", buffer_write_int8 },
+  { "writeInt16BE", buffer_write_int16be },
+  { "writeInt16LE", buffer_write_int16le },
+  { "writeInt32BE", buffer_write_int32be },
+  { "writeInt32LE", buffer_write_int32le },
   { "writeUInt8", buffer_write_uint8 },
   { "writeUInt16BE", buffer_write_uint16be },
   { "writeUInt16LE", buffer_write_uint16le },
