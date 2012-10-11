@@ -8,7 +8,7 @@ int luvL_is_in_mainthread(lua_State *L) {
   return is_mainthread;
 }
 
-int luvL_checkmetatablename(lua_State *L, int index, const char *tname) {
+int luvL_hasmetatablename(lua_State *L, int index, const char *tname) {
   if (lua_getmetatable(L, index)) {
     luaL_getmetatable(L, tname);
     if (lua_rawequal(L, -1, -2)) {

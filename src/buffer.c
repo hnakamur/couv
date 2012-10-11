@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <string.h>
 #include <lauxlib.h>
 #include "auxlib.h"
@@ -6,17 +7,59 @@
 #define FLOAT_SIZE ((int)sizeof(float))
 #define DOUBLE_SIZE ((int)sizeof(double))
 
-const char *luv_checkbuforstr(lua_State *L, int index, size_t *length) {
+uv_buf_t luv_checkbuforstr(lua_State *L, int index) {
+  uv_buf_t buf;
   int type = lua_type(L, index);
   if (type == LUA_TSTRING) {
-    return lua_tolstring(L, index, length);
-  } else if (luvL_checkmetatablename(L, index, LUV_BUFFER_MTBL_NAME)) {
-    luv_buffer_t *buffer = (luv_buffer_t *)lua_touserdata(L, index);
-    *length = buffer->length;
-    return buffer->buf;
+    buf.base = (char *)lua_tolstring(L, index, &buf.len);
+  } else if (luvL_hasmetatablename(L, index, LUV_BUFFER_MTBL_NAME)) {
+    buf = *(uv_buf_t *)lua_touserdata(L, index);
   } else {
+    buf.base = NULL;
+    buf.len = 0;
     luaL_argerror(L, index, "must be string or Buffer");
   }
+  return buf;
+}
+
+uv_buf_t luv_tobuforstr(lua_State *L, int index) {
+  uv_buf_t buf;
+  int type = lua_type(L, index);
+  if (type == LUA_TSTRING) {
+    buf.base = (char *)lua_tolstring(L, index, &buf.len);
+  } else if (luvL_hasmetatablename(L, index, LUV_BUFFER_MTBL_NAME)) {
+    buf = *(uv_buf_t *)lua_touserdata(L, index);
+  } else {
+    buf.base = NULL;
+    buf.len = 0;
+  }
+  return buf;
+}
+
+uv_buf_t *luv_checkbuforstrtable(lua_State *L, int index, size_t *buffers_cnt) {
+  int i;
+  int n;
+  uv_buf_t buf;
+  uv_buf_t *buffers;
+
+  luaL_checktype(L, index, LUA_TTABLE);
+  n = lua_objlen(L, index);
+  buffers = (uv_buf_t *)malloc(n * sizeof(uv_buf_t));
+
+  for (i = 1; i <= n; ++i) {
+    lua_rawgeti(L, index, i);
+    buf = luv_tobuforstr(L, -1);
+    lua_pop(L, 1);
+    if (buf.base) {
+      buffers[i - 1] = buf;
+    } else {
+      free(buffers);
+      luaL_argerror(L, 1, "must be an array (table) of buffers");
+      return NULL;
+    }
+  }
+  *buffers_cnt = n;
+  return buffers;
 }
 
 static void memcpy_le(char *src, char *dst, int length) {
@@ -48,81 +91,88 @@ static void memcpy_be(char *src, char *dst, int length) {
 }
 
 static int buffer_gc(lua_State *L) {
-  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
-  luaL_unref(L, LUA_REGISTRYINDEX, buffer->buf_ref);
+  int ref;
+  uv_buf_t *buf = luv_checkbuf(L, 1);
+
+  lua_pushlightuserdata(L, buf);
+  lua_rawget(L, LUA_REGISTRYINDEX);
+  ref = lua_tointeger(L, -1);
+  lua_pop(L, 1);
+  luaL_unref(L, LUA_REGISTRYINDEX, ref);
+
   return 0;
 }
 
 static int buffer_read_uint8(lua_State *L) {
-  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  uv_buf_t *buf = luv_checkbuf(L, 1);
   int position = luaL_checkint(L, 2);
-  luv_argcheckindex(L, 2, position, 1, buffer->length);
+  luv_argcheckindex(L, 2, position, 1, buf->len);
 
-  lua_pushnumber(L, *(unsigned char *)&buffer->buf[position - 1]);
+  lua_pushnumber(L, *(unsigned char *)&buf->base[position - 1]);
   return 1;
 }
 
 static int buffer_read_uint16le(lua_State *L) {
   unsigned char *p;
-  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  uv_buf_t *buf = luv_checkbuf(L, 1);
   int position = luaL_checkint(L, 2);
-  luv_argcheckindex(L, 2, position, 1, buffer->length - 1);
+  luv_argcheckindex(L, 2, position, 1, buf->len - 1);
 
-  p = (unsigned char *)&buffer->buf[position - 1];
+  p = (unsigned char *)&buf->base[position - 1];
   lua_pushnumber(L, p[1] << 8 | p[0]);
   return 1;
 }
 
 static int buffer_read_uint16be(lua_State *L) {
   unsigned char *p;
-  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  uv_buf_t *buf = luv_checkbuf(L, 1);
   int position = luaL_checkint(L, 2);
-  luv_argcheckindex(L, 2, position, 1, buffer->length - 1);
+  luv_argcheckindex(L, 2, position, 1, buf->len - 1);
 
-  p = (unsigned char *)&buffer->buf[position - 1];
+  p = (unsigned char *)&buf->base[position - 1];
   lua_pushnumber(L, p[0] << 8 | p[1]);
   return 1;
 }
 
 static int buffer_read_uint32le(lua_State *L) {
   unsigned char *p;
-  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  uv_buf_t *buf = luv_checkbuf(L, 1);
   int position = luaL_checkint(L, 2);
-  luv_argcheckindex(L, 2, position, 1, buffer->length - 3);
+  luv_argcheckindex(L, 2, position, 1, buf->len - 3);
 
-  p = (unsigned char *)&buffer->buf[position - 1];
+  p = (unsigned char *)&buf->base[position - 1];
   lua_pushnumber(L, (unsigned)p[3] << 24 | p[2] << 16 | p[1] << 8 | p[0]);
   return 1;
 }
 
 static int buffer_read_uint32be(lua_State *L) {
   unsigned char *p;
-  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  uv_buf_t *buf = luv_checkbuf(L, 1);
   int position = luaL_checkint(L, 2);
-  luv_argcheckindex(L, 2, position, 1, buffer->length - 3);
+  luv_argcheckindex(L, 2, position, 1, buf->len - 3);
 
-  p = (unsigned char *)&buffer->buf[position - 1];
+  p = (unsigned char *)&buf->base[position - 1];
   lua_pushnumber(L, (unsigned)p[0] << 24 | p[1] << 16 | p[2] << 8 | p[3]);
   return 1;
 }
 
 static int buffer_read_int8(lua_State *L) {
-  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  uv_buf_t *buf = luv_checkbuf(L, 1);
   int position = luaL_checkint(L, 2);
-  luv_argcheckindex(L, 2, position, 1, buffer->length);
+  luv_argcheckindex(L, 2, position, 1, buf->len);
 
-  lua_pushnumber(L, buffer->buf[position - 1]);
+  lua_pushnumber(L, buf->base[position - 1]);
   return 1;
 }
 
 static int buffer_read_int16le(lua_State *L) {
   int value;
   unsigned char *p;
-  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  uv_buf_t *buf = luv_checkbuf(L, 1);
   int position = luaL_checkint(L, 2);
-  luv_argcheckindex(L, 2, position, 1, buffer->length - 1);
+  luv_argcheckindex(L, 2, position, 1, buf->len - 1);
 
-  p = (unsigned char *)&buffer->buf[position - 1];
+  p = (unsigned char *)&buf->base[position - 1];
   value = p[1] << 8 | p[0];
   if (value >= 0x8000)
     value = -(0xFFFF - value + 1);
@@ -133,11 +183,11 @@ static int buffer_read_int16le(lua_State *L) {
 static int buffer_read_int16be(lua_State *L) {
   int value;
   unsigned char *p;
-  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  uv_buf_t *buf = luv_checkbuf(L, 1);
   int position = luaL_checkint(L, 2);
-  luv_argcheckindex(L, 2, position, 1, buffer->length - 1);
+  luv_argcheckindex(L, 2, position, 1, buf->len - 1);
 
-  p = (unsigned char *)&buffer->buf[position - 1];
+  p = (unsigned char *)&buf->base[position - 1];
   value = p[0] << 8 | p[1];
   if (value >= 0x8000)
     value = -(0xFFFF - value + 1);
@@ -148,11 +198,11 @@ static int buffer_read_int16be(lua_State *L) {
 static int buffer_read_int32le(lua_State *L) {
   unsigned int value;
   unsigned char *p;
-  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  uv_buf_t *buf = luv_checkbuf(L, 1);
   int position = luaL_checkint(L, 2);
-  luv_argcheckindex(L, 2, position, 1, buffer->length - 3);
+  luv_argcheckindex(L, 2, position, 1, buf->len - 3);
 
-  p = (unsigned char *)&buffer->buf[position - 1];
+  p = (unsigned char *)&buf->base[position - 1];
   value = p[3] << 24 | p[2] << 16 | p[1] << 8 | p[0];
   lua_pushnumber(L, value >= 0x80000000
       ? -(int)(0xFFFFFFFF - value + 1) : (int)value);
@@ -162,11 +212,11 @@ static int buffer_read_int32le(lua_State *L) {
 static int buffer_read_int32be(lua_State *L) {
   unsigned int value;
   unsigned char *p;
-  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  uv_buf_t *buf = luv_checkbuf(L, 1);
   int position = luaL_checkint(L, 2);
-  luv_argcheckindex(L, 2, position, 1, buffer->length - 3);
+  luv_argcheckindex(L, 2, position, 1, buf->len - 3);
 
-  p = (unsigned char *)&buffer->buf[position - 1];
+  p = (unsigned char *)&buf->base[position - 1];
   value = p[0] << 24 | p[1] << 16 | p[2] << 8 | p[3];
   lua_pushnumber(L, value >= 0x80000000 ?
       -(int)(0xFFFFFFFF - value + 1) : (int)value);
@@ -175,44 +225,44 @@ static int buffer_read_int32be(lua_State *L) {
 
 static int buffer_read_float_le(lua_State *L) {
   float value;
-  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  uv_buf_t *buf = luv_checkbuf(L, 1);
   int position = luaL_checkint(L, 2);
-  luv_argcheckindex(L, 2, position, 1, buffer->length - (FLOAT_SIZE - 1));
+  luv_argcheckindex(L, 2, position, 1, buf->len - (FLOAT_SIZE - 1));
 
-  memcpy_le(&buffer->buf[position - 1], (char *)&value, FLOAT_SIZE);
+  memcpy_le(&buf->base[position - 1], (char *)&value, FLOAT_SIZE);
   lua_pushnumber(L, value);
   return 1;
 }
 
 static int buffer_read_float_be(lua_State *L) {
   float value;
-  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  uv_buf_t *buf = luv_checkbuf(L, 1);
   int position = luaL_checkint(L, 2);
-  luv_argcheckindex(L, 2, position, 1, buffer->length - (FLOAT_SIZE - 1));
+  luv_argcheckindex(L, 2, position, 1, buf->len - (FLOAT_SIZE - 1));
 
-  memcpy_be(&buffer->buf[position - 1], (char *)&value, FLOAT_SIZE);
+  memcpy_be(&buf->base[position - 1], (char *)&value, FLOAT_SIZE);
   lua_pushnumber(L, value);
   return 1;
 }
 
 static int buffer_read_double_le(lua_State *L) {
   double value;
-  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  uv_buf_t *buf = luv_checkbuf(L, 1);
   int position = luaL_checkint(L, 2);
-  luv_argcheckindex(L, 2, position, 1, buffer->length - (DOUBLE_SIZE - 1));
+  luv_argcheckindex(L, 2, position, 1, buf->len - (DOUBLE_SIZE - 1));
 
-  memcpy_le(&buffer->buf[position - 1], (char *)&value, DOUBLE_SIZE);
+  memcpy_le(&buf->base[position - 1], (char *)&value, DOUBLE_SIZE);
   lua_pushnumber(L, value);
   return 1;
 }
 
 static int buffer_read_double_be(lua_State *L) {
   double value;
-  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  uv_buf_t *buf = luv_checkbuf(L, 1);
   int position = luaL_checkint(L, 2);
-  luv_argcheckindex(L, 2, position, 1, buffer->length - (DOUBLE_SIZE - 1));
+  luv_argcheckindex(L, 2, position, 1, buf->len - (DOUBLE_SIZE - 1));
 
-  memcpy_be(&buffer->buf[position - 1], (char *)&value, DOUBLE_SIZE);
+  memcpy_be(&buf->base[position - 1], (char *)&value, DOUBLE_SIZE);
   lua_pushnumber(L, value);
   return 1;
 }
@@ -228,23 +278,23 @@ static int buffer_index(lua_State *L) {
 }
 
 static int buffer_write_uint8(lua_State *L) {
-  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  uv_buf_t *buf = luv_checkbuf(L, 1);
   int position = luaL_checkint(L, 2);
   int byte = luaL_checkint(L, 3);
-  luv_argcheckindex(L, 2, position, 1, buffer->length);
+  luv_argcheckindex(L, 2, position, 1, buf->len);
 
-  *(unsigned char *)&buffer->buf[position - 1] = (unsigned char)byte;
+  *(unsigned char *)&buf->base[position - 1] = (unsigned char)byte;
   return 0;
 }
 
 static int buffer_write_uint16le(lua_State *L) {
   unsigned char *q;
-  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  uv_buf_t *buf = luv_checkbuf(L, 1);
   int position = luaL_checkint(L, 2);
   unsigned int value = (unsigned int)luaL_checkinteger(L, 3);
-  luv_argcheckindex(L, 2, position, 1, buffer->length - 1);
+  luv_argcheckindex(L, 2, position, 1, buf->len - 1);
 
-  q = (unsigned char *)&buffer->buf[position - 1];
+  q = (unsigned char *)&buf->base[position - 1];
   *q++ = value & 0xFF;
   *q++ = value >> 8;
   return 0;
@@ -252,12 +302,12 @@ static int buffer_write_uint16le(lua_State *L) {
 
 static int buffer_write_uint16be(lua_State *L) {
   unsigned char *q;
-  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  uv_buf_t *buf = luv_checkbuf(L, 1);
   int position = luaL_checkint(L, 2);
   unsigned int value = (unsigned int)luaL_checkinteger(L, 3);
-  luv_argcheckindex(L, 2, position, 1, buffer->length - 1);
+  luv_argcheckindex(L, 2, position, 1, buf->len - 1);
 
-  q = (unsigned char *)&buffer->buf[position - 1];
+  q = (unsigned char *)&buf->base[position - 1];
   *q++ = value >> 8;
   *q++ = value & 0xFF;
   return 0;
@@ -265,12 +315,12 @@ static int buffer_write_uint16be(lua_State *L) {
 
 static int buffer_write_uint32le(lua_State *L) {
   unsigned char *q;
-  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  uv_buf_t *buf = luv_checkbuf(L, 1);
   int position = luaL_checkint(L, 2);
   unsigned int value = (unsigned int)luaL_checkinteger(L, 3);
-  luv_argcheckindex(L, 2, position, 1, buffer->length - 3);
+  luv_argcheckindex(L, 2, position, 1, buf->len - 3);
 
-  q = (unsigned char *)&buffer->buf[position - 1];
+  q = (unsigned char *)&buf->base[position - 1];
   *q++ = value & 0xFF;
   *q++ = (value >> 8) & 0xFF;
   *q++ = (value >> 16) & 0xFF;
@@ -280,12 +330,12 @@ static int buffer_write_uint32le(lua_State *L) {
 
 static int buffer_write_uint32be(lua_State *L) {
   unsigned char *q;
-  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  uv_buf_t *buf = luv_checkbuf(L, 1);
   int position = luaL_checkint(L, 2);
   unsigned int value = (unsigned int)luaL_checkinteger(L, 3);
-  luv_argcheckindex(L, 2, position, 1, buffer->length - 3);
+  luv_argcheckindex(L, 2, position, 1, buf->len - 3);
 
-  q = (unsigned char *)&buffer->buf[position - 1];
+  q = (unsigned char *)&buf->base[position - 1];
   *q++ = value >> 24;
   *q++ = (value >> 16) & 0xFF;
   *q++ = (value >> 8) & 0xFF;
@@ -294,24 +344,24 @@ static int buffer_write_uint32be(lua_State *L) {
 }
 
 static int buffer_write_int8(lua_State *L) {
-  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  uv_buf_t *buf = luv_checkbuf(L, 1);
   int position = luaL_checkint(L, 2);
   int byte = luaL_checkint(L, 3);
-  luv_argcheckindex(L, 2, position, 1, buffer->length);
+  luv_argcheckindex(L, 2, position, 1, buf->len);
 
-  buffer->buf[position - 1] = (char)byte;
+  buf->base[position - 1] = (char)byte;
   return 0;
 }
 
 static int buffer_write_int16le(lua_State *L) {
   unsigned char *q;
-  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  uv_buf_t *buf = luv_checkbuf(L, 1);
   int position = luaL_checkint(L, 2);
   int value = luaL_checkinteger(L, 3);
   unsigned int uvalue = value < 0 ? 0x10000 + value : value;
-  luv_argcheckindex(L, 2, position, 1, buffer->length - 1);
+  luv_argcheckindex(L, 2, position, 1, buf->len - 1);
 
-  q = (unsigned char *)&buffer->buf[position - 1];
+  q = (unsigned char *)&buf->base[position - 1];
   *q++ = uvalue & 0xFF;
   *q++ = uvalue >> 8;
   return 0;
@@ -319,13 +369,13 @@ static int buffer_write_int16le(lua_State *L) {
 
 static int buffer_write_int16be(lua_State *L) {
   unsigned char *q;
-  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  uv_buf_t *buf = luv_checkbuf(L, 1);
   int position = luaL_checkint(L, 2);
   int value = luaL_checkinteger(L, 3);
   unsigned int uvalue = value < 0 ? 0x10000 + value : value;
-  luv_argcheckindex(L, 2, position, 1, buffer->length - 1);
+  luv_argcheckindex(L, 2, position, 1, buf->len - 1);
 
-  q = (unsigned char *)&buffer->buf[position - 1];
+  q = (unsigned char *)&buf->base[position - 1];
   *q++ = uvalue >> 8;
   *q++ = uvalue & 0xFF;
   return 0;
@@ -333,13 +383,13 @@ static int buffer_write_int16be(lua_State *L) {
 
 static int buffer_write_int32le(lua_State *L) {
   unsigned char *q;
-  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  uv_buf_t *buf = luv_checkbuf(L, 1);
   int position = luaL_checkint(L, 2);
   int value = luaL_checkinteger(L, 3);
   unsigned int uvalue = value < 0 ? 0x100000000 + value : value;
-  luv_argcheckindex(L, 2, position, 1, buffer->length - 3);
+  luv_argcheckindex(L, 2, position, 1, buf->len - 3);
 
-  q = (unsigned char *)&buffer->buf[position - 1];
+  q = (unsigned char *)&buf->base[position - 1];
   *q++ = uvalue & 0xFF;
   *q++ = (uvalue >> 8) & 0xFF;
   *q++ = (uvalue >> 16) & 0xFF;
@@ -349,13 +399,13 @@ static int buffer_write_int32le(lua_State *L) {
 
 static int buffer_write_int32be(lua_State *L) {
   unsigned char *q;
-  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  uv_buf_t *buf = luv_checkbuf(L, 1);
   int position = luaL_checkint(L, 2);
   int value = luaL_checkinteger(L, 3);
   unsigned int uvalue = value < 0 ? 0x100000000 + value : value;
-  luv_argcheckindex(L, 2, position, 1, buffer->length - 3);
+  luv_argcheckindex(L, 2, position, 1, buf->len - 3);
 
-  q = (unsigned char *)&buffer->buf[position - 1];
+  q = (unsigned char *)&buf->base[position - 1];
   *q++ = uvalue >> 24;
   *q++ = (uvalue >> 16) & 0xFF;
   *q++ = (uvalue >> 8) & 0xFF;
@@ -364,128 +414,132 @@ static int buffer_write_int32be(lua_State *L) {
 }
 
 static int buffer_write_float_le(lua_State *L) {
-  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  uv_buf_t *buf = luv_checkbuf(L, 1);
   int position = luaL_checkint(L, 2);
   float value = (float)luaL_checknumber(L, 3);
-  luv_argcheckindex(L, 2, position, 1, buffer->length - (FLOAT_SIZE - 1));
+  luv_argcheckindex(L, 2, position, 1, buf->len - (FLOAT_SIZE - 1));
 
-  memcpy_le((char *)&value, &buffer->buf[position - 1], FLOAT_SIZE);
+  memcpy_le((char *)&value, &buf->base[position - 1], FLOAT_SIZE);
   return 0;
 }
 
 static int buffer_write_float_be(lua_State *L) {
-  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  uv_buf_t *buf = luv_checkbuf(L, 1);
   int position = luaL_checkint(L, 2);
   float value = (float)luaL_checknumber(L, 3);
-  luv_argcheckindex(L, 2, position, 1, buffer->length - (FLOAT_SIZE - 1));
+  luv_argcheckindex(L, 2, position, 1, buf->len - (FLOAT_SIZE - 1));
 
-  memcpy_be((char *)&value, &buffer->buf[position - 1], FLOAT_SIZE);
+  memcpy_be((char *)&value, &buf->base[position - 1], FLOAT_SIZE);
   return 0;
 }
 
 static int buffer_write_double_le(lua_State *L) {
-  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  uv_buf_t *buf = luv_checkbuf(L, 1);
   int position = luaL_checkint(L, 2);
   double value = (double)luaL_checknumber(L, 3);
-  luv_argcheckindex(L, 2, position, 1, buffer->length - (DOUBLE_SIZE - 1));
+  luv_argcheckindex(L, 2, position, 1, buf->len - (DOUBLE_SIZE - 1));
 
-  memcpy_le((char *)&value, &buffer->buf[position - 1], DOUBLE_SIZE);
+  memcpy_le((char *)&value, &buf->base[position - 1], DOUBLE_SIZE);
   return 0;
 }
 
 static int buffer_write_double_be(lua_State *L) {
-  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  uv_buf_t *buf = luv_checkbuf(L, 1);
   int position = luaL_checkint(L, 2);
   double value = (double)luaL_checknumber(L, 3);
-  luv_argcheckindex(L, 2, position, 1, buffer->length - (DOUBLE_SIZE - 1));
+  luv_argcheckindex(L, 2, position, 1, buf->len - (DOUBLE_SIZE - 1));
 
-  memcpy_be((char *)&value, &buffer->buf[position - 1], DOUBLE_SIZE);
+  memcpy_be((char *)&value, &buf->base[position - 1], DOUBLE_SIZE);
   return 0;
 }
 
 static int buffer_length(lua_State *L) {
-  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
-  lua_pushnumber(L, buffer->length);
+  uv_buf_t *buf = luv_checkbuf(L, 1);
+  lua_pushnumber(L, buf->len);
   return 1;
 }
 
 static int buffer_slice(lua_State *L) {
-  luv_buffer_t *slice;
-  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  uv_buf_t *slice;
+  uv_buf_t *buf = luv_checkbuf(L, 1);
   int first = luaL_optint(L, 2, 1);
-  int last = luaL_optint(L, 3, buffer->length);
-  luv_argcheckindex(L, 2, first, 1, buffer->length);
-  luv_argcheckindex(L, 3, last, first, buffer->length);
+  int last = luaL_optint(L, 3, buf->len);
+  luv_argcheckindex(L, 2, first, 1, buf->len);
+  luv_argcheckindex(L, 3, last, first, buf->len);
 
-  slice = (luv_buffer_t *)lua_newuserdata(L, sizeof(luv_buffer_t));
+  slice = (uv_buf_t *)lua_newuserdata(L, sizeof(uv_buf_t));
   luaL_getmetatable(L, LUV_BUFFER_MTBL_NAME);
   lua_setmetatable(L, -2);
 
-  slice->length = last - first + 1;
-  slice->buf = buffer->buf + first - 1;
+  slice->len = last - first + 1;
+  slice->base = buf->base + first - 1;
 
-  lua_rawgeti(L, LUA_REGISTRYINDEX, buffer->buf_ref);
-  slice->buf_ref = luaL_ref(L, LUA_REGISTRYINDEX);
+  /* registry[slice] = registry[buf] */
+  lua_pushlightuserdata(L, slice);
+  lua_pushlightuserdata(L, buf);
+  lua_rawget(L, LUA_REGISTRYINDEX);
+  lua_rawset(L, LUA_REGISTRYINDEX);
+
   return 1;
 }
 
 static int buffer_fill(lua_State *L) {
-  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  uv_buf_t *buf = luv_checkbuf(L, 1);
   int byte = luaL_checkint(L, 2);
   int first = luaL_optint(L, 3, 1);
-  int last = luaL_optint(L, 4, buffer->length);
-  luv_argcheckindex(L, 3, first, 1, buffer->length);
-  luv_argcheckindex(L, 4, last, first, buffer->length);
+  int last = luaL_optint(L, 4, buf->len);
+  luv_argcheckindex(L, 3, first, 1, buf->len);
+  luv_argcheckindex(L, 4, last, first, buf->len);
 
-  memset(buffer->buf + first - 1, byte, last - first + 1);
+  memset(buf->base + first - 1, byte, last - first + 1);
   return 0;
 }
 
 static int buffer_to_string(lua_State *L) {
-  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  uv_buf_t *buf = luv_checkbuf(L, 1);
   int first = luaL_optint(L, 2, 1);
-  int last = luaL_optint(L, 3, buffer->length);
-  luv_argcheckindex(L, 2, first, 1, buffer->length);
-  luv_argcheckindex(L, 3, last, first, buffer->length);
+  int last = luaL_optint(L, 3, buf->len);
+  luv_argcheckindex(L, 2, first, 1, buf->len);
+  luv_argcheckindex(L, 3, last, first, buf->len);
 
-  lua_pushlstring(L, buffer->buf + first - 1, last - first + 1);
+  lua_pushlstring(L, buf->base + first - 1, last - first + 1);
   return 1;
 }
 
 static int buffer_copy(lua_State *L) {
-  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
-  luv_buffer_t *target = luv_checkbuffer(L, 2);
+  uv_buf_t *buf = luv_checkbuf(L, 1);
+  uv_buf_t *target = luv_checkbuf(L, 2);
   int target_first = luaL_optint(L, 3, 1);
   int source_first = luaL_optint(L, 4, 1);
-  int source_last = luaL_optint(L, 5, buffer->length);
+  int source_last = luaL_optint(L, 5, buf->len);
   int length;
-  luv_argcheckindex(L, 3, target_first, 1, target->length);
-  luv_argcheckindex(L, 4, source_first, 1, buffer->length);
-  luv_argcheckindex(L, 5, source_last, source_first, buffer->length);
+  luv_argcheckindex(L, 3, target_first, 1, target->len);
+  luv_argcheckindex(L, 4, source_first, 1, buf->len);
+  luv_argcheckindex(L, 5, source_last, source_first, buf->len);
 
   length = source_last - source_first + 1;
-  if (length > target->length - target_first + 1)
-    length = target->length - target_first + 1;
+  if (length > (int)target->len - target_first + 1)
+    length = (int)target->len - target_first + 1;
   if (length > 0)
-    memmove(&target->buf[target_first - 1],
-        &buffer->buf[source_first - 1], length);
+    memmove(&target->base[target_first - 1],
+        &buf->base[source_first - 1], length);
   lua_pushnumber(L, length);
   return 1;
 }
 
 static int buffer_write(lua_State *L) {
-  luv_buffer_t *buffer = luv_checkbuffer(L, 1);
+  uv_buf_t *buf = luv_checkbuf(L, 1);
   size_t str_len;
   const char *str = luaL_checklstring(L, 2, &str_len);
   int position = luaL_optint(L, 3, 1);
-  int length = luaL_optint(L, 4, buffer->length - position + 1);
-  luv_argcheckindex(L, 3, position, 1, buffer->length);
-  luv_argcheckindex(L, 4, length, 0, buffer->length - position + 1);
+  int length = luaL_optint(L, 4, buf->len - position + 1);
+  luv_argcheckindex(L, 3, position, 1, buf->len);
+  luv_argcheckindex(L, 4, length, 0, buf->len - position + 1);
 
   if (length > (int)str_len)
     length = (int)str_len;
   if (length > 0)
-    memcpy(&buffer->buf[position - 1], str, length);
+    memcpy(&buf->base[position - 1], str, length);
   lua_pushnumber(L, length);
   return 1;
 }
@@ -533,12 +587,13 @@ static const struct luaL_Reg buffer_methods[] = {
 };
 
 static int buffer_is_buffer(lua_State *L) {
-  lua_pushboolean(L, luvL_checkmetatablename(L, 1, LUV_BUFFER_MTBL_NAME));
+  lua_pushboolean(L, luvL_hasmetatablename(L, 1, LUV_BUFFER_MTBL_NAME));
   return 1;
 }
 
 static int buffer_new(lua_State *L) {
-  luv_buffer_t *buffer;
+  int ref;
+  uv_buf_t *buf;
   size_t length;
   const char *str = NULL;
   int arg1_type = lua_type(L, 1);
@@ -550,73 +605,58 @@ static int buffer_new(lua_State *L) {
     luaL_argerror(L, 1, "must be integer or string");
   }
 
-  buffer = (luv_buffer_t *)lua_newuserdata(L, sizeof(luv_buffer_t));
+  buf = (uv_buf_t *)lua_newuserdata(L, sizeof(uv_buf_t));
   luaL_getmetatable(L, LUV_BUFFER_MTBL_NAME);
   lua_setmetatable(L, -2);
-  buffer->length = length;
-  buffer->buf = (char *)lua_newuserdata(L, length);
+  buf->len = length;
+  buf->base = (char *)lua_newuserdata(L, length);
   if (str)
-    memcpy(buffer->buf, str, length);
-  buffer->buf_ref = luaL_ref(L, LUA_REGISTRYINDEX);
+    memcpy(buf->base, str, length);
+
+  /* registry[buf] = ref to char[] buf */
+  ref = luaL_ref(L, LUA_REGISTRYINDEX);
+  lua_pushlightuserdata(L, buf);
+  lua_pushnumber(L, ref);
+  lua_rawset(L, LUA_REGISTRYINDEX);
+
   return 1;
 }
 
 static int buffer_concat(lua_State *L) {
-  int i;
-  int n;
+  size_t i;
+  size_t n;
   int total_length;
-  luv_buffer_t *buffer;
-  luv_buffer_t *target;
+  uv_buf_t *buf;
+  uv_buf_t *buffers;
+  uv_buf_t *target;
   char *dst;
   int len;
 
-  luaL_checktype(L, 1, LUA_TTABLE);
+  buffers = luv_checkbuforstrtable(L, 1, &n);
   total_length = luaL_optint(L, 2, 0);
-  n = lua_objlen(L, 1);
-
-  luaL_getmetatable(L, LUV_BUFFER_MTBL_NAME);
-  /* stack: mtbl [total_length] list */
 
   if (total_length == 0) {
-    for (i = 1; i <= n; ++i) {
-      lua_rawgeti(L, 1, i);
-      buffer = (luv_buffer_t *)lua_touserdata(L, -1);
-      if (lua_getmetatable(L, -1) && lua_rawequal(L, -1, -3)) {
-        total_length += buffer->length;
-        lua_pop(L, 2);
-      } else {
-        return luaL_argerror(L, 1, "must be an array (table) of buffers");
-      }
+    for (i = 0; i < n; ++i) {
+      buf = &buffers[i];
+      total_length += buf->len;
     }
   }
 
   lua_pushcfunction(L, buffer_new);
   lua_pushnumber(L, total_length);
   lua_call(L, 1, 1);
-  /* stack: target mtbl [total_length] list */
-  target = (luv_buffer_t *)lua_touserdata(L, -1);
-  dst = target->buf;
-
-  for (i = 1; i <= n && total_length > 0;
-      ++i, dst += len, total_length -= len) {
-    lua_rawgeti(L, 1, i);
-    buffer = (luv_buffer_t *)lua_touserdata(L, -1);
-    /* stack: buf target mtbl [total_length] list */
-    if (lua_getmetatable(L, -1) && lua_rawequal(L, -1, -4)) {
-      /* stack: mtbl2 buf target mtbl [total_length] list */
-      len = buffer->length;
-      if (len > total_length)
-        len = total_length;
-      memmove(dst, buffer->buf, len);
-      lua_pop(L, 2);
-      /* stack: target mtbl [total_length] list */
-    } else {
-      return luaL_argerror(L, 1, "must be an array (table) of buffers");
-    }
-  }
-  /* stack: target mtbl [total_length] list */
-  lua_remove(L, -2);
   /* stack: target [total_length] list */
+  target = (uv_buf_t *)lua_touserdata(L, -1);
+  dst = target->base;
+
+  for (i = 0; i < n && total_length > 0; ++i, dst += len, total_length -= len) {
+    buf = &buffers[i];
+    len = buf->len;
+    if (len > total_length)
+      len = total_length;
+    memmove(dst, buf->base, len);
+  }
+  free(buffers);
   return 1;
 }
 

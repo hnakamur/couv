@@ -11,6 +11,7 @@ set(SRCS
   src/auxlib.c
   src/buffer.c
   src/fs.c
+  src/ipaddr.c
   src/loop.c
   src/yaluv.c
 )

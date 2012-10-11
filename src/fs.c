@@ -653,21 +653,21 @@ static int fs_utime(lua_State *L) {
 static int fs_read(lua_State *L) {
   uv_loop_t *loop = luv_loop(L);
   int fd = luaL_checkint(L, 1);
-  luv_buffer_t *buffer = luv_checkbuffer(L, 2);
-  char *buf = buffer->buf;
+  uv_buf_t *buf = luv_checkbuf(L, 2);
+  char *p = buf->base;
   int buf_pos = luaL_optint(L, 3, 1);
-  int length = luaL_optint(L, 4, buffer->length - buf_pos + 1);
+  int length = luaL_optint(L, 4, buf->len - buf_pos + 1);
   long file_offset = luaL_optlong(L, 5, -1);
-  luv_argcheckindex(L, 3, buf_pos, 1, buffer->length);
-  luv_argcheckindex(L, 4, length, 0, buffer->length - buf_pos + 1);
+  luv_argcheckindex(L, 3, buf_pos, 1, buf->len);
+  luv_argcheckindex(L, 4, length, 0, buf->len - buf_pos + 1);
   if (luvL_is_in_mainthread(L)) {
     uv_fs_t req;
-    uv_fs_read(loop, &req, fd, (void *)&buf[buf_pos - 1], length, file_offset,
+    uv_fs_read(loop, &req, fd, (void *)&p[buf_pos - 1], length, file_offset,
         NULL);
     return fs_push_common_results(L, &req);
   } else {
     uv_fs_t *req = fs_alloc_req(L);
-    int r = uv_fs_read(loop, req, fd, (void *)&buf[buf_pos - 1], length,
+    int r = uv_fs_read(loop, req, fd, (void *)&p[buf_pos - 1], length,
         file_offset, fs_common_callback);
     return fs_yield_or_error(req, r);
   }
@@ -690,21 +690,21 @@ static int fs_readdir(lua_State *L) {
 static int fs_write(lua_State *L) {
   uv_loop_t *loop = luv_loop(L);
   int fd = luaL_checkint(L, 1);
-  size_t buf_len;
-  const char *buf = luv_checkbuforstr(L, 2, &buf_len);
+  uv_buf_t buf = luv_checkbuforstr(L, 2);
   int buf_pos = luaL_optint(L, 3, 1);
-  int length = luaL_optint(L, 4, buf_len - buf_pos + 1);
+  char *p = buf.base;
+  int length = luaL_optint(L, 4, buf.len - buf_pos + 1);
   long file_offset = luaL_optlong(L, 5, -1);
-  luv_argcheckindex(L, 3, buf_pos, 1, (int)buf_len);
-  luv_argcheckindex(L, 4, length, 0, (int)buf_len - buf_pos + 1);
+  luv_argcheckindex(L, 3, buf_pos, 1, (int)buf.len);
+  luv_argcheckindex(L, 4, length, 0, (int)buf.len - buf_pos + 1);
   if (luvL_is_in_mainthread(L)) {
     uv_fs_t req;
-    uv_fs_write(loop, &req, fd, (void *)&buf[buf_pos - 1], length, file_offset,
+    uv_fs_write(loop, &req, fd, (void *)&p[buf_pos - 1], length, file_offset,
         NULL);
     return fs_push_common_results(L, &req);
   } else {
     uv_fs_t *req = fs_alloc_req(L);
-    int r = uv_fs_write(loop, req, fd, (void *)&buf[buf_pos - 1], length,
+    int r = uv_fs_write(loop, req, fd, (void *)&p[buf_pos - 1], length,
         file_offset, fs_common_callback);
     return fs_yield_or_error(req, r);
   }
