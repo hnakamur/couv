@@ -13,6 +13,7 @@ set(SRCS
   src/fs.c
   src/ipaddr.c
   src/loop.c
+  src/udp.c
   src/yaluv.c
 )
 install_lua_module(yaluv ${SRCS})

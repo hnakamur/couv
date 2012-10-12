@@ -4,6 +4,7 @@
 #include "fs.h"
 #include "ipaddr.h"
 #include "loop.h"
+#include "udp.h"
 #include "yaluv.h"
 
 static void close_cb(uv_handle_t* handle) {
@@ -30,6 +31,7 @@ int luaopen_yaluv(lua_State *L) {
   luaopen_yaluv_buffer(L);
   luaopen_yaluv_fs(L);
   luaopen_yaluv_ipaddr(L);
+  luaopen_yaluv_udp(L);
 
   return 1;
 }
