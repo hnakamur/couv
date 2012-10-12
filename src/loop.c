@@ -14,6 +14,10 @@ static int loop_default(lua_State *L) {
 }
 
 static int loop_set(lua_State *L) {
+  uv_loop_t *loop;
+  
+  loop = *(uv_loop_t **)lua_touserdata(L, -1);
+  loop->data = L;
   lua_setfield(L, LUA_REGISTRYINDEX, LOOP_REGISTRY_KEY);
   return 0;
 }
