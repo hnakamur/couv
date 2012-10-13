@@ -13,6 +13,7 @@ set(SRCS
   src/fs.c
   src/ipaddr.c
   src/loop.c
+  src/tcp.c
   src/udp.c
   src/yaluv.c
 )

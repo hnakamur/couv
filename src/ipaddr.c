@@ -5,6 +5,23 @@
 #include "loop.h"
 
 
+int ip4addr_dbg_print(const char *header, struct sockaddr_in *addr) {
+  char buf[sizeof "255.255.255.255"];
+  int r;
+  if (addr) {
+    unsigned char *p;
+    r = uv_ip4_name(addr, buf, sizeof(buf));
+    if (r < 0) {
+      printf("%s error in uv_ip4_name r=%d\n", header, r);
+    }
+    p = (unsigned char *)&addr->sin_port;
+    printf("%s addr host=%s, port=%d\n", header, buf,  p[0] << 8 | p[1]);
+  } else {
+    printf("%s addr=NULL\n", header);
+  }
+  return r;
+}
+
 int luv_ip4addr_host(lua_State *L) {
   struct sockaddr_in *addr = luv_checkip4addr(L, 1);
   char buf[sizeof "255.255.255.255"];

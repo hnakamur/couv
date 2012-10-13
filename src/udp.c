@@ -50,30 +50,13 @@ int luv_udp_open(lua_State *L) {
   return 0;
 }
 
-static int print_addr(const char *header, struct sockaddr_in *addr) {
-  char buf[sizeof "255.255.255.255"];
-  int r;
-  if (addr) {
-    unsigned char *p;
-    r = uv_ip4_name(addr, buf, sizeof(buf));
-    if (r < 0) {
-      printf("%s error in uv_ip4_name r=%d\n", header, r);
-    }
-    p = (unsigned char *)&addr->sin_port;
-    printf("%s addr host=%s, port=%d\n", header, buf,  p[0] << 8 | p[1]);
-  } else {
-    printf("%s addr=NULL\n", header);
-  }
-  return r;
-}
-
 int luv_udp_bind(lua_State *L) {
   uv_loop_t *loop = luv_loop(L);
   uv_udp_t *handle = (uv_udp_t *)lua_touserdata(L, 1);
   struct sockaddr_in *addr = luv_checkip4addr(L, 2);
   int r = uv_udp_bind(handle, *addr, 0);
 printf("bind L=%lx, handle=%lx\n", (unsigned long)L, (unsigned long)handle);
-print_addr("bind", addr);
+ip4addr_dbg_print("bind", addr);
 printf("bind r=%d\n", r);
   if (r < 0) {
     return luaL_error(L, luvL_uv_errname(uv_last_error(loop).code));
@@ -115,7 +98,7 @@ printf("udp_send loop=%lx, L=%lx\n", (unsigned long)loop, (unsigned long)L);
   handle = (uv_udp_t *)lua_touserdata(L, 1);
 printf("send handle=%lx\n", (unsigned long)handle);
   addr = luv_checkip4addr(L, 2);
-print_addr("send", addr);
+ip4addr_dbg_print("send", addr);
 
   bufs = luv_checkbuforstrtable(L, 3, &bufcnt);
 printf("udp_send #1.1 bufcnt=%lu\n", bufcnt);
@@ -167,16 +150,16 @@ static void udp_recv_cb(uv_udp_t* handle, ssize_t nread, uv_buf_t buf,
   int ref;
   int r;
 
-printf("recv_cb #1 handle=%lx, nread=%d, buf.base=%s\n", (unsigned long)handle, nread, buf.base);
+  loop = handle->loop;
+  L = (lua_State *)handle->data;
+printf("recv_cb #1 L=%lx, top=%d\n", (unsigned long)L, lua_gettop(L));
+
+printf("recv_cb #2 handle=%lx, nread=%d, buf.base=%s\n", (unsigned long)handle, nread, buf.base);
   r = uv_udp_recv_stop(handle);
   if (r < 0) {
     luaL_error(L, luvL_uv_errname(uv_last_error(loop).code));
     return;
   }
-
-  loop = handle->loop;
-  L = (lua_State *)handle->data;
-printf("recv_cb #2 L=%lx, top=%d\n", (unsigned long)L, lua_gettop(L));
 
   if (nread == 0) {
     lua_pushnil(L);

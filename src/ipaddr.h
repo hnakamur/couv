@@ -14,4 +14,6 @@
 
 int luaopen_yaluv_ipaddr(lua_State *L);
 
+int ip4addr_dbg_print(const char *header, struct sockaddr_in *addr);
+
 #endif /* _IPADDR_H */
