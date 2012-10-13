@@ -25,6 +25,7 @@ static const struct luaL_Reg functions[] = {
 };
 
 int luaopen_yaluv(lua_State *L) {
+printf("luaopen_yaluv L=%lx\n", (unsigned long)L);
   luaL_register(L, "yaluv", functions);
 
   luaopen_yaluv_loop(L);

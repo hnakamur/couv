@@ -38,7 +38,13 @@ uv_loop_t *luv_loop(lua_State *L) {
 static int loop_run(lua_State *L) {
   uv_loop_t *loop = luv_checkloop(L, 1);
 printf("loop_run enter\n");
+#if 1
+  while (uv_run_once(loop)) {
+    lua_gc(L, LUA_GCCOLLECT, 0);
+  }
+#else
   uv_run(loop);
+#endif
 printf("loop_run exit\n");
   return 0;
 }
