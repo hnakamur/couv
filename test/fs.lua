@@ -28,7 +28,7 @@ exports['fs.open.sync.ENOENT'] = function(test)
 end
 
 exports['fs.open.async.OK'] = function(test)
-  coroutine.wrap(function()
+  local co = coroutine.create(function()
     local err, fd = fs.open('../test/fs.lua', 'r', '0666')
     test.is_nil(err)
     test.is_number(fd)
@@ -37,18 +37,20 @@ exports['fs.open.async.OK'] = function(test)
     test.is_nil(err)
 
     test.done()
-  end)()
+  end)
+  coroutine.resume(co)
 
   loop.get():run()
 end
 
 exports['fs.open.async.ENOENT'] = function(test)
-  coroutine.wrap(function()
+  local co = coroutine.create(function()
     local err, fd = fs.open('non_exist_file', 'r', '0666')
     test.equal(err, 'ENOENT')
     test.is_nil(fd)
     test.done()
-  end)()
+  end)
+  coroutine.resume(co)
 
   loop.get():run()
 end
@@ -62,12 +64,13 @@ exports['fs.stat.sync'] = function(test)
 end
 
 exports['fs.stat.async'] = function(test)
-  coroutine.wrap(function()
+  local co = coroutine.create(function()
     local err, stat = fs.stat('../test/fs.lua')
     test.is_nil(err)
     test.ok(stat:isFile())
     test.done()
-  end)()
+  end)
+  coroutine.resume(co)
 
   loop.get():run()
 end
@@ -100,7 +103,7 @@ exports['fs.write_and_read.sync'] = function(test)
 end
 
 exports['fs.write_and_read.async'] = function(test)
-  coroutine.wrap(function()
+  local co = coroutine.create(function()
     local path = '_test_fs.write_and_read.async'
     local err, fd = fs.open(path, 'w', '0666')
     test.is_nil(err)
@@ -125,7 +128,8 @@ exports['fs.write_and_read.async'] = function(test)
     test.is_nil(err)
 
     test.done()
-  end)()
+  end)
+  coroutine.resume(co)
 
   loop.get():run()
 end
@@ -144,7 +148,7 @@ exports['fs.unlink.sync'] = function(test)
 end
 
 exports['fs.unlink.async'] = function(test)
-  coroutine.wrap(function()
+  local co = coroutine.create(function()
     local path = '_test_fs.unlink.async'
     local err, fd = fs.open(path, 'w', '0666')
     test.is_nil(err)
@@ -155,7 +159,8 @@ exports['fs.unlink.async'] = function(test)
     test.is_nil(err)
 
     test.done()
-  end)()
+  end)
+  coroutine.resume(co)
 
   loop.get():run()
 end
@@ -176,7 +181,7 @@ exports['fs.mkdir_rmdir.sync'] = function(test)
 end
 
 exports['fs.mkdir_rmdir.async'] = function(test)
-  coroutine.wrap(function()
+  local co = coroutine.create(function()
     local path = '_test_fs_mkdir_rmdir.async'
     local err = fs.mkdir(path)
     test.is_nil(err)
@@ -189,7 +194,8 @@ exports['fs.mkdir_rmdir.async'] = function(test)
     test.is_nil(err)
 
     test.done()
-  end)()
+  end)
+  coroutine.resume(co)
 
   loop.get():run()
 end
@@ -219,7 +225,7 @@ end
 
 --[[ TODO: investigate why this test blocks.
 exports['fs.rename_dir.async'] = function(test)
-  coroutine.wrap(function()
+  local co = coroutine.create(function()
     local oldPath = '_test_fs_rename_dir.async.old'
     local newPath = '_test_fs_rename_dir.async.new'
 
@@ -240,7 +246,8 @@ exports['fs.rename_dir.async'] = function(test)
     test.is_nil(err)
 
     test.done()
-  end)()
+  end)
+  coroutine.resume(co)
 
   loop.get():run()
 end
@@ -280,7 +287,7 @@ exports['fs.ftruncate.sync'] = function(test)
 end
 
 exports['fs.ftruncate.async'] = function(test)
-  coroutine.wrap(function()
+  local co = coroutine.create(function()
     local path = '_test_fs_ftruncate.async'
     local err, fd = fs.open(path, 'w', '0666')
     test.is_nil(err)
@@ -311,7 +318,8 @@ exports['fs.ftruncate.async'] = function(test)
     test.is_nil(err)
 
     test.done()
-  end)()
+  end)
+  coroutine.resume(co)
 
   loop.get():run()
 end
