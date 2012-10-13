@@ -39,7 +39,7 @@ static void connect_cb(uv_connect_t *req, int status) {
   }
 
   luv_free(L, req);
-  lua_resume(L, 0);
+  luv_resume(L, L, 0);
 }
 
 static int tcp_connect(lua_State *L) {

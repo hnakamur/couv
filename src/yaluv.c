@@ -95,7 +95,7 @@ printf("read_cb L=%lx, nread=%d\n", (unsigned long)L, nread);
   }
 
   if (nread == 0) {
-    lua_resume(L, 0);
+    luv_resume(L, L, 0);
 printf("read_cb exit nread=0\n");
     return;
   }
@@ -116,7 +116,7 @@ printf("read_cb exit nread=0\n");
   lua_rawset(L, LUA_REGISTRYINDEX);
 
 printf("read_cb\n");
-  lua_resume(L, 2);
+  luv_resume(L, L, 2);
 }
 
 static int luv_read_start(lua_State *L) {
@@ -166,7 +166,7 @@ printf("write_cb L=%lx\n", (unsigned long)L);
   luv_free(L, req->data);
   luv_free(L, req);
 printf("write_cb exit\n");
-  lua_resume(L, 0);
+  luv_resume(L, L, 0);
 }
 
 static int luv_write(lua_State *L) {
@@ -195,7 +195,7 @@ printf("write exit\n");
 
 static void close_cb(uv_handle_t *handle) {
   lua_State *L = (lua_State *)handle->data;
-  lua_resume(L, 0);
+  luv_resume(L, L, 0);
 }
 
 static int luv_close(lua_State *L) {

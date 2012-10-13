@@ -266,7 +266,7 @@ static void fs_exists_callback(uv_fs_t* req) {
   lua_State *L = (lua_State *)req->data;
   int nresults = fs_push_exists_results(L, req);
   free(req);
-  lua_resume(L, nresults);
+  luv_resume(L, L, nresults);
 }
 
 static int fs_push_common_results(lua_State *L, uv_fs_t* req) {
@@ -320,7 +320,7 @@ static void fs_common_callback(uv_fs_t* req) {
   lua_State *L = (lua_State *)req->data;
   int nresults = fs_push_common_results(L, req);
   free(req);
-  lua_resume(L, nresults);
+  luv_resume(L, L, nresults);
 }
 
 static int fs_yield_or_error(uv_fs_t *req, int ret_code) {

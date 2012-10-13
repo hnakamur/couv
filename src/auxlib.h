@@ -3,6 +3,14 @@
 
 #include <lua.h>
 
+#if LUA_VERSION_NUM == 502
+#define luv_resume(L, from, nargs) lua_resume(L, from, nargs)
+#elif LUA_VERSION_NUM == 501
+#define luv_resume(L, from, nargs) lua_resume(L, nargs)
+#else
+#error
+#endif
+
 void *luv_alloc(lua_State *L, size_t size);
 void luv_free(lua_State *L, void *ptr);
 

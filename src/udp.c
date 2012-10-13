@@ -79,7 +79,7 @@ printf("udp_send_cb loop=%lx, L=%lx\n", (unsigned long)loop, (unsigned long)L);
   if (status < 0) {
     luaL_error(L, luvL_uv_errname(uv_last_error(loop).code));
   }
-  lua_resume(L, 0);
+  luv_resume(L, L, 0);
 }
 
 int luv_udp_send(lua_State *L) {
@@ -163,7 +163,7 @@ printf("recv_cb #2 handle=%lx, nread=%d, buf.base=%s\n", (unsigned long)handle, 
 
   if (nread == 0) {
     lua_pushnil(L);
-    lua_resume(L, 1);
+    luv_resume(L, L, 1);
     return;
   }
 
@@ -187,7 +187,7 @@ printf("recv_cb #2 handle=%lx, nread=%d, buf.base=%s\n", (unsigned long)handle, 
   lua_setmetatable(L, -2);
   *ip4addr = *(struct sockaddr_in *)addr;
 
-  lua_resume(L, 3);
+  luv_resume(L, L, 3);
 }
 
 int luv_udp_recv(lua_State *L) {
