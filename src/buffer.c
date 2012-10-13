@@ -1,8 +1,4 @@
-#include <stdlib.h>
-#include <string.h>
-#include <lauxlib.h>
-#include "auxlib.h"
-#include "buffer.h"
+#include "yaluv-private.h"
 
 #define FLOAT_SIZE ((int)sizeof(float))
 #define DOUBLE_SIZE ((int)sizeof(double))

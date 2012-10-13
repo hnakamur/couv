@@ -1,7 +1,4 @@
-#include <lauxlib.h>
-#include <uv.h>
-#include "auxlib.h"
-#include "loop.h"
+#include "yaluv-private.h"
 
 #define LOOP_REGISTRY_KEY "luv.loop"
 

@@ -6,7 +6,7 @@ set(CMAKE_VERBOSE_MAKEFILE on)
 set(CMAKE_BUILD_TYPE Debug)
 
 add_subdirectory(deps/uv)
-include_directories(deps/uv/include include)
+include_directories(include include/yaluv-private deps/uv/include)
 set(SRCS
   src/auxlib.c
   src/buffer.c

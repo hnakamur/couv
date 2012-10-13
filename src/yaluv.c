@@ -1,13 +1,4 @@
-#include <lauxlib.h>
-#include <string.h>
-#include "auxlib.h"
-#include "buffer.h"
-#include "fs.h"
-#include "ipaddr.h"
-#include "loop.h"
-#include "tcp.h"
-#include "udp.h"
-#include "yaluv.h"
+#include "yaluv-private.h"
 
 static void connection_cb(uv_stream_t *handle, int status) {
   uv_loop_t *loop;
@@ -87,7 +78,7 @@ static void read_cb(uv_stream_t* handle, ssize_t nread, uv_buf_t buf) {
 
   loop = handle->loop;
   L = (lua_State *)handle->data;
-printf("read_cb L=%lx, nread=%d\n", (unsigned long)L, nread);
+printf("read_cb L=%lx, nread=%ld\n", (unsigned long)L, nread);
   r = uv_read_stop(handle);
   if (r < 0) {
     luaL_error(L, luvL_uv_errname(uv_last_error(loop).code));

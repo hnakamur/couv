@@ -1,8 +1,4 @@
-#include <lauxlib.h>
-#include <uv.h>
-#include "auxlib.h"
-#include "ipaddr.h"
-#include "loop.h"
+#include "yaluv-private.h"
 
 
 int ip4addr_dbg_print(const char *header, struct sockaddr_in *addr) {

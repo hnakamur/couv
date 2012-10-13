@@ -1,13 +1,4 @@
-#include <lauxlib.h>
-#include <stdlib.h>
-#include <string.h>
-#include <uv.h>
-
-#include "auxlib.h"
-#include "buffer.h"
-#include "ipaddr.h"
-#include "loop.h"
-#include "udp.h"
+#include "yaluv-private.h"
 
 typedef struct luv_udp_send_s {
   lua_State *L;

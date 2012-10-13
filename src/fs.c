@@ -1,11 +1,4 @@
-#include <lauxlib.h>
-#include <stdlib.h>
-#include <string.h>
-#include <uv.h>
-#include "auxlib.h"
-#include "loop.h"
-#include "buffer.h"
-#include "fs.h"
+#include "yaluv-private.h"
 
 #define LUV_FS_STAT_MTBL_NAME "luv.fs.Stat"
 #define luv_checkfsstat(L, index) \

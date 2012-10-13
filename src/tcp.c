@@ -1,9 +1,4 @@
-#include <lauxlib.h>
-#include <uv.h>
-#include "auxlib.h"
-#include "ipaddr.h"
-#include "loop.h"
-#include "tcp.h"
+#include "yaluv-private.h"
 
 static int tcp_create(lua_State *L) {
   uv_loop_t *loop = luv_loop(L);

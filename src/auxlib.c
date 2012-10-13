@@ -1,6 +1,4 @@
-#include <uv.h>
-#include <lauxlib.h>
-#include "auxlib.h"
+#include "yaluv-private.h"
 
 void *luv_alloc(lua_State *L, size_t size) {
 #if 1
