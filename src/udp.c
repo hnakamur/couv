@@ -167,9 +167,16 @@ static void udp_recv_cb(uv_udp_t* handle, ssize_t nread, uv_buf_t buf,
   int ref;
   int r;
 
+printf("recv_cb #1 handle=%lx, nread=%d, buf.base=%s\n", (unsigned long)handle, nread, buf.base);
+  r = uv_udp_recv_stop(handle);
+  if (r < 0) {
+    luaL_error(L, luvL_uv_errname(uv_last_error(loop).code));
+    return;
+  }
+
   loop = handle->loop;
   L = (lua_State *)handle->data;
-printf("recv_cb #1 handle=%lx, L=%lx, top=%d\n", (unsigned long)handle, (unsigned long)L, lua_gettop(L));
+printf("recv_cb #2 L=%lx, top=%d\n", (unsigned long)L, lua_gettop(L));
 
   if (nread == 0) {
     lua_pushnil(L);
@@ -196,12 +203,6 @@ printf("recv_cb #1 handle=%lx, L=%lx, top=%d\n", (unsigned long)handle, (unsigne
   luaL_getmetatable(L, LUV_IP4ADDR_MTBL_NAME);
   lua_setmetatable(L, -2);
   *ip4addr = *(struct sockaddr_in *)addr;
-
-  r = uv_udp_recv_stop(handle);
-  if (r < 0) {
-    luaL_error(L, luvL_uv_errname(uv_last_error(loop).code));
-    return;
-  }
 
   lua_resume(L, 3);
 }
@@ -360,9 +361,7 @@ static const struct luaL_Reg udp_functions[] = {
 };
 
 int luaopen_yaluv_udp(lua_State *L) {
-  lua_createtable(L, 0, ARRAY_SIZE(udp_functions) - 1);
   luaL_register(L, NULL, udp_functions);
 
-  lua_setfield(L, -2, "udp");
   return 1;
 }

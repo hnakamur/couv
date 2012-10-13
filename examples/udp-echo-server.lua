@@ -1,20 +1,16 @@
 local uv = require 'yaluv'
 local loop = uv.loop
-local udp = uv.udp
 
 coroutine.wrap(function()
-  local handle = udp.udp_create()
-print("server#1")
-  udp.udp_bind(handle, uv.ip4addr('0.0.0.0', 9123))
-print("server#2")
-  local nread, buf, addr = udp.udp_recv(handle)
-  print('server#2.1 nread=', nread, ', buf=', buf:toString(),
+  local handle = uv.udp_create()
+  uv.udp_bind(handle, uv.ip4addr('0.0.0.0', 9123))
+  local nread, buf, addr = uv.udp_recv(handle)
+  print('server#2.1 received=', buf:toString(1, nread),
       ', host=', addr:host(), ', port=', addr:port())
-  nread, buf, addr = udp.udp_recv(handle)
-  print('server#2.2 nread=', nread, ', buf=', buf:toString(),
+  nread, buf, addr = uv.udp_recv(handle)
+  print('server#2.2 received=', buf:toString(1, nread),
       ', host=', addr:host(), ', port=', addr:port())
---  uv.udp_close(handle)
-print("server#3")
+  uv.udp_close(handle)
 end)()
 
 loop.get():run()

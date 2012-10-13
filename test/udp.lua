@@ -1,47 +1,62 @@
 local uv = require 'yaluv'
 local loop = uv.loop
-local udp = uv.udp
 
 local exports = {}
 
-exports['udp.send'] = function(test)
-  coroutine.wrap(function()
-    local handle = udp.udp_create()
-    udp.udp_bind(handle, uv.ip4addr('127.0.0.1', 62001))
-    udp.udp_send(handle, uv.ip4addr('127.0.0.1', 62002), {"hello", "world"})
-    uv.close(handle)
-
-    test.done()
-  end)()
-
-  loop.get():run()
-end
-
-exports['udp.send-and-recv'] = function(test)
+exports['uv.send_and_recv'] = function(test)
   local server = coroutine.create(function()
-    local handle = udp.udp_create()
-print("server#1")
-    udp.udp_bind(handle, uv.ip4addr('127.0.0.1', 62001))
-print("server#2")
-    local nread, buf, addr = udp.udp_recv(handle)
-    print('nread=', nread, ', buf=', buf:toString(), ', host=', addr:host(),
-        ', port=', addr:port())
+    local handle = uv.udp_create()
+    uv.udp_bind(handle, uv.ip4addr('127.0.0.1', 62001))
+    local nread, buf, addr = uv.udp_recv(handle)
+    test.equal(nread, #'helloworld')
+    test.equal(buf:toString(1, nread), 'helloworld')
+    test.equal(addr:host(), '127.0.0.1')
+    test.is_number(addr:port())
     uv.udp_close(handle)
-print("server#3")
   end)
   coroutine.resume(server)
   
   local client = coroutine.create(function()
-    local handle = udp.udp_create()
-print("client#1")
-    udp.udp_send(handle, uv.ip4addr('127.0.0.1', 62001), {"hello", "world"})
-print("client#2")
+    local handle = uv.udp_create()
+    uv.udp_send(handle, uv.ip4addr('127.0.0.1', 62001), {"hello", "world"})
     uv.close(handle)
-print("client#3")
   end)
   coroutine.resume(client)
 
   loop.get():run()
+  test.done()
+end
+
+exports['uv.send_and_recv_twice'] = function(test)
+  local server = coroutine.create(function()
+    local handle = uv.udp_create()
+    uv.udp_bind(handle, uv.ip4addr('127.0.0.1', 62001))
+    local nread, buf, addr = uv.udp_recv(handle)
+    test.equal(nread, #'helloworld')
+    test.equal(buf:toString(1, nread), 'helloworld')
+    test.equal(addr:host(), '127.0.0.1')
+    test.is_number(addr:port())
+
+    nread, buf, addr = uv.udp_recv(handle)
+    test.equal(nread, #'hi')
+    test.equal(buf:toString(1, nread), 'hi')
+    test.equal(addr:host(), '127.0.0.1')
+    test.is_number(addr:port())
+
+    uv.udp_close(handle)
+  end)
+  coroutine.resume(server)
+  
+  local client = coroutine.create(function()
+    local handle = uv.udp_create()
+    uv.udp_send(handle, uv.ip4addr('127.0.0.1', 62001), {"hello", "world"})
+    uv.udp_send(handle, uv.ip4addr('127.0.0.1', 62001), {"hi"})
+    uv.close(handle)
+  end)
+  coroutine.resume(client)
+
+  loop.get():run()
+  test.done()
 end
 
 return exports

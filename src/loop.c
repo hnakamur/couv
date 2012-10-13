@@ -39,6 +39,7 @@ static int loop_run(lua_State *L) {
   uv_loop_t *loop = luv_checkloop(L, 1);
 printf("loop_run enter\n");
 #if 1
+  /* To debug memory allocation / free errors, gc often. */
   while (uv_run_once(loop)) {
     lua_gc(L, LUA_GCCOLLECT, 0);
   }
