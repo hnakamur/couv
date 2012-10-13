@@ -3,6 +3,7 @@
 
 #include <lua.h>
 
+void *luv_alloc(lua_State *L, size_t size);
 int luvL_is_in_mainthread(lua_State *L);
 int luvL_hasmetatablename(lua_State *L, int index, const char *tname);
 const char *luvL_uv_errname(int uv_errcode);

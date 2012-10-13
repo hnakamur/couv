@@ -2,6 +2,18 @@
 #include <lauxlib.h>
 #include "auxlib.h"
 
+void *luv_alloc(lua_State *L, size_t size) {
+  lua_Alloc f;
+  void *p;
+
+  f = lua_getallocf(L, NULL);
+  p = f(NULL, NULL, 0, size);
+  if (!p) {
+    luaL_error(L, "ENOMEM");
+  }
+  return p;
+}
+
 int luvL_is_in_mainthread(lua_State *L) {
   int is_mainthread = lua_pushthread(L);
   lua_pop(L, 1);

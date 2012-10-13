@@ -14,10 +14,6 @@ static int loop_default(lua_State *L) {
 }
 
 static int loop_set(lua_State *L) {
-  uv_loop_t *loop;
-  
-  loop = *(uv_loop_t **)lua_touserdata(L, -1);
-  loop->data = L;
   lua_setfield(L, LUA_REGISTRYINDEX, LOOP_REGISTRY_KEY);
   return 0;
 }
@@ -41,7 +37,9 @@ uv_loop_t *luv_loop(lua_State *L) {
 
 static int loop_run(lua_State *L) {
   uv_loop_t *loop = luv_checkloop(L, 1);
+printf("loop_run enter\n");
   uv_run(loop);
+printf("loop_run exit\n");
   return 0;
 }
 

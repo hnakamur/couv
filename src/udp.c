@@ -1,16 +1,40 @@
 #include <lauxlib.h>
 #include <stdlib.h>
 #include <uv.h>
+
+#include "lstate.h" /* L->state for debugging */
+
 #include "auxlib.h"
 #include "buffer.h"
 #include "ipaddr.h"
 #include "loop.h"
 #include "udp.h"
 
+typedef struct luv_udp_send_s {
+  lua_State *L;
+  uv_buf_t *bufs;
+  uv_udp_send_t req;
+} luv_udp_send_t;
+
+static luv_udp_send_t *luv_alloc_udp_send(lua_State *L, uv_buf_t *bufs) {
+  luv_udp_send_t *req;
+
+  req = luv_alloc(L, sizeof(luv_udp_send_t));
+  if (!req)
+    return NULL;
+
+  req->L = L;
+  req->bufs = bufs;
+  return req;
+}
+
+
 int luv_udp_create(lua_State *L) {
   uv_loop_t *loop = luv_loop(L);
   uv_udp_t *handle = lua_newuserdata(L, sizeof(uv_udp_t));
+printf("create handle=%x\n", handle);
   int r = uv_udp_init(loop, handle);
+printf("create r=%d\n", r);
   if (r < 0) {
     return luaL_error(L, luvL_uv_errname(uv_last_error(loop).code));
   }
@@ -28,25 +52,61 @@ int luv_udp_open(lua_State *L) {
   return 0;
 }
 
+static int print_addr(const char *header, struct sockaddr_in *addr) {
+  char buf[sizeof "255.255.255.255"];
+  if (addr) {
+    int r = uv_ip4_name(addr, buf, sizeof(buf));
+    unsigned char *p = (unsigned char *)&addr->sin_port;
+    printf("%s addr host=%s, port=%d\n", header, buf,  p[0] << 8 | p[1]);
+  } else {
+    printf("%s addr=NULL\n", header);
+  }
+}
+
 int luv_udp_bind(lua_State *L) {
   uv_loop_t *loop = luv_loop(L);
   uv_udp_t *handle = (uv_udp_t *)lua_touserdata(L, 1);
+printf("bind handle=%x\n", handle);
   struct sockaddr_in *addr = luv_checkip4addr(L, 2);
+print_addr("bind", addr);
   int r = uv_udp_bind(handle, *addr, 0);
+printf("bind r=%d\n", r);
   if (r < 0) {
     return luaL_error(L, luvL_uv_errname(uv_last_error(loop).code));
   }
   return 0;
 }
 
+static uv_buf_t sendbuf;
+static uv_buf_t *bufs;
+
 static void udp_send_cb(uv_udp_send_t* req, int status) {
-  uv_loop_t *loop = req->handle->loop;
-  lua_State *L = (lua_State *)loop->data;
+  luv_udp_send_t *holder;
+  uv_loop_t *loop;
+  lua_State *L;
+  int r;
+printf("udp_send_cb status=%d\n", status);
+  holder = container_of(req, luv_udp_send_t, req);
+  L = holder->L;
+  loop = req->handle->loop;
+printf("udp_send_cb loop=%x, L=%x\n", (unsigned long)loop, (unsigned long)L);
+printf("udp_send_cb L->status=%d, LUA_YIELD=%d\n", L->status, LUA_YIELD);
+#if 0
   free(req->data);
+#endif
   if (status < 0) {
     luaL_error(L, luvL_uv_errname(uv_last_error(loop).code));
   }
+#if 1
   lua_resume(L, 0);
+#else
+  r = lua_resume(L, 0);
+printf("udp_send_cb resume result=%d, LUA_YIELD=%d, LUA_ERRRUN=%d, LUA_ERRMEME=%d, LUA_ERRERR=%d\n", r, LUA_YIELD, LUA_ERRRUN, LUA_ERRMEM, LUA_ERRERR);
+  if (r) {
+    const char *errmsg = lua_tostring(L, -1);
+    printf("errmsg=%s\n", errmsg);
+  }
+#endif
 }
 
 int luv_udp_send(lua_State *L) {
@@ -55,32 +115,30 @@ int luv_udp_send(lua_State *L) {
   uv_udp_t *handle;
   struct sockaddr_in *addr;
   size_t bufcnt;
-  char buf[sizeof "255.255.255.255"];
-  unsigned char *p;
   int i;
+  luv_udp_send_t *holder;
 
-printf("udp_send #1\n");
+printf("udp_send #1 top=%d\n", lua_gettop(L));
   loop = luv_loop(L);
+printf("udp_send loop=%x, L=%x\n", (unsigned long)loop, (unsigned long)L);
   handle = (uv_udp_t *)lua_touserdata(L, 1);
+printf("send handle=%x\n", handle);
   addr = luv_checkip4addr(L, 2);
-  r = uv_ip4_name(addr, buf, sizeof(buf));
-  p = (unsigned char *)&addr->sin_port;
-printf("udb_send host=%s, port=%d\n", buf,  p[0] << 8 | p[1]);
+print_addr("send", addr);
 
-  uv_buf_t *bufs = luv_checkbuforstrtable(L, 3, &bufcnt);
+  bufs = luv_checkbuforstrtable(L, 3, &bufcnt);
 printf("udp_send #1.1 bufcnt=%d\n", bufcnt);
 for (i = 0; i < bufcnt; ++i) {
 printf("i=%d, buf.len=%d, buf.base=%s\n", i, bufs[i].len, bufs[i].base);
 }
-  uv_udp_send_t* req = malloc(sizeof(uv_udp_send_t));
-  req->data = bufs;
+  holder = luv_alloc_udp_send(L, bufs);
 printf("udp_send #2\n");
-  r = uv_udp_send(req, handle, bufs, (int)bufcnt, *addr, udp_send_cb);
+  r = uv_udp_send(&holder->req, handle, bufs, (int)bufcnt, *addr, udp_send_cb);
 printf("udp_send #3 r=%d\n", r);
   if (r < 0) {
     return luaL_error(L, luvL_uv_errname(uv_last_error(loop).code));
   }
-printf("udp_send #4\n");
+printf("udp_send #4 top=%d\n", lua_gettop(L));
   return lua_yield(L, 0);
 }
 
@@ -90,7 +148,7 @@ static uv_buf_t alloc_cb(uv_handle_t* handle, size_t suggested_size) {
   uv_buf_t buf;
 printf("alloc_cb #1 suggested_size=%u\n", suggested_size);
   loop = handle->loop;
-  L = (lua_State *)loop->data;
+  L = (lua_State *)handle->data;
 printf("alloc_cb #2 loop=%x, L=%x\n", (unsigned long)loop, (unsigned long)L);
 #if 0
   buf.base = (char *)lua_newuserdata(L, suggested_size);
@@ -105,12 +163,17 @@ printf("alloc_cb #3\n");
 
 static void udp_recv_cb(uv_udp_t* handle, ssize_t nread, uv_buf_t buf,
     struct sockaddr* addr, unsigned flags) {
-  uv_loop_t *loop = handle->loop;
-  lua_State *L = (lua_State *)loop->data;
+  uv_loop_t *loop;
+  lua_State *L;
   uv_buf_t *bufptr;
   struct sockaddr_in *ip4addr;
 
+printf("ucb_recv_cb handle=%x\n", handle);
+  loop = handle->loop;
+  L = (lua_State *)handle->data;
+printf("udp_recv_cb loop=%x, L=%x\n", (unsigned long)loop, (unsigned long)L);
 printf("udp_recv_cb nread=%d, buf.base=%s, buf.len=%d\n", nread, buf.base, buf.len);
+print_addr("udp_recv_cb", addr);
   lua_pushnumber(L, nread);
 
 printf("udp_recv_cb #2\n");
@@ -141,8 +204,11 @@ printf("udp_recv_cb #3\n");
   printf("udp_recv_cb #4\n");
   }
 
+#if 1
   lua_resume(L, 3);
-printf("udp_recv_cb #5\n");
+#else
+  return 3;
+#endif
 }
 
 int luv_udp_recv(lua_State *L) {
@@ -154,14 +220,19 @@ printf("udp_recv #1\n");
   loop = luv_loop(L);
 printf("udp_recv #2\n");
   handle = (uv_udp_t *)lua_touserdata(L, 1);
-printf("udp_recv #3\n");
+  handle->data = L;
+printf("udp_recv #3 handle=%x\n", handle);
   r = uv_udp_recv_start(handle, alloc_cb, udp_recv_cb);
 printf("udp_recv #4\n");
   if (r < 0) {
     return luaL_error(L, luvL_uv_errname(uv_last_error(loop).code));
   }
 printf("udp_recv #5\n");
+#if 1
   return lua_yield(L, 0);
+#else
+  return 0;
+#endif
 }
 
 

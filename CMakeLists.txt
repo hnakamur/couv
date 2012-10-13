@@ -6,7 +6,7 @@ set(CMAKE_VERBOSE_MAKEFILE on)
 set(CMAKE_BUILD_TYPE Debug)
 
 add_subdirectory(deps/uv)
-include_directories(deps/uv/include)
+include_directories(deps/uv/include include)
 set(SRCS
   src/auxlib.c
   src/buffer.c
@@ -18,7 +18,7 @@ set(SRCS
 )
 install_lua_module(yaluv ${SRCS})
 set_property(SOURCE ${SRCS} PROPERTY
-  COMPILE_DEFINITIONS _XOPEN_SOURCE=500)
+  COMPILE_DEFINITIONS _XOPEN_SOURCE=500 _GNU_SOURCE)
 set_property(SOURCE ${SRCS} PROPERTY
   COMPILE_FLAGS "--std=c89 -pedantic -Wall -Wextra -Wno-unused-parameter")
 add_checkit_test(test/*.lua)
