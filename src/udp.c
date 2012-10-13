@@ -2,8 +2,6 @@
 #include <stdlib.h>
 #include <uv.h>
 
-#include "lstate.h" /* L->state for debugging */
-
 #include "auxlib.h"
 #include "buffer.h"
 #include "ipaddr.h"
@@ -90,7 +88,6 @@ printf("udp_send_cb status=%d\n", status);
   L = holder->L;
   loop = req->handle->loop;
 printf("udp_send_cb loop=%x, L=%x\n", (unsigned long)loop, (unsigned long)L);
-printf("udp_send_cb L->status=%d, LUA_YIELD=%d\n", L->status, LUA_YIELD);
 #if 0
   free(req->data);
 #endif
