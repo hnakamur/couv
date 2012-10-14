@@ -1,6 +1,5 @@
 local uv = require 'yaluv'
 local fs = uv.fs
-local loop = uv.loop
 local Buffer = uv.Buffer
 
 local exports = {}
@@ -40,7 +39,7 @@ exports['fs.open.async.OK'] = function(test)
   end)
   coroutine.resume(co)
 
-  loop.get():run()
+  uv.run()
 end
 
 exports['fs.open.async.ENOENT'] = function(test)
@@ -52,7 +51,7 @@ exports['fs.open.async.ENOENT'] = function(test)
   end)
   coroutine.resume(co)
 
-  loop.get():run()
+  uv.run()
 end
 
 exports['fs.stat.sync'] = function(test)
@@ -72,7 +71,7 @@ exports['fs.stat.async'] = function(test)
   end)
   coroutine.resume(co)
 
-  loop.get():run()
+  uv.run()
 end
 
 exports['fs.write_and_read.sync'] = function(test)
@@ -131,7 +130,7 @@ exports['fs.write_and_read.async'] = function(test)
   end)
   coroutine.resume(co)
 
-  loop.get():run()
+  uv.run()
 end
 
 exports['fs.unlink.sync'] = function(test)
@@ -162,7 +161,7 @@ exports['fs.unlink.async'] = function(test)
   end)
   coroutine.resume(co)
 
-  loop.get():run()
+  uv.run()
 end
 
 exports['fs.mkdir_rmdir.sync'] = function(test)
@@ -197,7 +196,7 @@ exports['fs.mkdir_rmdir.async'] = function(test)
   end)
   coroutine.resume(co)
 
-  loop.get():run()
+  uv.run()
 end
 
 exports['fs.rename_dir.sync'] = function(test)
@@ -249,7 +248,7 @@ exports['fs.rename_dir.async'] = function(test)
   end)
   coroutine.resume(co)
 
-  loop.get():run()
+  uv.run()
 end
 ]]
 
@@ -321,7 +320,7 @@ exports['fs.ftruncate.async'] = function(test)
   end)
   coroutine.resume(co)
 
-  loop.get():run()
+  uv.run()
 end
 
 return exports

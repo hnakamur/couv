@@ -1,5 +1,4 @@
 local uv = require 'yaluv'
-local loop = uv.loop
 
 local exports = {}
 
@@ -23,7 +22,7 @@ exports['udp.send_and_recv'] = function(test)
   end)
   coroutine.resume(client)
 
-  loop.get():run()
+  uv.run()
   test.done()
 end
 
@@ -56,7 +55,7 @@ exports['udp.send_and_recv_twice'] = function(test)
   end)
   coroutine.resume(client)
 
-  loop.get():run()
+  uv.run()
   test.done()
 end
 ]]

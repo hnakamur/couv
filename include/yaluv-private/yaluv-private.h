@@ -98,17 +98,7 @@ void luv_dbg_print_bufs(const char *header, uv_buf_t *bufs, size_t bufcnt);
 int luaopen_yaluv_loop(lua_State *L);
 uv_loop_t *luv_loop(lua_State *L);
 
-#define LUV_LOOP_MTBL_NAME "luv.loop.Loop"
-#define luv_checkloop(L, index) \
-    (*(uv_loop_t **)luaL_checkudata(L, index, LUV_LOOP_MTBL_NAME))
-
-#if LUA_VERSION_NUM == 502
-#define luv_resume(L, from, nargs) lua_resume(L, from, nargs)
-#elif LUA_VERSION_NUM == 501
-#define luv_resume(L, from, nargs) lua_resume(L, nargs)
-#else
-#error
-#endif
+#define LUV_LOOP_REGISTRY_KEY "luv.loop"
 
 /*
  * ipaddr
@@ -143,6 +133,14 @@ int luaopen_yaluv_udp(lua_State *L);
 /*
  * auxlib
  */
+#if LUA_VERSION_NUM == 502
+#define luv_resume(L, from, nargs) lua_resume(L, from, nargs)
+#elif LUA_VERSION_NUM == 501
+#define luv_resume(L, from, nargs) lua_resume(L, nargs)
+#else
+#error
+#endif
+
 void *luv_alloc(lua_State *L, size_t size);
 void luv_free(lua_State *L, void *ptr);
 
@@ -150,9 +148,9 @@ int luvL_is_in_mainthread(lua_State *L);
 int luvL_hasmetatablename(lua_State *L, int index, const char *tname);
 const char *luvL_uv_errname(int uv_errcode);
 
-void luv_registry_set_for_ptr(lua_State *L, void *ptr, int index);
-void luv_registry_get_for_ptr(lua_State *L, void *ptr);
-void luv_registry_delete_for_ptr(lua_State *L, void *ptr);
+int luv_registry_set_for_ptr(lua_State *L, void *ptr, int index);
+int luv_registry_get_for_ptr(lua_State *L, void *ptr);
+int luv_registry_delete_for_ptr(lua_State *L, void *ptr);
 
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
 #define container_of(ptr, type, member) \

@@ -1,5 +1,4 @@
 local uv = require 'yaluv'
-local loop = uv.loop
 
 local co = coroutine.create(function()
   local ok, err = pcall(function()
@@ -28,4 +27,4 @@ local co = coroutine.create(function()
 end)
 coroutine.resume(co)
 
-loop.get():run()
+uv.run()

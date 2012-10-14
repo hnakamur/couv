@@ -60,20 +60,23 @@ const char *luvL_uv_errname(int uv_errcode) {
   }
 }
 
-void luv_registry_set_for_ptr(lua_State *L, void *ptr, int index) {
+int luv_registry_set_for_ptr(lua_State *L, void *ptr, int index) {
   lua_pushlightuserdata(L, ptr);
   lua_pushvalue(L, index);
   lua_rawset(L, LUA_REGISTRYINDEX);
+  return 0;
 }
 
-void luv_registry_get_for_ptr(lua_State *L, void *ptr) {
+int luv_registry_get_for_ptr(lua_State *L, void *ptr) {
   lua_pushlightuserdata(L, ptr);
   lua_rawget(L, LUA_REGISTRYINDEX);
+  return 1;
 }
 
-void luv_registry_delete_for_ptr(lua_State *L, void *ptr) {
+int luv_registry_delete_for_ptr(lua_State *L, void *ptr) {
   lua_pushlightuserdata(L, ptr);
   lua_pushnil(L);
   lua_rawset(L, LUA_REGISTRYINDEX);
+  return 0;
 }
 
