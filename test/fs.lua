@@ -1,38 +1,37 @@
 local uv = require 'yaluv'
-local fs = uv.fs
 local Buffer = uv.Buffer
 
 local exports = {}
 
-exports['fs.open.sync.OK'] = function(test)
-  local err, fd = fs.open('../test/fs.lua', 'r', '0666')
+exports['uv.fs_open.sync.OK'] = function(test)
+  local err, fd = uv.fs_open('../test/fs.lua', 'r', '0666')
   test.is_nil(err)
   test.is_number(fd)
 
-  err = fs.close(fd)
+  err = uv.fs_close(fd)
   test.is_nil(err)
 
   -- try to close twice
-  err = fs.close(fd)
+  err = uv.fs_close(fd)
   test.equal(err, 'EBADF')
 
   test.done()
 end
 
-exports['fs.open.sync.ENOENT'] = function(test)
-  local err, fd = fs.open('not_exist_file', 'r', '0666')
+exports['uv.fs_open.sync.ENOENT'] = function(test)
+  local err, fd = uv.fs_open('not_exist_file', 'r', '0666')
   test.equal(err, 'ENOENT')
   test.is_nil(fd)
   test.done()
 end
 
-exports['fs.open.async.OK'] = function(test)
+exports['uv.fs_open.async.OK'] = function(test)
   local co = coroutine.create(function()
-    local err, fd = fs.open('../test/fs.lua', 'r', '0666')
+    local err, fd = uv.fs_open('../test/fs.lua', 'r', '0666')
     test.is_nil(err)
     test.is_number(fd)
 
-    err = fs.close(fd)
+    err = uv.fs_close(fd)
     test.is_nil(err)
 
     test.done()
@@ -42,9 +41,9 @@ exports['fs.open.async.OK'] = function(test)
   uv.run()
 end
 
-exports['fs.open.async.ENOENT'] = function(test)
+exports['uv.fs_open.async.ENOENT'] = function(test)
   local co = coroutine.create(function()
-    local err, fd = fs.open('non_exist_file', 'r', '0666')
+    local err, fd = uv.fs_open('non_exist_file', 'r', '0666')
     test.equal(err, 'ENOENT')
     test.is_nil(fd)
     test.done()
@@ -54,17 +53,17 @@ exports['fs.open.async.ENOENT'] = function(test)
   uv.run()
 end
 
-exports['fs.stat.sync'] = function(test)
-  local err, stat = fs.stat('Makefile')
+exports['uv.fs_stat.sync'] = function(test)
+  local err, stat = uv.fs_stat('Makefile')
   test.is_nil(err)
   test.ok(stat)
   test.ok(stat:isFile())
   test.done()
 end
 
-exports['fs.stat.async'] = function(test)
+exports['uv.fs_stat.async'] = function(test)
   local co = coroutine.create(function()
-    local err, stat = fs.stat('../test/fs.lua')
+    local err, stat = uv.fs_stat('../test/fs.lua')
     test.is_nil(err)
     test.ok(stat:isFile())
     test.done()
@@ -74,56 +73,56 @@ exports['fs.stat.async'] = function(test)
   uv.run()
 end
 
-exports['fs.write_and_read.sync'] = function(test)
-  local path = '_test_fs.write_and_read.sync'
-  local err, fd = fs.open(path, 'w', '0666')
+exports['uv.fs_write_and_read.sync'] = function(test)
+  local path = '_test_uv.fs_write_and_read.sync'
+  local err, fd = uv.fs_open(path, 'w', '0666')
   test.is_nil(err)
   local str = 'Hello, libuv!\n'
   local n
-  err, n = fs.write(fd, str)
+  err, n = uv.fs_write(fd, str)
   test.is_nil(err)
   test.equal(n, #str)
-  err = fs.close(fd)
+  err = uv.fs_close(fd)
   test.is_nil(err)
 
-  err, fd = fs.open(path, 'r')
+  err, fd = uv.fs_open(path, 'r')
   test.is_nil(err)
   local buf = Buffer.new(#str)
-  err, n = fs.read(fd, buf)
+  err, n = uv.fs_read(fd, buf)
   test.is_nil(err)
   test.equal(buf:toString(), str)
-  err = fs.close(fd)
+  err = uv.fs_close(fd)
   test.is_nil(err)
 
-  err = fs.unlink(path)
+  err = uv.fs_unlink(path)
   test.is_nil(err)
 
   test.done()
 end
 
-exports['fs.write_and_read.async'] = function(test)
+exports['uv.fs_write_and_read.async'] = function(test)
   local co = coroutine.create(function()
-    local path = '_test_fs.write_and_read.async'
-    local err, fd = fs.open(path, 'w', '0666')
+    local path = '_test_uv.fs_write_and_read.async'
+    local err, fd = uv.fs_open(path, 'w', '0666')
     test.is_nil(err)
     local str = 'Hello, libuv!\n'
     local n
-    err, n = fs.write(fd, str)
+    err, n = uv.fs_write(fd, str)
     test.is_nil(err)
     test.equal(n, #str)
-    err = fs.close(fd)
+    err = uv.fs_close(fd)
     test.is_nil(err)
 
-    err, fd = fs.open(path, 'r')
+    err, fd = uv.fs_open(path, 'r')
     test.is_nil(err)
     local buf = Buffer.new(#str)
-    err, n = fs.read(fd, buf)
+    err, n = uv.fs_read(fd, buf)
     test.is_nil(err)
     test.equal(buf:toString(), str)
-    err = fs.close(fd)
+    err = uv.fs_close(fd)
     test.is_nil(err)
 
-    err = fs.unlink(path)
+    err = uv.fs_unlink(path)
     test.is_nil(err)
 
     test.done()
@@ -133,28 +132,28 @@ exports['fs.write_and_read.async'] = function(test)
   uv.run()
 end
 
-exports['fs.unlink.sync'] = function(test)
-  local path = '_test_fs.unlink.sync'
-  local err, fd = fs.open(path, 'w', '0666')
+exports['uv.fs_unlink.sync'] = function(test)
+  local path = '_test_uv.fs_unlink.sync'
+  local err, fd = uv.fs_open(path, 'w', '0666')
   test.is_nil(err)
-  err = fs.close(fd)
+  err = uv.fs_close(fd)
   test.is_nil(err)
 
-  err = fs.unlink(path)
+  err = uv.fs_unlink(path)
   test.is_nil(err)
 
   test.done()
 end
 
-exports['fs.unlink.async'] = function(test)
+exports['uv.fs_unlink.async'] = function(test)
   local co = coroutine.create(function()
-    local path = '_test_fs.unlink.async'
-    local err, fd = fs.open(path, 'w', '0666')
+    local path = '_test_uv.fs_unlink.async'
+    local err, fd = uv.fs_open(path, 'w', '0666')
     test.is_nil(err)
-    err = fs.close(fd)
+    err = uv.fs_close(fd)
     test.is_nil(err)
 
-    err = fs.unlink(path)
+    err = uv.fs_unlink(path)
     test.is_nil(err)
 
     test.done()
@@ -164,32 +163,32 @@ exports['fs.unlink.async'] = function(test)
   uv.run()
 end
 
-exports['fs.mkdir_rmdir.sync'] = function(test)
+exports['uv.fs_mkdir_rmdir.sync'] = function(test)
   local path = '_test_fs_mkdir_rmdir.sync'
-  local err = fs.mkdir(path)
+  local err = uv.fs_mkdir(path)
   test.is_nil(err)
 
   local stat
-  err, stat = fs.stat(path)
+  err, stat = uv.fs_stat(path)
   test.ok(stat:isDirectory())
 
-  err = fs.rmdir(path)
+  err = uv.fs_rmdir(path)
   test.is_nil(err)
 
   test.done()
 end
 
-exports['fs.mkdir_rmdir.async'] = function(test)
+exports['uv.fs_mkdir_rmdir.async'] = function(test)
   local co = coroutine.create(function()
     local path = '_test_fs_mkdir_rmdir.async'
-    local err = fs.mkdir(path)
+    local err = uv.fs_mkdir(path)
     test.is_nil(err)
 
     local stat
-    err, stat = fs.stat(path)
+    err, stat = uv.fs_stat(path)
     test.ok(stat:isDirectory())
 
-    err = fs.rmdir(path)
+    err = uv.fs_rmdir(path)
     test.is_nil(err)
 
     test.done()
@@ -199,49 +198,48 @@ exports['fs.mkdir_rmdir.async'] = function(test)
   uv.run()
 end
 
-exports['fs.rename_dir.sync'] = function(test)
+exports['uv.fs_rename_dir.sync'] = function(test)
   local oldPath = '_test_fs_rename_dir.sync.old'
   local newPath = '_test_fs_rename_dir.sync.new'
 
-  test.ok(not fs.exists(oldPath))
-  test.ok(not fs.exists(newPath))
+  test.ok(not uv.fs_exists(oldPath))
+  test.ok(not uv.fs_exists(newPath))
 
-  local err = fs.mkdir(oldPath)
+  local err = uv.fs_mkdir(oldPath)
   test.is_nil(err)
-  test.ok(fs.exists(oldPath))
-  test.ok(not fs.exists(newPath))
+  test.ok(uv.fs_exists(oldPath))
+  test.ok(not uv.fs_exists(newPath))
 
-  err = fs.rename(oldPath, newPath)
+  err = uv.fs_rename(oldPath, newPath)
   test.is_nil(err)
-  test.ok(not fs.exists(oldPath))
-  test.ok(fs.exists(newPath))
+  test.ok(not uv.fs_exists(oldPath))
+  test.ok(uv.fs_exists(newPath))
 
-  err = fs.rmdir(newPath)
+  err = uv.fs_rmdir(newPath)
   test.is_nil(err)
 
   test.done()
 end
 
---[[ TODO: investigate why this test blocks.
-exports['fs.rename_dir.async'] = function(test)
+exports['uv.fs_rename_dir.async'] = function(test)
   local co = coroutine.create(function()
     local oldPath = '_test_fs_rename_dir.async.old'
     local newPath = '_test_fs_rename_dir.async.new'
 
-    test.ok(not fs.exists(oldPath))
-    test.ok(not fs.exists(newPath))
+    test.ok(not uv.fs_exists(oldPath))
+    test.ok(not uv.fs_exists(newPath))
 
-    local err = fs.mkdir(oldPath)
+    local err = uv.fs_mkdir(oldPath)
     test.is_nil(err)
-    test.ok(fs.exists(oldPath))
-    test.ok(not fs.exists(newPath))
+    test.ok(uv.fs_exists(oldPath))
+    test.ok(not uv.fs_exists(newPath))
 
-    err = fs.rename(oldPath, newPath)
+    err = uv.fs_rename(oldPath, newPath)
     test.is_nil(err)
-    test.ok(not fs.exists(oldPath))
-    test.ok(fs.exists(newPath))
+    test.ok(not uv.fs_exists(oldPath))
+    test.ok(uv.fs_exists(newPath))
 
-    err = fs.rmdir(newPath)
+    err = uv.fs_rmdir(newPath)
     test.is_nil(err)
 
     test.done()
@@ -250,70 +248,69 @@ exports['fs.rename_dir.async'] = function(test)
 
   uv.run()
 end
-]]
 
-exports['fs.ftruncate.sync'] = function(test)
+exports['uv.fs_ftruncate.sync'] = function(test)
   local path = '_test_fs_ftruncate.sync'
-  local err, fd = fs.open(path, 'w', '0666')
+  local err, fd = uv.fs_open(path, 'w', '0666')
   test.is_nil(err)
   local str = 'Hello, libuv!\n'
   local n
-  err, n = fs.write(fd, str)
+  err, n = uv.fs_write(fd, str)
   test.is_nil(err)
 
-  err = fs.ftruncate(fd, 5)
+  err = uv.fs_ftruncate(fd, 5)
   test.is_nil(err)
 
   local stat
-  err, stat = fs.stat(path)
+  err, stat = uv.fs_stat(path)
   test.is_nil(err)
   test.equal(stat:size(), 5)
 
-  err = fs.ftruncate(fd)
+  err = uv.fs_ftruncate(fd)
   test.is_nil(err)
 
-  err, stat = fs.stat(path)
+  err, stat = uv.fs_stat(path)
   test.is_nil(err)
   test.equal(stat:size(), 0)
 
-  err = fs.close(fd)
+  err = uv.fs_close(fd)
   test.is_nil(err)
 
-  err = fs.unlink(path)
+  err = uv.fs_unlink(path)
   test.is_nil(err)
 
   test.done()
 end
 
-exports['fs.ftruncate.async'] = function(test)
+exports['uv.fs_ftruncate.async'] = function(test)
   local co = coroutine.create(function()
     local path = '_test_fs_ftruncate.async'
-    local err, fd = fs.open(path, 'w', '0666')
+    local err, fd = uv.fs_open(path, 'w', '0666')
     test.is_nil(err)
     local str = 'Hello, libuv!\n'
     local n
-    err, n = fs.write(fd, str)
+    err, n = uv.fs_write(fd, str)
     test.is_nil(err)
 
-    err = fs.ftruncate(fd, 5)
+    err = uv.fs_ftruncate(fd, 5)
     test.is_nil(err)
 
     local stat
-    err, stat = fs.stat(path)
+    err, stat = uv.fs_stat(path)
     test.is_nil(err)
     test.equal(stat:size(), 5)
 
-    err = fs.ftruncate(fd)
+    err = uv.fs_ftruncate(fd)
     test.is_nil(err)
 
-    err, stat = fs.stat(path)
+    err, stat = uv.fs_stat(path)
     test.is_nil(err)
     test.equal(stat:size(), 0)
 
-    err = fs.close(fd)
+    err = uv.fs_close(fd)
     test.is_nil(err)
 
-    err = fs.unlink(path)
+    err = uv.fs_unlink(path)
     test.is_nil(err)
 
     test.done()
