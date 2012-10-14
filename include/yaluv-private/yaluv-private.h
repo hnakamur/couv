@@ -51,6 +51,26 @@ typedef struct luv_udp_s {
   ngx_queue_t input_queue;
 } luv_udp_t;
 
+typedef struct luv_stream_input_s {
+  ngx_queue_t *prev;
+  ngx_queue_t *next;
+  ssize_t nread;
+  luv_buf_t lbuf;
+} luv_stream_input_t;
+
+typedef struct luv_stream_s {
+  uv_stream_t handle;
+  int is_yielded_for_read;
+  ngx_queue_t input_queue;
+} luv_stream_t;
+
+typedef struct luv_tcp_s {
+  uv_tcp_t handle;
+  int is_yielded_for_read;
+  ngx_queue_t input_queue;
+} luv_tcp_t;
+
+
 /*
  * buffer
  */

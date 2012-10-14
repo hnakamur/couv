@@ -117,7 +117,7 @@ static uv_buf_t alloc_cb(uv_handle_t* handle, size_t suggested_size) {
   lua_State *L;
   void *p;
 
-  L = (lua_State *)handle->data;
+  L = handle->data;
   p = luv_buf_mem_alloc(L, suggested_size);
   if (!p)
     return uv_buf_init(NULL, 0);
