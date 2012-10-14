@@ -6,7 +6,7 @@ extern "C" {
 
 #include <lua.h>
 
-int luaopen_yaluv(lua_State *L);
+int luaopen_yaluv_native(lua_State *L);
 
 #ifdef __cplusplus
 }

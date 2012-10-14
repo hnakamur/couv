@@ -5,6 +5,12 @@ include(checkit.cmake)
 set(CMAKE_VERBOSE_MAKEFILE on)
 set(CMAKE_BUILD_TYPE Debug)
 
+set(LIBS
+  lib/yaluv.lua
+)
+install_lua_module(yaluv ${LIBS})
+file(COPY ${LIBS} DESTINATION .)
+
 add_subdirectory(deps/uv)
 include_directories(include include/yaluv-private deps/uv/include)
 set(SRCS
@@ -17,10 +23,10 @@ set(SRCS
   src/udp.c
   src/yaluv.c
 )
-install_lua_module(yaluv ${SRCS})
+install_lua_module(yaluv_native ${SRCS})
 set_property(SOURCE ${SRCS} PROPERTY
   COMPILE_DEFINITIONS _XOPEN_SOURCE=500 _GNU_SOURCE)
 set_property(SOURCE ${SRCS} PROPERTY
   COMPILE_FLAGS "--std=c89 -pedantic -Wall -Wextra -Wno-unused-parameter")
 add_checkit_test(test/*.lua)
-target_link_libraries(yaluv uv pthread rt)
+target_link_libraries(yaluv_native uv pthread rt)

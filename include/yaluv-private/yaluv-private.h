@@ -17,6 +17,13 @@ extern "C" {
 typedef void *(*luv_alloc_t)(lua_State *L, size_t nbytes);
 typedef void (*luv_free_t)(lua_State *L, void *ptr);
 
+typedef struct luv_buf_mem_s luv_buf_mem_t;
+struct luv_buf_mem_s {
+  int ref_cnt;
+  luv_free_t free;
+  char mem[1];
+};
+
 void *luv_buf_mem_alloc(lua_State *L, size_t nbytes);
 void luv_buf_mem_retain(lua_State *L, void *ptr);
 void luv_buf_mem_release(lua_State *L, void *ptr);
@@ -25,6 +32,24 @@ typedef struct luv_buf_s {
   void *orig;
   uv_buf_t buf;
 } luv_buf_t;
+
+typedef struct luv_udp_input_s {
+  ngx_queue_t *prev;
+  ngx_queue_t *next;
+  ssize_t nread;
+  luv_buf_t lbuf;
+  union {
+    struct sockaddr_storage storage;
+    struct sockaddr_in v4;
+    struct sockaddr_in6 v6;
+  } addr;
+} luv_udp_input_t;
+
+typedef struct luv_udp_s {
+  uv_udp_t handle;
+  int is_yielded_for_recv;
+  ngx_queue_t input_queue;
+} luv_udp_t;
 
 /*
  * buffer
@@ -39,6 +64,8 @@ uv_buf_t luv_checkbuforstr(lua_State *L, int index);
 
 /* NOTE: you must free the result buffers array with luv_free. */
 uv_buf_t *luv_checkbuforstrtable(lua_State *L, int index, size_t *buffers_cnt);
+
+void luv_dbg_print_bufs(const char *header, uv_buf_t *bufs, size_t bufcnt);
 
 #define luv_argcheckindex(L, arg_index, index, min, max) \
   luaL_argcheck(L, (int)min <= index && index <= (int)max, arg_index, \

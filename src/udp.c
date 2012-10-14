@@ -1,7 +1,6 @@
 #include "yaluv-private.h"
 
 typedef struct luv_udp_send_s {
-  lua_State *L;
   uv_buf_t *bufs;
   uv_udp_send_t req;
 } luv_udp_send_t;
@@ -13,40 +12,56 @@ static luv_udp_send_t *luv_alloc_udp_send(lua_State *L, uv_buf_t *bufs) {
   if (!req)
     return NULL;
 
-  req->L = L;
   req->bufs = bufs;
   return req;
 }
 
 
 int luv_udp_create(lua_State *L) {
-  uv_loop_t *loop = luv_loop(L);
-  uv_udp_t *handle = lua_newuserdata(L, sizeof(uv_udp_t));
-  int r = uv_udp_init(loop, handle);
-printf("create L=%lx, handle=%lx, r=%d\n", (unsigned long)L, (unsigned long)handle, r);
+  uv_loop_t *loop;
+  luv_udp_t *lhandle;
+  int r;
+
+  lhandle = lua_newuserdata(L, sizeof(luv_udp_t));
+  if (!lhandle)
+    return 0;
+
+  lhandle->is_yielded_for_recv = 0;
+  ngx_queue_init(&lhandle->input_queue);
+  loop = luv_loop(L);
+  r = uv_udp_init(loop, &lhandle->handle);
+printf("create L=%lx, handle=%lx, r=%d\n", (unsigned long)L, (unsigned long)&lhandle->handle, r);
   if (r < 0) {
     return luaL_error(L, luvL_uv_errname(uv_last_error(loop).code));
   }
+  lhandle->handle.data = L;
   return 1;
 }
 
 int luv_udp_open(lua_State *L) {
-  uv_loop_t *loop = luv_loop(L);
-  uv_udp_t *handle = (uv_udp_t *)lua_touserdata(L, 1);
-  uv_os_sock_t sock = (uv_os_sock_t)luaL_checkinteger(L, 2);
-  int r = uv_udp_open(handle, sock);
+  uv_loop_t *loop;
+  luv_udp_t *lhandle;
+  uv_os_sock_t sock;
+  int r;
+
+  loop = luv_loop(L);
+  lhandle = lua_touserdata(L, 1);
+  sock = (uv_os_sock_t)luaL_checkinteger(L, 2);
+  r = uv_udp_open(&lhandle->handle, sock);
   if (r < 0) {
     return luaL_error(L, luvL_uv_errname(uv_last_error(loop).code));
   }
+  lhandle->is_yielded_for_recv = 0;
+  lhandle->handle.data = L;
   return 0;
 }
 
 int luv_udp_bind(lua_State *L) {
   uv_loop_t *loop = luv_loop(L);
-  uv_udp_t *handle = (uv_udp_t *)lua_touserdata(L, 1);
+  luv_udp_t *lhandle = lua_touserdata(L, 1);
   struct sockaddr_in *addr = luv_checkip4addr(L, 2);
-  int r = uv_udp_bind(handle, *addr, 0);
-printf("bind L=%lx, handle=%lx\n", (unsigned long)L, (unsigned long)handle);
+  int r = uv_udp_bind(&lhandle->handle, *addr, 0);
+printf("bind L=%lx, handle=%lx\n", (unsigned long)L, (unsigned long)&lhandle->handle);
 ip4addr_dbg_print("bind", addr);
 printf("bind r=%d\n", r);
   if (r < 0) {
@@ -61,37 +76,40 @@ static void udp_send_cb(uv_udp_send_t* req, int status) {
   lua_State *L;
 printf("udp_send_cb status=%d\n", status);
   holder = container_of(req, luv_udp_send_t, req);
-  L = holder->L;
   loop = req->handle->loop;
+  L = req->handle->data;
 printf("udp_send_cb loop=%lx, L=%lx\n", (unsigned long)loop, (unsigned long)L);
-#if 0
-  free(req->data);
-#endif
+  luv_free(L, holder->bufs);
   if (status < 0) {
     luaL_error(L, luvL_uv_errname(uv_last_error(loop).code));
   }
+printf("udp_send_cb resuming loop=%lx, L=%lx\n", (unsigned long)loop, (unsigned long)L);
   luv_resume(L, L, 0);
 }
 
 int luv_udp_send(lua_State *L) {
   int r;
   uv_loop_t *loop;
-  uv_udp_t *handle;
+  luv_udp_t *lhandle;
   struct sockaddr_in *addr;
   uv_buf_t *bufs;
   size_t bufcnt;
   luv_udp_send_t *holder;
 
   loop = luv_loop(L);
-  handle = (uv_udp_t *)lua_touserdata(L, 1);
+  lhandle = (luv_udp_t *)lua_touserdata(L, 1);
   addr = luv_checkip4addr(L, 2);
 
   bufs = luv_checkbuforstrtable(L, 3, &bufcnt);
   holder = luv_alloc_udp_send(L, bufs);
-  r = uv_udp_send(&holder->req, handle, bufs, (int)bufcnt, *addr, udp_send_cb);
+printf("udp_send loop=%lx, L=%lx req=%lx\n", (unsigned long)loop, (unsigned long)L, (unsigned long)&holder->req);
+luv_dbg_print_bufs("udp_send", bufs, bufcnt);
+  r = uv_udp_send(&holder->req, &lhandle->handle, bufs, (int)bufcnt, *addr,
+      udp_send_cb);
   if (r < 0) {
     return luaL_error(L, luvL_uv_errname(uv_last_error(loop).code));
   }
+printf("udp_send yielding loop=%lx, L=%lx\n", (unsigned long)loop, (unsigned long)L);
   return lua_yield(L, 0);
 }
 
@@ -100,67 +118,99 @@ static uv_buf_t alloc_cb(uv_handle_t* handle, size_t suggested_size) {
   void *p;
 
   L = (lua_State *)handle->data;
-  p = luv_alloc(L, suggested_size);
+  p = luv_buf_mem_alloc(L, suggested_size);
   if (!p)
     return uv_buf_init(NULL, 0);
   return uv_buf_init(p, suggested_size);
 }
 
-static void udp_recv_cb(uv_udp_t* handle, ssize_t nread, uv_buf_t buf,
+static void udp_recv_cb(uv_udp_t *handle, ssize_t nread, uv_buf_t buf,
     struct sockaddr* addr, unsigned flags) {
-  uv_loop_t *loop;
+  luv_udp_t *lhandle;
   lua_State *L;
-  luv_buf_t *lbuf;
-  struct sockaddr_in *ip4addr;
+  luv_udp_input_t *input;
+
+  lhandle = container_of(handle, luv_udp_t, handle);
+printf("udp_recv_cb#1 handle=%lx, nread=%ld, buf.len=%ld, buf.base=%s (%lx)\n", (unsigned long)handle, nread, buf.len, buf.base, (unsigned long)buf.base);
+  L = handle->data;
+printf("udp_recv_cb#3 L=%lx\n", (unsigned long)L);
+
+  input = luv_alloc(L, sizeof(luv_udp_input_t));
+  if (!input)
+    return;
+
+  input->nread = nread;
+  input->lbuf.orig = buf.base;
+  input->lbuf.buf = buf;
+  if (addr)
+    input->addr.v4 = *(struct sockaddr_in *)addr;
+  ngx_queue_insert_tail(&lhandle->input_queue, (ngx_queue_t *)input);
+
+printf("udp_recv_cb#4 exiting or resume\n");
+  if (lua_status(L) == LUA_YIELD && lhandle->is_yielded_for_recv) {
+printf("udp_recv_cb#5 resume yielded coroutine L=%lx\n", (unsigned long)L);
+    lhandle->is_yielded_for_recv = 0;
+    luv_resume(L, L, 0);
+  }
+}
+
+int luv_udp_recv_start(lua_State *L) {
+  luv_udp_t *lhandle;
   int r;
 
-  loop = handle->loop;
-  L = (lua_State *)handle->data;
-printf("recv_cb #1 L=%lx, top=%d\n", (unsigned long)L, lua_gettop(L));
-
-printf("recv_cb #2 handle=%lx, nread=%ld, buf.base=%s\n", (unsigned long)handle, nread, buf.base);
-  r = uv_udp_recv_stop(handle);
+  lhandle = lua_touserdata(L, 1);
+printf("udp_recv_start handle=%lx, L=%lx, top=%d\n", (unsigned long)&lhandle->handle, (unsigned long)L, lua_gettop(L));
+  r = uv_udp_recv_start(&lhandle->handle, alloc_cb, udp_recv_cb);
   if (r < 0) {
-    luaL_error(L, luvL_uv_errname(uv_last_error(loop).code));
-    return;
+    return luaL_error(L, luvL_uv_errname(uv_last_error(luv_loop(L)).code));
   }
+  return 0;
+}
 
-  if (nread == 0) {
-    lua_pushnil(L);
-    luv_resume(L, L, 1);
-    return;
+int luv_udp_recv_stop(lua_State *L) {
+  luv_udp_t *lhandle;
+  int r;
+
+  lhandle = lua_touserdata(L, 1);
+  lhandle->handle.data = L;
+printf("udp_recv_stop handle=%lx, L=%lx\n", (unsigned long)&lhandle->handle, (unsigned long)L);
+  r = uv_udp_recv_stop(&lhandle->handle);
+  if (r < 0) {
+    return luaL_error(L, luvL_uv_errname(uv_last_error(luv_loop(L)).code));
   }
+  return 0;
+}
 
-  lua_pushnumber(L, nread);
+int luv_udp_prim_recv(lua_State *L) {
+  luv_udp_t *lhandle;
+  luv_udp_input_t *input;
+  luv_buf_t *lbuf;
+  struct sockaddr_in *ip4addr;
+
+  lhandle = lua_touserdata(L, 1);
+printf("luv_udp_prim_recv#1 L=%lx, handle=%lx\n", (unsigned long)L, (unsigned long)&lhandle->handle);
+  if (ngx_queue_empty(&lhandle->input_queue)) {
+printf("luv_udp_prim_recv#2 input_queue was empty, yield...\n");
+    lhandle->is_yielded_for_recv = 1;
+    return lua_yield(L, 0);
+  }
+  input = (luv_udp_input_t *)ngx_queue_head(&lhandle->input_queue);
+  ngx_queue_remove(input);
+
+  lua_pushnumber(L, input->nread);
 
   lbuf = lua_newuserdata(L, sizeof(luv_buf_t));
   luaL_getmetatable(L, LUV_BUFFER_MTBL_NAME);
   lua_setmetatable(L, -2);
-  lbuf->orig = buf.base;
-  lbuf->buf = buf;
+  *lbuf = input->lbuf;
 
   ip4addr = lua_newuserdata(L, sizeof(struct sockaddr_in));
   luaL_getmetatable(L, LUV_IP4ADDR_MTBL_NAME);
   lua_setmetatable(L, -2);
-  *ip4addr = *(struct sockaddr_in *)addr;
+  *ip4addr = input->addr.v4;
 
-  luv_resume(L, L, 3);
-}
-
-int luv_udp_recv(lua_State *L) {
-  int r;
-  uv_loop_t *loop;
-  uv_udp_t *handle;
-
-  loop = luv_loop(L);
-  handle = (uv_udp_t *)lua_touserdata(L, 1);
-  handle->data = L;
-printf("udp_recv #3 handle=%lx, L=%lx, top=%d\n", (unsigned long)handle, (unsigned long)L, lua_gettop(L));
-  r = uv_udp_recv_start(handle, alloc_cb, udp_recv_cb);
-  if (r < 0) {
-    return luaL_error(L, luvL_uv_errname(uv_last_error(loop).code));
-  }
-  return lua_yield(L, 0);
+printf("luv_udp_prim_recv#3 return input\n");
+  return 3;
 }
 
 
@@ -295,7 +345,9 @@ static const struct luaL_Reg udp_functions[] = {
   { "udp_bind", luv_udp_bind },
   { "udp_create", luv_udp_create },
   { "udp_open", luv_udp_open },
-  { "udp_recv", luv_udp_recv },
+  { "udp_prim_recv", luv_udp_prim_recv },
+  { "udp_recv_start", luv_udp_recv_start },
+  { "udp_recv_stop", luv_udp_recv_stop },
   { "udp_send", luv_udp_send },
   { NULL, NULL }
 };

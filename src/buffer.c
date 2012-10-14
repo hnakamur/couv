@@ -3,13 +3,6 @@
 #define FLOAT_SIZE ((int)sizeof(float))
 #define DOUBLE_SIZE ((int)sizeof(double))
 
-typedef struct luv_buf_mem_s luv_buf_mem_t;
-struct luv_buf_mem_s {
-  int ref_cnt;
-  luv_free_t free;
-  char mem[1];
-};
-
 void *luv_buf_mem_alloc(lua_State *L, size_t nbytes) {
   luv_buf_mem_t *mem;
 
@@ -139,6 +132,15 @@ uv_buf_t *luv_checkbuforstrtable(lua_State *L, int index, size_t *bufcnt) {
   }
   *bufcnt = n;
   return buffers;
+}
+
+void luv_dbg_print_bufs(const char *header, uv_buf_t *bufs, size_t bufcnt) {
+  size_t i;
+
+  for (i = 0; i < bufcnt; ++i) {
+    printf("%s bufs[%lu] len=%ld, base=%s\n", header, i, bufs[i].len,
+        bufs[i].base);
+  }
 }
 
 static void memcpy_le(char *src, char *dst, int length) {

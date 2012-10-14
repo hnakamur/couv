@@ -34,7 +34,7 @@ uv_loop_t *luv_loop(lua_State *L) {
 
 static int loop_run(lua_State *L) {
   uv_loop_t *loop = luv_checkloop(L, 1);
-printf("loop_run enter\n");
+printf("loop_run enter loop=%lx, L=%lx\n", (unsigned long)loop, (unsigned long)L);
 #if 0
   /* To debug memory allocation / free errors, gc often. */
   while (uv_run_once(loop)) {
@@ -43,7 +43,7 @@ printf("loop_run enter\n");
 #else
   uv_run(loop);
 #endif
-printf("loop_run exit\n");
+printf("loop_run exit loop=%lx, L=%lx\n", (unsigned long)loop, (unsigned long)L);
   return 0;
 }
 

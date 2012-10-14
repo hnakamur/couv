@@ -80,7 +80,6 @@ static void read_cb(uv_stream_t* handle, ssize_t nread, uv_buf_t buf) {
   uv_loop_t *loop;
   lua_State *L;
   luv_buf_t *lbuf;
-  int ref;
 
   loop = handle->loop;
   L = (lua_State *)handle->data;
@@ -205,9 +204,10 @@ static const struct luaL_Reg functions[] = {
   { NULL, NULL }
 };
 
-int luaopen_yaluv(lua_State *L) {
-printf("luaopen_yaluv L=%lx\n", (unsigned long)L);
-  luaL_register(L, "yaluv", functions);
+int luaopen_yaluv_native(lua_State *L) {
+printf("luaopen_yaluv_native L=%lx\n", (unsigned long)L);
+  lua_createtable(L, 0, ARRAY_SIZE(functions) - 1);
+  luaL_register(L, NULL, functions);
 
   luaopen_yaluv_loop(L);
 
