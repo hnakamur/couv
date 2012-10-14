@@ -685,11 +685,12 @@ static int fs_write(lua_State *L) {
   int fd = luaL_checkint(L, 1);
   uv_buf_t buf = luv_checkbuforstr(L, 2);
   int buf_pos = luaL_optint(L, 3, 1);
+  int buflen = (int)buf.len;
   char *p = buf.base;
-  int length = luaL_optint(L, 4, buf.len - buf_pos + 1);
+  int length = luaL_optint(L, 4, buflen - buf_pos + 1);
   long file_offset = luaL_optlong(L, 5, -1);
-  luv_argcheckindex(L, 3, buf_pos, 1, (int)buf.len);
-  luv_argcheckindex(L, 4, length, 0, (int)buf.len - buf_pos + 1);
+  luv_argcheckindex(L, 3, buf_pos, 1, (int)buflen);
+  luv_argcheckindex(L, 4, length, 0, (int)buflen - buf_pos + 1);
   if (luvL_is_in_mainthread(L)) {
     uv_fs_t req;
     uv_fs_write(loop, &req, fd, (void *)&p[buf_pos - 1], length, file_offset,

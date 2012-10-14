@@ -3,7 +3,7 @@ local loop = uv.loop
 
 local exports = {}
 
-exports['uv.send_and_recv'] = function(test)
+exports['udp.send_and_recv'] = function(test)
   local server = coroutine.create(function()
     local handle = uv.udp_create()
     uv.udp_bind(handle, uv.ip4addr('127.0.0.1', 62001))
@@ -27,7 +27,8 @@ exports['uv.send_and_recv'] = function(test)
   test.done()
 end
 
-exports['uv.send_and_recv_twice'] = function(test)
+--[[
+exports['udp.send_and_recv_twice'] = function(test)
   local server = coroutine.create(function()
     local handle = uv.udp_create()
     uv.udp_bind(handle, uv.ip4addr('127.0.0.1', 62001))
@@ -58,5 +59,6 @@ exports['uv.send_and_recv_twice'] = function(test)
   loop.get():run()
   test.done()
 end
+]]
 
 return exports

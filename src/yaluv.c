@@ -65,15 +65,21 @@ printf("accept exit\n");
 }
 
 static uv_buf_t alloc_cb(uv_handle_t* handle, size_t suggested_size) {
-  static char tmp[65536];
-  return uv_buf_init(tmp, sizeof(tmp));
+  lua_State *L;
+  void *p;
+
+  L = (lua_State *)handle->data;
+  p = luv_alloc(L, suggested_size);
+  if (!p)
+    return uv_buf_init(NULL, 0);
+  return uv_buf_init(p, suggested_size);
 }
 
 static void read_cb(uv_stream_t* handle, ssize_t nread, uv_buf_t buf) {
   int r;
   uv_loop_t *loop;
   lua_State *L;
-  uv_buf_t *bufptr;
+  luv_buf_t *lbuf;
   int ref;
 
   loop = handle->loop;
@@ -93,18 +99,11 @@ printf("read_cb exit nread=0\n");
 
   lua_pushnumber(L, nread);
 
-  bufptr = (uv_buf_t *)lua_newuserdata(L, sizeof(uv_buf_t));
+  lbuf = lua_newuserdata(L, sizeof(luv_buf_t));
   luaL_getmetatable(L, LUV_BUFFER_MTBL_NAME);
   lua_setmetatable(L, -2);
-  bufptr->len = buf.len;
-  bufptr->base = lua_newuserdata(L, buf.len);
-  memcpy(bufptr->base, buf.base, buf.len);
-
-  /* registry[bufptr] = ref to char[] buf */
-  ref = luaL_ref(L, LUA_REGISTRYINDEX);
-  lua_pushlightuserdata(L, bufptr);
-  lua_pushnumber(L, ref);
-  lua_rawset(L, LUA_REGISTRYINDEX);
+  lbuf->orig = buf.base;
+  lbuf->buf = buf;
 
 printf("read_cb\n");
   luv_resume(L, L, 2);

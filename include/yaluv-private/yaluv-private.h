@@ -12,6 +12,19 @@ extern "C" {
 #include <uv.h>
 
 #include "yaluv.h"
+#include "ngx-queue.h"
+
+typedef void *(*luv_alloc_t)(lua_State *L, size_t nbytes);
+typedef void (*luv_free_t)(lua_State *L, void *ptr);
+
+void *luv_buf_mem_alloc(lua_State *L, size_t nbytes);
+void luv_buf_mem_retain(lua_State *L, void *ptr);
+void luv_buf_mem_release(lua_State *L, void *ptr);
+
+typedef struct luv_buf_s {
+  void *orig;
+  uv_buf_t buf;
+} luv_buf_t;
 
 /*
  * buffer
@@ -20,10 +33,11 @@ int luaopen_yaluv_buffer(lua_State *L);
 
 #define LUV_BUFFER_MTBL_NAME "luv.Buffer"
 #define luv_checkbuf(L, index) \
-    (uv_buf_t *)luaL_checkudata(L, index, LUV_BUFFER_MTBL_NAME)
+    luaL_checkudata(L, index, LUV_BUFFER_MTBL_NAME)
+uv_buf_t luv_tobuforstr(lua_State *L, int index);
 uv_buf_t luv_checkbuforstr(lua_State *L, int index);
 
-/* NOTE: you must free the result buffers array. */
+/* NOTE: you must free the result buffers array with luv_free. */
 uv_buf_t *luv_checkbuforstrtable(lua_State *L, int index, size_t *buffers_cnt);
 
 #define luv_argcheckindex(L, arg_index, index, min, max) \

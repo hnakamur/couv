@@ -80,72 +80,45 @@ int luv_udp_send(lua_State *L) {
   struct sockaddr_in *addr;
   uv_buf_t *bufs;
   size_t bufcnt;
-  size_t i;
   luv_udp_send_t *holder;
 
-printf("udp_send #1 top=%d\n", lua_gettop(L));
   loop = luv_loop(L);
-printf("udp_send loop=%lx, L=%lx\n", (unsigned long)loop, (unsigned long)L);
   handle = (uv_udp_t *)lua_touserdata(L, 1);
-printf("send handle=%lx\n", (unsigned long)handle);
   addr = luv_checkip4addr(L, 2);
-ip4addr_dbg_print("send", addr);
 
   bufs = luv_checkbuforstrtable(L, 3, &bufcnt);
-printf("udp_send #1.1 bufcnt=%lu\n", bufcnt);
-for (i = 0; i < bufcnt; ++i) {
-printf("i=%lu, buf.len=%lu, buf.base=%s\n", i, bufs[i].len, bufs[i].base);
-}
   holder = luv_alloc_udp_send(L, bufs);
-printf("udp_send #2\n");
   r = uv_udp_send(&holder->req, handle, bufs, (int)bufcnt, *addr, udp_send_cb);
-printf("udp_send #3 r=%d\n", r);
   if (r < 0) {
     return luaL_error(L, luvL_uv_errname(uv_last_error(loop).code));
   }
-printf("udp_send #4 top=%d\n", lua_gettop(L));
   return lua_yield(L, 0);
 }
 
 static uv_buf_t alloc_cb(uv_handle_t* handle, size_t suggested_size) {
-#if 1
-  static char tmp[65536];
-  return uv_buf_init(tmp, sizeof(tmp));
-#else
-  uv_loop_t *loop;
   lua_State *L;
-  uv_buf_t buf;
-  loop = handle->loop;
+  void *p;
+
   L = (lua_State *)handle->data;
-#if 0
-printf("alloc_cb #1 handle=%x, L=%x, top=%d\n", handle, L, lua_gettop(L));
-  buf.base = (char *)lua_newuserdata(L, suggested_size);
-  buf.len = suggested_size;
-  lua_pushvalue(L, -1);
-  lua_rawset(L, LUA_REGISTRYINDEX);
-printf("alloc_cb #2 top=%d\n", lua_gettop(L));
-#else
-  buf.base = (char *)malloc(suggested_size);
-  buf.len = suggested_size;
-#endif
-  return buf;
-#endif
+  p = luv_alloc(L, suggested_size);
+  if (!p)
+    return uv_buf_init(NULL, 0);
+  return uv_buf_init(p, suggested_size);
 }
 
 static void udp_recv_cb(uv_udp_t* handle, ssize_t nread, uv_buf_t buf,
     struct sockaddr* addr, unsigned flags) {
   uv_loop_t *loop;
   lua_State *L;
-  uv_buf_t *bufptr;
+  luv_buf_t *lbuf;
   struct sockaddr_in *ip4addr;
-  int ref;
   int r;
 
   loop = handle->loop;
   L = (lua_State *)handle->data;
 printf("recv_cb #1 L=%lx, top=%d\n", (unsigned long)L, lua_gettop(L));
 
-printf("recv_cb #2 handle=%lx, nread=%d, buf.base=%s\n", (unsigned long)handle, nread, buf.base);
+printf("recv_cb #2 handle=%lx, nread=%ld, buf.base=%s\n", (unsigned long)handle, nread, buf.base);
   r = uv_udp_recv_stop(handle);
   if (r < 0) {
     luaL_error(L, luvL_uv_errname(uv_last_error(loop).code));
@@ -160,18 +133,11 @@ printf("recv_cb #2 handle=%lx, nread=%d, buf.base=%s\n", (unsigned long)handle, 
 
   lua_pushnumber(L, nread);
 
-  bufptr = (uv_buf_t *)lua_newuserdata(L, sizeof(uv_buf_t));
+  lbuf = lua_newuserdata(L, sizeof(luv_buf_t));
   luaL_getmetatable(L, LUV_BUFFER_MTBL_NAME);
   lua_setmetatable(L, -2);
-  bufptr->len = buf.len;
-  bufptr->base = lua_newuserdata(L, buf.len);
-  memcpy(bufptr->base, buf.base, buf.len);
-
-  /* registry[buf] = ref to char[] buf */
-  ref = luaL_ref(L, LUA_REGISTRYINDEX);
-  lua_pushlightuserdata(L, bufptr);
-  lua_pushnumber(L, ref);
-  lua_rawset(L, LUA_REGISTRYINDEX);
+  lbuf->orig = buf.base;
+  lbuf->buf = buf;
 
   ip4addr = lua_newuserdata(L, sizeof(struct sockaddr_in));
   luaL_getmetatable(L, LUV_IP4ADDR_MTBL_NAME);
