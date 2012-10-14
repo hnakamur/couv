@@ -256,74 +256,73 @@ static int fs_push_exists_results(lua_State *L, uv_fs_t* req) {
 }
 
 static void fs_exists_callback(uv_fs_t* req) {
-  lua_State *L = (lua_State *)req->data;
+  lua_State *L = req->data;
   int nresults = fs_push_exists_results(L, req);
   luv_free(L, req);
   luv_resume(L, L, nresults);
 }
 
+static int fs_error(lua_State *L, uv_fs_t* req) {
+  int errcode;
+  const char *errname;
+
+  uv_fs_req_cleanup(req);
+  if (req->cb != NULL) {
+    errcode = req->errorno;
+    luv_free(L, req);
+  } else {
+    errcode = uv_last_error(req->loop).code;
+  }
+  errname = luvL_uv_errname(errcode);
+  luaL_error(L, errname);
+  return 0;
+}
+
 static int fs_push_common_results(lua_State *L, uv_fs_t* req) {
   int nresults;
-  if (req->result < 0) {
-    int is_async = req->cb != NULL;
-    int errcode = is_async ? req->errorno : uv_last_error(req->loop).code;
-    lua_pushstring(L, luvL_uv_errname(errcode));
+
+  if (req->result < 0)
+    return fs_error(L, req);
+
+  switch (req->fs_type) {
+  case UV_FS_OPEN:
+  case UV_FS_READ:
+  case UV_FS_WRITE:
+    lua_pushnumber(L, req->result);
     nresults = 1;
-  } else {
-    switch (req->fs_type) {
-    case UV_FS_OPEN:
-    case UV_FS_READ:
-    case UV_FS_WRITE:
-      lua_pushnil(L);
-      lua_pushnumber(L, req->result);
-      nresults = 2;
-      break;
-    case UV_FS_LSTAT:
-    case UV_FS_FSTAT:
-    case UV_FS_STAT: {
-      uv_statbuf_t *stat_buf;
-      lua_pushnil(L);
-      stat_buf = (uv_statbuf_t *)lua_newuserdata(L, sizeof(uv_statbuf_t));
-      *stat_buf = *(uv_statbuf_t *)req->ptr;
-      luaL_getmetatable(L, LUV_FS_STAT_MTBL_NAME);
-      lua_setmetatable(L, -2);
-      nresults = 2;
-      break;
-    }
-    case UV_FS_READLINK:
-      lua_pushnil(L);
-      lua_pushstring(L, req->ptr);
-      nresults = 2;
-      break;
-    case UV_FS_READDIR:
-      lua_pushnil(L);
-      fs_push_readdir_results(L, req->result, req->ptr);
-      nresults = 2;
-      break;
-    default:
-      nresults = 0;
-      break;
-    }
+    break;
+  case UV_FS_LSTAT:
+  case UV_FS_FSTAT:
+  case UV_FS_STAT: {
+    uv_statbuf_t *stat_buf;
+    stat_buf = (uv_statbuf_t *)lua_newuserdata(L, sizeof(uv_statbuf_t));
+    *stat_buf = *(uv_statbuf_t *)req->ptr;
+    luaL_getmetatable(L, LUV_FS_STAT_MTBL_NAME);
+    lua_setmetatable(L, -2);
+    nresults = 1;
+    break;
+  }
+  case UV_FS_READLINK:
+    lua_pushstring(L, req->ptr);
+    nresults = 1;
+    break;
+  case UV_FS_READDIR:
+    fs_push_readdir_results(L, req->result, req->ptr);
+    nresults = 1;
+    break;
+  default:
+    nresults = 0;
+    break;
   }
   uv_fs_req_cleanup(req);
   return nresults;
 }
 
 static void fs_common_callback(uv_fs_t* req) {
-  lua_State *L = (lua_State *)req->data;
-  int nresults = fs_push_common_results(L, req);
-  luv_free(L, req);
+  lua_State *L = req->data;
+  int nresults;
+  nresults = fs_push_common_results(L, req);
   luv_resume(L, L, nresults);
-}
-
-static int fs_yield_or_error(uv_fs_t *req, int ret_code) {
-  lua_State *L = (lua_State *)req->data;
-  if (ret_code < 0) {
-    lua_pushstring(L, luvL_uv_errname(uv_last_error(req->loop).code));
-    luv_free(L, req);
-    return 1;
-  }
-  return lua_yield(L, 0);
 }
 
 static uv_fs_t *fs_alloc_req(lua_State *L) {
@@ -346,7 +345,7 @@ static int fs_chown(lua_State *L) {
   } else {
     uv_fs_t *req = fs_alloc_req(L);
     int r = uv_fs_chown(loop, req, path, uid, gid, fs_common_callback);
-    return fs_yield_or_error(req, r);
+    return r < 0 ? fs_error(L, req) : lua_yield(L, 0);
   }
 }
 
@@ -361,7 +360,7 @@ static int fs_chmod(lua_State *L) {
   } else {
     uv_fs_t *req = fs_alloc_req(L);
     int r = uv_fs_chmod(loop, req, path, mode, fs_common_callback);
-    return fs_yield_or_error(req, r);
+    return r < 0 ? fs_error(L, req) : lua_yield(L, 0);
   }
 }
 
@@ -375,7 +374,7 @@ static int fs_close(lua_State *L) {
   } else {
     uv_fs_t *req = fs_alloc_req(L);
     int r = uv_fs_close(loop, req, fd, fs_common_callback);
-    return fs_yield_or_error(req, r);
+    return r < 0 ? fs_error(L, req) : lua_yield(L, 0);
   }
 }
 
@@ -389,7 +388,7 @@ static int fs_exists(lua_State *L) {
   } else {
     uv_fs_t *req = fs_alloc_req(L);
     int r = uv_fs_stat(loop, req, path, fs_exists_callback);
-    return fs_yield_or_error(req, r);
+    return r < 0 ? fs_error(L, req) : lua_yield(L, 0);
   }
 }
 
@@ -404,7 +403,7 @@ static int fs_fchmod(lua_State *L) {
   } else {
     uv_fs_t *req = fs_alloc_req(L);
     int r = uv_fs_fchmod(loop, req, fd, mode, fs_common_callback);
-    return fs_yield_or_error(req, r);
+    return r < 0 ? fs_error(L, req) : lua_yield(L, 0);
   }
 }
 
@@ -420,7 +419,7 @@ static int fs_fchown(lua_State *L) {
   } else {
     uv_fs_t *req = fs_alloc_req(L);
     int r = uv_fs_fchown(loop, req, fd, uid, gid, fs_common_callback);
-    return fs_yield_or_error(req, r);
+    return r < 0 ? fs_error(L, req) : lua_yield(L, 0);
   }
 }
 
@@ -434,7 +433,7 @@ static int fs_fstat(lua_State *L) {
   } else {
     uv_fs_t *req = fs_alloc_req(L);
     int r = uv_fs_fstat(loop, req, fd, fs_common_callback);
-    return fs_yield_or_error(req, r);
+    return r < 0 ? fs_error(L, req) : lua_yield(L, 0);
   }
 }
 
@@ -448,7 +447,7 @@ static int fs_fsync(lua_State *L) {
   } else {
     uv_fs_t *req = fs_alloc_req(L);
     int r = uv_fs_fsync(loop, req, fd, fs_common_callback);
-    return fs_yield_or_error(req, r);
+    return r < 0 ? fs_error(L, req) : lua_yield(L, 0);
   }
 }
 
@@ -463,7 +462,7 @@ static int fs_ftruncate(lua_State *L) {
   } else {
     uv_fs_t *req = fs_alloc_req(L);
     int r = uv_fs_ftruncate(loop, req, fd, len, fs_common_callback);
-    return fs_yield_or_error(req, r);
+    return r < 0 ? fs_error(L, req) : lua_yield(L, 0);
   }
 }
 
@@ -479,7 +478,7 @@ static int fs_futime(lua_State *L) {
   } else {
     uv_fs_t *req = fs_alloc_req(L);
     int r = uv_fs_futime(loop, req, fd, atime, mtime, fs_common_callback);
-    return fs_yield_or_error(req, r);
+    return r < 0 ? fs_error(L, req) : lua_yield(L, 0);
   }
 }
 
@@ -494,7 +493,7 @@ static int fs_link(lua_State *L) {
   } else {
     uv_fs_t *req = fs_alloc_req(L);
     int r = uv_fs_link(loop, req, path, new_path, fs_common_callback);
-    return fs_yield_or_error(req, r);
+    return r < 0 ? fs_error(L, req) : lua_yield(L, 0);
   }
 }
 
@@ -508,7 +507,7 @@ static int fs_lstat(lua_State *L) {
   } else {
     uv_fs_t *req = fs_alloc_req(L);
     int r = uv_fs_lstat(loop, req, path, fs_common_callback);
-    return fs_yield_or_error(req, r);
+    return r < 0 ? fs_error(L, req) : lua_yield(L, 0);
   }
 }
 
@@ -523,7 +522,7 @@ static int fs_mkdir(lua_State *L) {
   } else {
     uv_fs_t *req = fs_alloc_req(L);
     int r = uv_fs_mkdir(loop, req, path, mode, fs_common_callback);
-    return fs_yield_or_error(req, r);
+    return r < 0 ? fs_error(L, req) : lua_yield(L, 0);
   }
 }
 
@@ -539,7 +538,7 @@ static int fs_open(lua_State *L) {
   } else {
     uv_fs_t *req = fs_alloc_req(L);
     int r = uv_fs_open(loop, req, path, flags, mode, fs_common_callback);
-    return fs_yield_or_error(req, r);
+    return r < 0 ? fs_error(L, req) : lua_yield(L, 0);
   }
 }
 
@@ -553,7 +552,7 @@ static int fs_readlink(lua_State *L) {
   } else {
     uv_fs_t *req = fs_alloc_req(L);
     int r = uv_fs_readlink(loop, req, path, fs_common_callback);
-    return fs_yield_or_error(req, r);
+    return r < 0 ? fs_error(L, req) : lua_yield(L, 0);
   }
 }
 
@@ -568,7 +567,7 @@ static int fs_rename(lua_State *L) {
   } else {
     uv_fs_t *req = fs_alloc_req(L);
     int r = uv_fs_rename(loop, req, old_path, new_path, fs_common_callback);
-    return fs_yield_or_error(req, r);
+    return r < 0 ? fs_error(L, req) : lua_yield(L, 0);
   }
 }
 
@@ -582,7 +581,7 @@ static int fs_rmdir(lua_State *L) {
   } else {
     uv_fs_t *req = fs_alloc_req(L);
     int r = uv_fs_rmdir(loop, req, path, fs_common_callback);
-    return fs_yield_or_error(req, r);
+    return r < 0 ? fs_error(L, req) : lua_yield(L, 0);
   }
 }
 
@@ -596,7 +595,7 @@ static int fs_stat(lua_State *L) {
   } else {
     uv_fs_t *req = fs_alloc_req(L);
     int r = uv_fs_stat(loop, req, path, fs_common_callback);
-    return fs_yield_or_error(req, r);
+    return r < 0 ? fs_error(L, req) : lua_yield(L, 0);
   }
 }
 
@@ -611,7 +610,7 @@ static int fs_symlink(lua_State *L) {
   } else {
     uv_fs_t *req = fs_alloc_req(L);
     int r = uv_fs_symlink(loop, req, path, new_path, 0, fs_common_callback);
-    return fs_yield_or_error(req, r);
+    return r < 0 ? fs_error(L, req) : lua_yield(L, 0);
   }
 }
 
@@ -625,7 +624,7 @@ static int fs_unlink(lua_State *L) {
   } else {
     uv_fs_t *req = fs_alloc_req(L);
     int r = uv_fs_unlink(loop, req, path, fs_common_callback);
-    return fs_yield_or_error(req, r);
+    return r < 0 ? fs_error(L, req) : lua_yield(L, 0);
   }
 }
 
@@ -641,7 +640,7 @@ static int fs_utime(lua_State *L) {
   } else {
     uv_fs_t *req = fs_alloc_req(L);
     int r = uv_fs_utime(loop, req, path, atime, mtime, fs_common_callback);
-    return fs_yield_or_error(req, r);
+    return r < 0 ? fs_error(L, req) : lua_yield(L, 0);
   }
 }
 
@@ -664,7 +663,7 @@ static int fs_read(lua_State *L) {
     uv_fs_t *req = fs_alloc_req(L);
     int r = uv_fs_read(loop, req, fd, (void *)&p[buf_pos - 1], length,
         file_offset, fs_common_callback);
-    return fs_yield_or_error(req, r);
+    return r < 0 ? fs_error(L, req) : lua_yield(L, 0);
   }
 }
 
@@ -678,7 +677,7 @@ static int fs_readdir(lua_State *L) {
   } else {
     uv_fs_t *req = fs_alloc_req(L);
     int r = uv_fs_readdir(loop, req, path, 0, fs_common_callback);
-    return fs_yield_or_error(req, r);
+    return r < 0 ? fs_error(L, req) : lua_yield(L, 0);
   }
 }
 
@@ -702,7 +701,7 @@ static int fs_write(lua_State *L) {
     uv_fs_t *req = fs_alloc_req(L);
     int r = uv_fs_write(loop, req, fd, (void *)&p[buf_pos - 1], length,
         file_offset, fs_common_callback);
-    return fs_yield_or_error(req, r);
+    return r < 0 ? fs_error(L, req) : lua_yield(L, 0);
   }
 }
 
