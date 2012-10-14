@@ -123,7 +123,7 @@ uv_loop_t *luv_loop(lua_State *L);
 
 int luaopen_yaluv_ipaddr(lua_State *L);
 
-int ip4addr_dbg_print(const char *header, struct sockaddr_in *addr);
+int luv_dbg_print_ip4addr(const char *header, struct sockaddr_in *addr);
 
 /*
  * fs

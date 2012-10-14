@@ -62,7 +62,7 @@ int luv_udp_bind(lua_State *L) {
   struct sockaddr_in *addr = luv_checkip4addr(L, 2);
   int r = uv_udp_bind(&lhandle->handle, *addr, 0);
 printf("bind L=%lx, handle=%lx\n", (unsigned long)L, (unsigned long)&lhandle->handle);
-ip4addr_dbg_print("bind", addr);
+luv_dbg_print_ip4addr("bind", addr);
 printf("bind r=%d\n", r);
   if (r < 0) {
     return luaL_error(L, luvL_uv_errname(uv_last_error(loop).code));

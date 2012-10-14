@@ -30,7 +30,7 @@ static int tcp_bind(lua_State *L) {
   addr = luv_checkip4addr(L, 2);
   r = uv_tcp_bind(&lhandle->handle, *addr);
 printf("tcp_bind L=%lx, handle=%lx\n", (unsigned long)L, (unsigned long)&lhandle->handle);
-ip4addr_dbg_print("tcp_bind", addr);
+luv_dbg_print_ip4addr("tcp_bind", addr);
 printf("tcp_bind r=%d\n", r);
   if (r < 0) {
     return luaL_error(L, luvL_uv_errname(uv_last_error(luv_loop(L)).code));
@@ -66,7 +66,7 @@ static int tcp_connect(lua_State *L) {
   lhandle  = (luv_tcp_t *)lua_touserdata(L, 1);
   addr = luv_checkip4addr(L, 2);
 printf("tcp_connect#1 L=%lx, handle=%lx\n", (unsigned long)L, (unsigned long)&lhandle->handle);
-ip4addr_dbg_print("tcp_connect#2", addr);
+luv_dbg_print_ip4addr("tcp_connect#2", addr);
 
   req = luv_alloc(L, sizeof(uv_connect_t));
 printf("tcp_connect#3 req=%lx\n", (unsigned long)req);

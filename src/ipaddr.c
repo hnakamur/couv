@@ -1,7 +1,7 @@
 #include "yaluv-private.h"
 
 
-int ip4addr_dbg_print(const char *header, struct sockaddr_in *addr) {
+int luv_dbg_print_ip4addr(const char *header, struct sockaddr_in *addr) {
   char buf[sizeof "255.255.255.255"];
   int r;
   if (addr) {
