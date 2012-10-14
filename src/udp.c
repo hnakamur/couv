@@ -30,7 +30,6 @@ int luv_udp_create(lua_State *L) {
   ngx_queue_init(&lhandle->input_queue);
   loop = luv_loop(L);
   r = uv_udp_init(loop, &lhandle->handle);
-printf("create L=%lx, handle=%lx, r=%d\n", (unsigned long)L, (unsigned long)&lhandle->handle, r);
   if (r < 0) {
     return luaL_error(L, luvL_uv_errname(uv_last_error(loop).code));
   }
@@ -61,9 +60,6 @@ int luv_udp_bind(lua_State *L) {
   luv_udp_t *lhandle = lua_touserdata(L, 1);
   struct sockaddr_in *addr = luv_checkip4addr(L, 2);
   int r = uv_udp_bind(&lhandle->handle, *addr, 0);
-printf("bind L=%lx, handle=%lx\n", (unsigned long)L, (unsigned long)&lhandle->handle);
-luv_dbg_print_ip4addr("bind", addr);
-printf("bind r=%d\n", r);
   if (r < 0) {
     return luaL_error(L, luvL_uv_errname(uv_last_error(loop).code));
   }
@@ -74,16 +70,13 @@ static void udp_send_cb(uv_udp_send_t* req, int status) {
   luv_udp_send_t *holder;
   uv_loop_t *loop;
   lua_State *L;
-printf("udp_send_cb status=%d\n", status);
   holder = container_of(req, luv_udp_send_t, req);
   loop = req->handle->loop;
   L = req->handle->data;
-printf("udp_send_cb loop=%lx, L=%lx\n", (unsigned long)loop, (unsigned long)L);
   luv_free(L, holder->bufs);
   if (status < 0) {
     luaL_error(L, luvL_uv_errname(uv_last_error(loop).code));
   }
-printf("udp_send_cb resuming loop=%lx, L=%lx\n", (unsigned long)loop, (unsigned long)L);
   luv_resume(L, L, 0);
 }
 
@@ -102,14 +95,11 @@ int luv_udp_send(lua_State *L) {
 
   bufs = luv_checkbuforstrtable(L, 3, &bufcnt);
   holder = luv_alloc_udp_send(L, bufs);
-printf("udp_send loop=%lx, L=%lx req=%lx\n", (unsigned long)loop, (unsigned long)L, (unsigned long)&holder->req);
-luv_dbg_print_bufs("udp_send", bufs, bufcnt);
   r = uv_udp_send(&holder->req, &lhandle->handle, bufs, (int)bufcnt, *addr,
       udp_send_cb);
   if (r < 0) {
     return luaL_error(L, luvL_uv_errname(uv_last_error(loop).code));
   }
-printf("udp_send yielding loop=%lx, L=%lx\n", (unsigned long)loop, (unsigned long)L);
   return lua_yield(L, 0);
 }
 
@@ -131,9 +121,7 @@ static void udp_recv_cb(uv_udp_t *handle, ssize_t nread, uv_buf_t buf,
   luv_udp_input_t *input;
 
   lhandle = container_of(handle, luv_udp_t, handle);
-printf("udp_recv_cb#1 handle=%lx, nread=%ld, buf.len=%ld, buf.base=%s (%lx)\n", (unsigned long)handle, nread, buf.len, buf.base, (unsigned long)buf.base);
   L = handle->data;
-printf("udp_recv_cb#3 L=%lx\n", (unsigned long)L);
 
   input = luv_alloc(L, sizeof(luv_udp_input_t));
   if (!input)
@@ -146,9 +134,7 @@ printf("udp_recv_cb#3 L=%lx\n", (unsigned long)L);
     input->addr.v4 = *(struct sockaddr_in *)addr;
   ngx_queue_insert_tail(&lhandle->input_queue, (ngx_queue_t *)input);
 
-printf("udp_recv_cb#4 exiting or resume\n");
   if (lua_status(L) == LUA_YIELD && lhandle->is_yielded_for_recv) {
-printf("udp_recv_cb#5 resume yielded coroutine L=%lx\n", (unsigned long)L);
     lhandle->is_yielded_for_recv = 0;
     luv_resume(L, L, 0);
   }
@@ -159,7 +145,6 @@ int luv_udp_recv_start(lua_State *L) {
   int r;
 
   lhandle = lua_touserdata(L, 1);
-printf("udp_recv_start handle=%lx, L=%lx, top=%d\n", (unsigned long)&lhandle->handle, (unsigned long)L, lua_gettop(L));
   r = uv_udp_recv_start(&lhandle->handle, alloc_cb, udp_recv_cb);
   if (r < 0) {
     return luaL_error(L, luvL_uv_errname(uv_last_error(luv_loop(L)).code));
@@ -173,7 +158,6 @@ int luv_udp_recv_stop(lua_State *L) {
 
   lhandle = lua_touserdata(L, 1);
   lhandle->handle.data = L;
-printf("udp_recv_stop handle=%lx, L=%lx\n", (unsigned long)&lhandle->handle, (unsigned long)L);
   r = uv_udp_recv_stop(&lhandle->handle);
   if (r < 0) {
     return luaL_error(L, luvL_uv_errname(uv_last_error(luv_loop(L)).code));
@@ -188,9 +172,7 @@ int luv_udp_prim_recv(lua_State *L) {
   struct sockaddr_in *ip4addr;
 
   lhandle = lua_touserdata(L, 1);
-printf("luv_udp_prim_recv#1 L=%lx, handle=%lx\n", (unsigned long)L, (unsigned long)&lhandle->handle);
   if (ngx_queue_empty(&lhandle->input_queue)) {
-printf("luv_udp_prim_recv#2 input_queue was empty, yield...\n");
     lhandle->is_yielded_for_recv = 1;
     return lua_yield(L, 0);
   }
@@ -209,7 +191,6 @@ printf("luv_udp_prim_recv#2 input_queue was empty, yield...\n");
   lua_setmetatable(L, -2);
   *ip4addr = input->addr.v4;
 
-printf("luv_udp_prim_recv#3 return input\n");
   return 3;
 }
 
