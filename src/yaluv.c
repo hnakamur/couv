@@ -16,12 +16,6 @@ static void connection_cb(uv_stream_t *handle, int status) {
   } else {
     lua_call(L, 1, 0);
   }
-
-#if 0
-/* TODO: move this to where connection close. __gc? */
-  luv_registry_delete_for_ptr(L, ((char *)handle) + 1);
-  luv_registry_delete_for_ptr(L, handle);
-#endif
 }
 
 static int luv_listen(lua_State *L) {

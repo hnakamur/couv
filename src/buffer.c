@@ -31,56 +31,6 @@ void luv_buf_mem_release(lua_State *L, void *ptr) {
   }
 }
 
-#if 0
-luv_buf_t *luv_buf_alloc(lua_State *L, size_t nbytes) {
-  void *base;
-  luv_buf_t *buf;
-
-  base = luv_alloc(L, nbytes);
-  if (!base)
-    return NULL;
-
-  buf = luv_alloc(L, sizeof(luv_buf_t));
-  if (!buf)
-    return NULL;
-
-  buf->type_cert = luv_buf_type_cert;
-  buf->ref_cnt = 1;
-  buf->orig = buf;
-  buf->free = luv_free;
-  buf->buf.base = base;
-  buf->buf.len = nbytes;
-  return buf;
-}
-
-luv_buf_t *luv_buf_slice(lua_State *L, luv_buf_t *orig, int first, int last) {
-  luv_buf_t *buf;
-
-  buf = luv_alloc(L, sizeof(luv_buf_t));
-  if (!buf)
-    return NULL;
-
-  orig->ref_cnt++;
-  buf->type_cert = luv_buf_type_cert;
-  buf->ref_cnt = 1;
-  buf->orig = orig;
-  buf->free = luv_free;
-  buf->buf.base = orig->buf.base + first - 1;
-  buf->buf.len = last - first + 1;
-  return buf;
-}
-
-luv_buf_t luv_buf_free(lua_State *L, luv_buf_t *buf) {
-  if (buf->orig != buf)
-    luv_buf_free(L, buf->orig);
-
-  if (--buf->ref_cnt == 0) {
-    if (buf->orig == buf)
-      buf->free(L, buf->buf.base);
-    buf->free(L, buf);
-  }
-}
-#endif
 
 uv_buf_t luv_tobuforstr(lua_State *L, int index) {
   uv_buf_t buf;

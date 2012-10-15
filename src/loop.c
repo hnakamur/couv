@@ -28,14 +28,7 @@ static int luv_run(lua_State *L) {
   uv_loop_t *loop;
 
   loop = luv_loop(L);
-#if 0
-  /* To debug memory allocation / free errors, gc often. */
-  while (uv_run_once(loop)) {
-    lua_gc(L, LUA_GCCOLLECT, 0);
-  }
-#else
   uv_run(loop);
-#endif
   return 0;
 }
 
