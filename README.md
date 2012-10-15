@@ -22,3 +22,11 @@ make test
 
 ## License
 MIT License
+
+## TODO
+* Rename this project. I think "couv" would be a good name.
+  COroutine based libUV wrapper for lua.
+* Add fixed size buffer memory allocator with a memory pool.
+* Add benchmarks.
+* Implement more C/lua functions for functions in libuv.
+* Decide wether or not we switch to object-oriented APIs in lua side.
