@@ -34,14 +34,14 @@ void couv_buf_mem_release(lua_State *L, void *ptr) {
 
 uv_buf_t couv_tobuforstr(lua_State *L, int index) {
   uv_buf_t buf;
-  couv_buf_t *lbuf;
+  couv_buf_t *w_buf;
   int type = lua_type(L, index);
   if (type == LUA_TSTRING) {
     buf.base = (char *)lua_tolstring(L, index, &buf.len);
     return buf;
   } else if (couvL_hasmetatablename(L, index, COUV_BUFFER_MTBL_NAME)) {
-    lbuf = lua_touserdata(L, index);
-    return lbuf->buf;
+    w_buf = lua_touserdata(L, index);
+    return w_buf->buf;
   } else {
     buf.base = NULL;
     buf.len = 0;

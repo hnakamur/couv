@@ -19,47 +19,47 @@ static couv_udp_send_t *couv_alloc_udp_send(lua_State *L, uv_buf_t *bufs) {
 
 int couv_udp_create(lua_State *L) {
   uv_loop_t *loop;
-  couv_udp_t *lhandle;
+  couv_udp_t *w_handle;
   int r;
 
-  lhandle = lua_newuserdata(L, sizeof(couv_udp_t));
-  if (!lhandle)
+  w_handle = lua_newuserdata(L, sizeof(couv_udp_t));
+  if (!w_handle)
     return 0;
 
-  lhandle->is_yielded_for_recv = 0;
-  ngx_queue_init(&lhandle->input_queue);
+  w_handle->is_yielded_for_recv = 0;
+  ngx_queue_init(&w_handle->input_queue);
   loop = couv_loop(L);
-  r = uv_udp_init(loop, &lhandle->handle);
+  r = uv_udp_init(loop, &w_handle->handle);
   if (r < 0) {
     return luaL_error(L, couvL_uv_errname(uv_last_error(loop).code));
   }
-  lhandle->handle.data = L;
+  w_handle->handle.data = L;
   return 1;
 }
 
 int couv_udp_open(lua_State *L) {
   uv_loop_t *loop;
-  couv_udp_t *lhandle;
+  couv_udp_t *w_handle;
   uv_os_sock_t sock;
   int r;
 
   loop = couv_loop(L);
-  lhandle = lua_touserdata(L, 1);
+  w_handle = lua_touserdata(L, 1);
   sock = (uv_os_sock_t)luaL_checkinteger(L, 2);
-  r = uv_udp_open(&lhandle->handle, sock);
+  r = uv_udp_open(&w_handle->handle, sock);
   if (r < 0) {
     return luaL_error(L, couvL_uv_errname(uv_last_error(loop).code));
   }
-  lhandle->is_yielded_for_recv = 0;
-  lhandle->handle.data = L;
+  w_handle->is_yielded_for_recv = 0;
+  w_handle->handle.data = L;
   return 0;
 }
 
 int couv_udp_bind(lua_State *L) {
   uv_loop_t *loop = couv_loop(L);
-  couv_udp_t *lhandle = lua_touserdata(L, 1);
+  couv_udp_t *w_handle = lua_touserdata(L, 1);
   struct sockaddr_in *addr = couv_checkip4addr(L, 2);
-  int r = uv_udp_bind(&lhandle->handle, *addr, 0);
+  int r = uv_udp_bind(&w_handle->handle, *addr, 0);
   if (r < 0) {
     return luaL_error(L, couvL_uv_errname(uv_last_error(loop).code));
   }
@@ -84,19 +84,19 @@ static void udp_send_cb(uv_udp_send_t* req, int status) {
 int couv_udp_send(lua_State *L) {
   int r;
   uv_loop_t *loop;
-  couv_udp_t *lhandle;
+  couv_udp_t *w_handle;
   struct sockaddr_in *addr;
   uv_buf_t *bufs;
   size_t bufcnt;
   couv_udp_send_t *holder;
 
   loop = couv_loop(L);
-  lhandle = (couv_udp_t *)lua_touserdata(L, 1);
+  w_handle = (couv_udp_t *)lua_touserdata(L, 1);
   addr = couv_checkip4addr(L, 2);
 
   bufs = couv_checkbuforstrtable(L, 3, &bufcnt);
   holder = couv_alloc_udp_send(L, bufs);
-  r = uv_udp_send(&holder->req, &lhandle->handle, bufs, (int)bufcnt, *addr,
+  r = uv_udp_send(&holder->req, &w_handle->handle, bufs, (int)bufcnt, *addr,
       udp_send_cb);
   if (r < 0) {
     return luaL_error(L, couvL_uv_errname(uv_last_error(loop).code));
@@ -117,11 +117,11 @@ static uv_buf_t alloc_cb(uv_handle_t* handle, size_t suggested_size) {
 
 static void udp_recv_cb(uv_udp_t *handle, ssize_t nread, uv_buf_t buf,
     struct sockaddr* addr, unsigned flags) {
-  couv_udp_t *lhandle;
+  couv_udp_t *w_handle;
   lua_State *L;
   couv_udp_input_t *input;
 
-  lhandle = container_of(handle, couv_udp_t, handle);
+  w_handle = container_of(handle, couv_udp_t, handle);
   L = handle->data;
 
   input = couv_alloc(L, sizeof(couv_udp_input_t));
@@ -129,24 +129,24 @@ static void udp_recv_cb(uv_udp_t *handle, ssize_t nread, uv_buf_t buf,
     return;
 
   input->nread = nread;
-  input->lbuf.orig = buf.base;
-  input->lbuf.buf = buf;
+  input->w_buf.orig = buf.base;
+  input->w_buf.buf = buf;
   if (addr)
     input->addr.v4 = *(struct sockaddr_in *)addr;
-  ngx_queue_insert_tail(&lhandle->input_queue, (ngx_queue_t *)input);
+  ngx_queue_insert_tail(&w_handle->input_queue, (ngx_queue_t *)input);
 
-  if (lua_status(L) == LUA_YIELD && lhandle->is_yielded_for_recv) {
-    lhandle->is_yielded_for_recv = 0;
+  if (lua_status(L) == LUA_YIELD && w_handle->is_yielded_for_recv) {
+    w_handle->is_yielded_for_recv = 0;
     couv_resume(L, L, 0);
   }
 }
 
 int couv_udp_recv_start(lua_State *L) {
-  couv_udp_t *lhandle;
+  couv_udp_t *w_handle;
   int r;
 
-  lhandle = lua_touserdata(L, 1);
-  r = uv_udp_recv_start(&lhandle->handle, alloc_cb, udp_recv_cb);
+  w_handle = lua_touserdata(L, 1);
+  r = uv_udp_recv_start(&w_handle->handle, alloc_cb, udp_recv_cb);
   if (r < 0) {
     return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
   }
@@ -154,12 +154,12 @@ int couv_udp_recv_start(lua_State *L) {
 }
 
 int couv_udp_recv_stop(lua_State *L) {
-  couv_udp_t *lhandle;
+  couv_udp_t *w_handle;
   int r;
 
-  lhandle = lua_touserdata(L, 1);
-  lhandle->handle.data = L;
-  r = uv_udp_recv_stop(&lhandle->handle);
+  w_handle = lua_touserdata(L, 1);
+  w_handle->handle.data = L;
+  r = uv_udp_recv_stop(&w_handle->handle);
   if (r < 0) {
     return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
   }
@@ -167,25 +167,25 @@ int couv_udp_recv_stop(lua_State *L) {
 }
 
 int couv_udp_prim_recv(lua_State *L) {
-  couv_udp_t *lhandle;
+  couv_udp_t *w_handle;
   couv_udp_input_t *input;
-  couv_buf_t *lbuf;
+  couv_buf_t *w_buf;
   struct sockaddr_in *ip4addr;
 
-  lhandle = lua_touserdata(L, 1);
-  if (ngx_queue_empty(&lhandle->input_queue)) {
-    lhandle->is_yielded_for_recv = 1;
+  w_handle = lua_touserdata(L, 1);
+  if (ngx_queue_empty(&w_handle->input_queue)) {
+    w_handle->is_yielded_for_recv = 1;
     return lua_yield(L, 0);
   }
-  input = (couv_udp_input_t *)ngx_queue_head(&lhandle->input_queue);
+  input = (couv_udp_input_t *)ngx_queue_head(&w_handle->input_queue);
   ngx_queue_remove(input);
 
   lua_pushnumber(L, input->nread);
 
-  lbuf = lua_newuserdata(L, sizeof(couv_buf_t));
+  w_buf = lua_newuserdata(L, sizeof(couv_buf_t));
   luaL_getmetatable(L, COUV_BUFFER_MTBL_NAME);
   lua_setmetatable(L, -2);
-  *lbuf = input->lbuf;
+  *w_buf = input->w_buf;
 
   ip4addr = lua_newuserdata(L, sizeof(struct sockaddr_in));
   luaL_getmetatable(L, COUV_IP4ADDR_MTBL_NAME);

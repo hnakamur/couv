@@ -2,32 +2,32 @@
 
 static int tcp_create(lua_State *L) {
   uv_loop_t *loop;
-  couv_tcp_t *lhandle;
+  couv_tcp_t *w_handle;
   int r;
 
-  lhandle = lua_newuserdata(L, sizeof(couv_tcp_t));
-  if (!lhandle)
+  w_handle = lua_newuserdata(L, sizeof(couv_tcp_t));
+  if (!w_handle)
     return 0;
 
-  lhandle->is_yielded_for_read = 0;
-  ngx_queue_init(&lhandle->input_queue);
+  w_handle->is_yielded_for_read = 0;
+  ngx_queue_init(&w_handle->input_queue);
   loop = couv_loop(L);
-  r = uv_tcp_init(loop, &lhandle->handle);
+  r = uv_tcp_init(loop, &w_handle->handle);
   if (r < 0) {
     return luaL_error(L, couvL_uv_errname(uv_last_error(loop).code));
   }
-  lhandle->handle.data = L;
+  w_handle->handle.data = L;
   return 1;
 }
 
 static int tcp_bind(lua_State *L) {
-  couv_tcp_t *lhandle;
+  couv_tcp_t *w_handle;
   struct sockaddr_in *addr;
   int r;
 
-  lhandle = lua_touserdata(L, 1);
+  w_handle = lua_touserdata(L, 1);
   addr = couv_checkip4addr(L, 2);
-  r = uv_tcp_bind(&lhandle->handle, *addr);
+  r = uv_tcp_bind(&w_handle->handle, *addr);
   if (r < 0) {
     return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
   }
@@ -49,16 +49,16 @@ static void connect_cb(uv_connect_t *req, int status) {
 }
 
 static int tcp_connect(lua_State *L) {
-  couv_tcp_t *lhandle;
+  couv_tcp_t *w_handle;
   struct sockaddr_in *addr;
   uv_connect_t *req;
   int r;
 
-  lhandle  = (couv_tcp_t *)lua_touserdata(L, 1);
+  w_handle  = (couv_tcp_t *)lua_touserdata(L, 1);
   addr = couv_checkip4addr(L, 2);
 
   req = couv_alloc(L, sizeof(uv_connect_t));
-  r = uv_tcp_connect(req, &lhandle->handle, *addr, connect_cb);
+  r = uv_tcp_connect(req, &w_handle->handle, *addr, connect_cb);
   if (r < 0) {
     return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
   }

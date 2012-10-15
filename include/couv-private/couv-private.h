@@ -37,7 +37,7 @@ typedef struct couv_udp_input_s {
   ngx_queue_t *prev;
   ngx_queue_t *next;
   ssize_t nread;
-  couv_buf_t lbuf;
+  couv_buf_t w_buf;
   union {
     struct sockaddr_storage storage;
     struct sockaddr_in v4;
@@ -55,7 +55,7 @@ typedef struct couv_stream_input_s {
   ngx_queue_t *prev;
   ngx_queue_t *next;
   ssize_t nread;
-  couv_buf_t lbuf;
+  couv_buf_t w_buf;
 } couv_stream_input_t;
 
 typedef struct couv_stream_s {
