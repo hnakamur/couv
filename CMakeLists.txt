@@ -9,7 +9,8 @@ set(LIBS
   lib/yaluv.lua
 )
 install_lua_module(yaluv ${LIBS})
-file(COPY ${LIBS} DESTINATION .)
+execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
+  ${CMAKE_SOURCE_DIR}/lib/yaluv.lua ${CMAKE_BINARY_DIR}/yaluv.lua)
 
 add_subdirectory(deps/uv)
 include_directories(include include/yaluv-private deps/uv/include)
