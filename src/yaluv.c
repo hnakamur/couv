@@ -8,14 +8,14 @@ static void connection_cb(uv_stream_t *handle, int status) {
   L = handle->data;
   loop = handle->loop;
   lhandle = container_of(handle, luv_stream_t, handle);
-  if (status < 0) {
-    luaL_error(L, luvL_uv_errname(uv_last_error(loop).code));
-    return;
-  }
-
   luv_registry_get_for_ptr(L, ((char *)lhandle) + 1);
   luv_registry_get_for_ptr(L, lhandle);
-  lua_call(L, 1, 0);
+  if (status < 0) {
+    lua_pushstring(L, luvL_uv_errname(uv_last_error(loop).code));
+    lua_call(L, 2, 0);
+  } else {
+    lua_call(L, 1, 0);
+  }
 
 #if 0
 /* TODO: move this to where connection close. __gc? */
@@ -71,11 +71,9 @@ static uv_buf_t alloc_cb(uv_handle_t *handle, size_t suggested_size) {
 
 static void read_cb(uv_stream_t *handle, ssize_t nread, uv_buf_t buf) {
   luv_stream_t *lhandle;
-  uv_loop_t *loop;
   lua_State *L;
   luv_stream_input_t *input;
 
-  loop = handle->loop;
   L = handle->data;
   lhandle = container_of(handle, luv_stream_t, handle);
 

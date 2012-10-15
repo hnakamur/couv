@@ -36,15 +36,16 @@ static int tcp_bind(lua_State *L) {
 
 static void connect_cb(uv_connect_t *req, int status) {
   lua_State *L;
+  int nresults = 0;
 
   L = req->handle->data;
   if (status < 0) {
-    luaL_error(L, luvL_uv_errname(uv_last_error(luv_loop(L)).code));
-    return;
+    lua_pushstring(L, luvL_uv_errname(uv_last_error(luv_loop(L)).code));
+    nresults = 1;
   }
 
   luv_free(L, req);
-  luv_resume(L, L, 0);
+  luv_resume(L, L, nresults);
 }
 
 static int tcp_connect(lua_State *L) {

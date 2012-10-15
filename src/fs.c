@@ -274,8 +274,22 @@ static int fs_error(lua_State *L, uv_fs_t* req) {
     errcode = uv_last_error(req->loop).code;
   }
   errname = luvL_uv_errname(errcode);
-  luaL_error(L, errname);
-  return 0;
+  switch (req->fs_type) {
+  case UV_FS_OPEN:
+  case UV_FS_READ:
+  case UV_FS_WRITE:
+  case UV_FS_LSTAT:
+  case UV_FS_FSTAT:
+  case UV_FS_STAT:
+  case UV_FS_READLINK:
+  case UV_FS_READDIR:
+    lua_pushnil(L);
+    lua_pushstring(L, errname);
+    return 2;
+  default:
+    lua_pushstring(L, errname);
+    return 1;
+  }
 }
 
 static int fs_push_common_results(lua_State *L, uv_fs_t* req) {
@@ -388,7 +402,7 @@ static int fs_exists(lua_State *L) {
   } else {
     uv_fs_t *req = fs_alloc_req(L);
     int r = uv_fs_stat(loop, req, path, fs_exists_callback);
-    return r < 0 ? fs_error(L, req) : lua_yield(L, 0);
+    return r < 0 ? fs_push_exists_results(L, &req) : lua_yield(L, 0);
   }
 }
 

@@ -75,9 +75,10 @@ static void udp_send_cb(uv_udp_send_t* req, int status) {
   L = req->handle->data;
   luv_free(L, holder->bufs);
   if (status < 0) {
-    luaL_error(L, luvL_uv_errname(uv_last_error(loop).code));
-  }
-  luv_resume(L, L, 0);
+    lua_pushstring(L, luvL_uv_errname(uv_last_error(loop).code));
+    luv_resume(L, L, 1);
+  } else
+    luv_resume(L, L, 0);
 }
 
 int luv_udp_send(lua_State *L) {

@@ -12,7 +12,7 @@ exports['uv.fs_open.sync.OK'] = function(test)
   -- try to close twice
   local ok, err = pcall(uv.fs_close, fd)
   test.ok(not ok)
-  test.equal(err, 'EBADF')
+  test.equal(string.sub(err, -string.len('EBADF'), -1), 'EBADF')
 
   test.done()
 end
@@ -40,9 +40,6 @@ exports['uv.fs_open.async.OK'] = function(test)
   uv.run()
 end
 
---[[TODO: Investigate why this test fails on Lua 5.1.5 with:
-PANIC: unprotected error in call to Lua API (ENOENT)
-
 exports['uv.fs_open.async.ENOENT'] = function(test)
   local co = coroutine.create(function()
     local ok, err = pcall(function()
@@ -56,7 +53,6 @@ exports['uv.fs_open.async.ENOENT'] = function(test)
 
   uv.run()
 end
---]]
 
 exports['uv.fs_stat.sync'] = function(test)
   local stat = uv.fs_stat('Makefile')
