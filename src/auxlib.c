@@ -1,6 +1,6 @@
 #include "couv-private.h"
 
-void *luv_alloc(lua_State *L, size_t size) {
+void *couv_alloc(lua_State *L, size_t size) {
 #if 1
   void *p;
 
@@ -22,7 +22,7 @@ void *luv_alloc(lua_State *L, size_t size) {
 #endif
 }
 
-void luv_free(lua_State *L, void *ptr) {
+void couv_free(lua_State *L, void *ptr) {
 #if 1
   free(ptr);
 #else
@@ -33,13 +33,13 @@ void luv_free(lua_State *L, void *ptr) {
 #endif
 }
 
-int luvL_is_in_mainthread(lua_State *L) {
+int couvL_is_in_mainthread(lua_State *L) {
   int is_mainthread = lua_pushthread(L);
   lua_pop(L, 1);
   return is_mainthread;
 }
 
-int luvL_hasmetatablename(lua_State *L, int index, const char *tname) {
+int couvL_hasmetatablename(lua_State *L, int index, const char *tname) {
   if (lua_getmetatable(L, index)) {
     luaL_getmetatable(L, tname);
     if (lua_rawequal(L, -1, -2)) {
@@ -51,29 +51,29 @@ int luvL_hasmetatablename(lua_State *L, int index, const char *tname) {
   return 0;
 }
 
-#define LUV_UV_ERRNAME_GEN(val, name, s) case val: return #name;
+#define COUV_UV_ERRNAME_GEN(val, name, s) case val: return #name;
 
-const char *luvL_uv_errname(int uv_errcode) {
+const char *couvL_uv_errname(int uv_errcode) {
   switch (uv_errcode) {
-  UV_ERRNO_MAP(LUV_UV_ERRNAME_GEN)
+  UV_ERRNO_MAP(COUV_UV_ERRNAME_GEN)
   default: return "UNKNOWN";
   }
 }
 
-int luv_registry_set_for_ptr(lua_State *L, void *ptr, int index) {
+int couv_registry_set_for_ptr(lua_State *L, void *ptr, int index) {
   lua_pushlightuserdata(L, ptr);
   lua_pushvalue(L, index);
   lua_rawset(L, LUA_REGISTRYINDEX);
   return 0;
 }
 
-int luv_registry_get_for_ptr(lua_State *L, void *ptr) {
+int couv_registry_get_for_ptr(lua_State *L, void *ptr) {
   lua_pushlightuserdata(L, ptr);
   lua_rawget(L, LUA_REGISTRYINDEX);
   return 1;
 }
 
-int luv_registry_delete_for_ptr(lua_State *L, void *ptr) {
+int couv_registry_delete_for_ptr(lua_State *L, void *ptr) {
   lua_pushlightuserdata(L, ptr);
   lua_pushnil(L);
   lua_rawset(L, LUA_REGISTRYINDEX);

@@ -2,34 +2,34 @@
 
 static int tcp_create(lua_State *L) {
   uv_loop_t *loop;
-  luv_tcp_t *lhandle;
+  couv_tcp_t *lhandle;
   int r;
 
-  lhandle = lua_newuserdata(L, sizeof(luv_tcp_t));
+  lhandle = lua_newuserdata(L, sizeof(couv_tcp_t));
   if (!lhandle)
     return 0;
 
   lhandle->is_yielded_for_read = 0;
   ngx_queue_init(&lhandle->input_queue);
-  loop = luv_loop(L);
+  loop = couv_loop(L);
   r = uv_tcp_init(loop, &lhandle->handle);
   if (r < 0) {
-    return luaL_error(L, luvL_uv_errname(uv_last_error(loop).code));
+    return luaL_error(L, couvL_uv_errname(uv_last_error(loop).code));
   }
   lhandle->handle.data = L;
   return 1;
 }
 
 static int tcp_bind(lua_State *L) {
-  luv_tcp_t *lhandle;
+  couv_tcp_t *lhandle;
   struct sockaddr_in *addr;
   int r;
 
   lhandle = lua_touserdata(L, 1);
-  addr = luv_checkip4addr(L, 2);
+  addr = couv_checkip4addr(L, 2);
   r = uv_tcp_bind(&lhandle->handle, *addr);
   if (r < 0) {
-    return luaL_error(L, luvL_uv_errname(uv_last_error(luv_loop(L)).code));
+    return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
   }
   return 0;
 }
@@ -40,27 +40,27 @@ static void connect_cb(uv_connect_t *req, int status) {
 
   L = req->handle->data;
   if (status < 0) {
-    lua_pushstring(L, luvL_uv_errname(uv_last_error(luv_loop(L)).code));
+    lua_pushstring(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
     nresults = 1;
   }
 
-  luv_free(L, req);
-  luv_resume(L, L, nresults);
+  couv_free(L, req);
+  couv_resume(L, L, nresults);
 }
 
 static int tcp_connect(lua_State *L) {
-  luv_tcp_t *lhandle;
+  couv_tcp_t *lhandle;
   struct sockaddr_in *addr;
   uv_connect_t *req;
   int r;
 
-  lhandle  = (luv_tcp_t *)lua_touserdata(L, 1);
-  addr = luv_checkip4addr(L, 2);
+  lhandle  = (couv_tcp_t *)lua_touserdata(L, 1);
+  addr = couv_checkip4addr(L, 2);
 
-  req = luv_alloc(L, sizeof(uv_connect_t));
+  req = couv_alloc(L, sizeof(uv_connect_t));
   r = uv_tcp_connect(req, &lhandle->handle, *addr, connect_cb);
   if (r < 0) {
-    return luaL_error(L, luvL_uv_errname(uv_last_error(luv_loop(L)).code));
+    return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
   }
   return lua_yield(L, 0);
 }

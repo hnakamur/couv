@@ -14,61 +14,61 @@ extern "C" {
 #include "couv.h"
 #include "ngx-queue.h"
 
-typedef void *(*luv_alloc_t)(lua_State *L, size_t nbytes);
-typedef void (*luv_free_t)(lua_State *L, void *ptr);
+typedef void *(*couv_alloc_t)(lua_State *L, size_t nbytes);
+typedef void (*couv_free_t)(lua_State *L, void *ptr);
 
-typedef struct luv_buf_mem_s luv_buf_mem_t;
-struct luv_buf_mem_s {
+typedef struct couv_buf_mem_s couv_buf_mem_t;
+struct couv_buf_mem_s {
   int ref_cnt;
-  luv_free_t free;
+  couv_free_t free;
   char mem[1];
 };
 
-void *luv_buf_mem_alloc(lua_State *L, size_t nbytes);
-void luv_buf_mem_retain(lua_State *L, void *ptr);
-void luv_buf_mem_release(lua_State *L, void *ptr);
+void *couv_buf_mem_alloc(lua_State *L, size_t nbytes);
+void couv_buf_mem_retain(lua_State *L, void *ptr);
+void couv_buf_mem_release(lua_State *L, void *ptr);
 
-typedef struct luv_buf_s {
+typedef struct couv_buf_s {
   void *orig;
   uv_buf_t buf;
-} luv_buf_t;
+} couv_buf_t;
 
-typedef struct luv_udp_input_s {
+typedef struct couv_udp_input_s {
   ngx_queue_t *prev;
   ngx_queue_t *next;
   ssize_t nread;
-  luv_buf_t lbuf;
+  couv_buf_t lbuf;
   union {
     struct sockaddr_storage storage;
     struct sockaddr_in v4;
     struct sockaddr_in6 v6;
   } addr;
-} luv_udp_input_t;
+} couv_udp_input_t;
 
-typedef struct luv_udp_s {
+typedef struct couv_udp_s {
   uv_udp_t handle;
   int is_yielded_for_recv;
   ngx_queue_t input_queue;
-} luv_udp_t;
+} couv_udp_t;
 
-typedef struct luv_stream_input_s {
+typedef struct couv_stream_input_s {
   ngx_queue_t *prev;
   ngx_queue_t *next;
   ssize_t nread;
-  luv_buf_t lbuf;
-} luv_stream_input_t;
+  couv_buf_t lbuf;
+} couv_stream_input_t;
 
-typedef struct luv_stream_s {
+typedef struct couv_stream_s {
   uv_stream_t handle;
   int is_yielded_for_read;
   ngx_queue_t input_queue;
-} luv_stream_t;
+} couv_stream_t;
 
-typedef struct luv_tcp_s {
+typedef struct couv_tcp_s {
   uv_tcp_t handle;
   int is_yielded_for_read;
   ngx_queue_t input_queue;
-} luv_tcp_t;
+} couv_tcp_t;
 
 
 /*
@@ -76,18 +76,18 @@ typedef struct luv_tcp_s {
  */
 int luaopen_couv_buffer(lua_State *L);
 
-#define LUV_BUFFER_MTBL_NAME "luv.Buffer"
-#define luv_checkbuf(L, index) \
-    luaL_checkudata(L, index, LUV_BUFFER_MTBL_NAME)
-uv_buf_t luv_tobuforstr(lua_State *L, int index);
-uv_buf_t luv_checkbuforstr(lua_State *L, int index);
+#define COUV_BUFFER_MTBL_NAME "couv.Buffer"
+#define couv_checkbuf(L, index) \
+    luaL_checkudata(L, index, COUV_BUFFER_MTBL_NAME)
+uv_buf_t couv_tobuforstr(lua_State *L, int index);
+uv_buf_t couv_checkbuforstr(lua_State *L, int index);
 
-/* NOTE: you must free the result buffers array with luv_free. */
-uv_buf_t *luv_checkbuforstrtable(lua_State *L, int index, size_t *buffers_cnt);
+/* NOTE: you must free the result buffers array with couv_free. */
+uv_buf_t *couv_checkbuforstrtable(lua_State *L, int index, size_t *buffers_cnt);
 
-void luv_dbg_print_bufs(const char *header, uv_buf_t *bufs, size_t bufcnt);
+void couv_dbg_print_bufs(const char *header, uv_buf_t *bufs, size_t bufcnt);
 
-#define luv_argcheckindex(L, arg_index, index, min, max) \
+#define couv_argcheckindex(L, arg_index, index, min, max) \
   luaL_argcheck(L, (int)min <= index && index <= (int)max, arg_index, \
       "index out of range");
 
@@ -96,24 +96,24 @@ void luv_dbg_print_bufs(const char *header, uv_buf_t *bufs, size_t bufcnt);
  * loop
  */
 int luaopen_couv_loop(lua_State *L);
-uv_loop_t *luv_loop(lua_State *L);
+uv_loop_t *couv_loop(lua_State *L);
 
-#define LUV_LOOP_REGISTRY_KEY "luv.loop"
+#define COUV_LOOP_REGISTRY_KEY "couv.loop"
 
 /*
  * ipaddr
  */
-#define LUV_IP4ADDR_MTBL_NAME "luv.Ip4addr"
-#define luv_checkip4addr(L, index) \
-  (struct sockaddr_in *)luaL_checkudata(L, index, LUV_IP4ADDR_MTBL_NAME)
+#define COUV_IP4ADDR_MTBL_NAME "couv.Ip4addr"
+#define couv_checkip4addr(L, index) \
+  (struct sockaddr_in *)luaL_checkudata(L, index, COUV_IP4ADDR_MTBL_NAME)
 
-#define LUV_IP6ADDR_MTBL_NAME "luv.Ip6addr"
-#define luv_checkip6addr(L, index) \
-  (struct sockaddr_in6 *)luaL_checkudata(L, index, LUV_IP6ADDR_MTBL_NAME)
+#define COUV_IP6ADDR_MTBL_NAME "couv.Ip6addr"
+#define couv_checkip6addr(L, index) \
+  (struct sockaddr_in6 *)luaL_checkudata(L, index, COUV_IP6ADDR_MTBL_NAME)
 
 int luaopen_couv_ipaddr(lua_State *L);
 
-int luv_dbg_print_ip4addr(const char *header, struct sockaddr_in *addr);
+int couv_dbg_print_ip4addr(const char *header, struct sockaddr_in *addr);
 
 /*
  * fs
@@ -134,30 +134,30 @@ int luaopen_couv_udp(lua_State *L);
  * auxlib
  */
 #if LUA_VERSION_NUM == 502
-#define luv_resume(L, from, nargs) lua_resume(L, from, nargs)
+#define couv_resume(L, from, nargs) lua_resume(L, from, nargs)
 #elif LUA_VERSION_NUM == 501
-#define luv_resume(L, from, nargs) lua_resume(L, nargs)
+#define couv_resume(L, from, nargs) lua_resume(L, nargs)
 #else
 #error
 #endif
 
-void *luv_alloc(lua_State *L, size_t size);
-void luv_free(lua_State *L, void *ptr);
+void *couv_alloc(lua_State *L, size_t size);
+void couv_free(lua_State *L, void *ptr);
 
-int luvL_is_in_mainthread(lua_State *L);
-int luvL_hasmetatablename(lua_State *L, int index, const char *tname);
-const char *luvL_uv_errname(int uv_errcode);
+int couvL_is_in_mainthread(lua_State *L);
+int couvL_hasmetatablename(lua_State *L, int index, const char *tname);
+const char *couvL_uv_errname(int uv_errcode);
 
-int luv_registry_set_for_ptr(lua_State *L, void *ptr, int index);
-int luv_registry_get_for_ptr(lua_State *L, void *ptr);
-int luv_registry_delete_for_ptr(lua_State *L, void *ptr);
+int couv_registry_set_for_ptr(lua_State *L, void *ptr, int index);
+int couv_registry_get_for_ptr(lua_State *L, void *ptr);
+int couv_registry_delete_for_ptr(lua_State *L, void *ptr);
 
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
 #define container_of(ptr, type, member) \
   ((type *) ((char *) (ptr) - offsetof(type, member)))
 
-#define luvL_SET_FIELD(L, name, type, val) \
-  lua_push##type(L, val);                  \
+#define couvL_SET_FIELD(L, name, type, val) \
+  lua_push##type(L, val);                   \
   lua_setfield(L, -2, #name)
 
 #ifdef __cplusplus
