@@ -178,7 +178,12 @@ static void close_cb(uv_handle_t *handle) {
   lua_State *L;
 
   L = handle->data;
-  luv_resume(L, L, 0);
+
+  /* If we close handle from another thread, the thread for handle is not
+   * yielded, so no need to resume.
+   */
+  if (lua_status(L) == LUA_YIELD)
+    luv_resume(L, L, 0);
 }
 
 static int luv_close(lua_State *L) {

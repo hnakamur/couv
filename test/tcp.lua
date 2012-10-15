@@ -2,7 +2,6 @@ local uv = require 'yaluv'
 
 local exports = {}
 
---[[
 exports['tcp.echo'] = function(test)
   local server = coroutine.create(function()
     local ok, err = pcall(function()
@@ -70,6 +69,5 @@ exports['tcp.echo'] = function(test)
   uv.run()
   test.done()
 end
---]]
 
 return exports
