@@ -52,17 +52,6 @@ static int couv_accept(lua_State *L) {
   return 0;
 }
 
-static uv_buf_t alloc_cb(uv_handle_t *handle, size_t suggested_size) {
-  lua_State *L;
-  void *p;
-
-  L = handle->data;
-  p = couv_buf_mem_alloc(L, suggested_size);
-  if (!p)
-    return uv_buf_init(NULL, 0);
-  return uv_buf_init(p, suggested_size);
-}
-
 static void read_cb(uv_stream_t *handle, ssize_t nread, uv_buf_t buf) {
   couv_stream_t *w_handle;
   lua_State *L;
@@ -91,7 +80,7 @@ static int couv_read_start(lua_State *L) {
   int r;
 
   w_handle = lua_touserdata(L, 1);
-  r = uv_read_start(&w_handle->handle, alloc_cb, read_cb);
+  r = uv_read_start(&w_handle->handle, couv_buf_alloc_cb, read_cb);
   if (r < 0) {
     luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
   }

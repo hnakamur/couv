@@ -16,6 +16,7 @@ add_subdirectory(deps/uv)
 include_directories(include include/couv-private deps/uv/include)
 set(SRCS
   src/auxlib.c
+  src/buf_alloc.c
   src/buffer.c
   src/fs.c
   src/ipaddr.c

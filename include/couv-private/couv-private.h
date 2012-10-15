@@ -28,6 +28,8 @@ void *couv_buf_mem_alloc(lua_State *L, size_t nbytes);
 void couv_buf_mem_retain(lua_State *L, void *ptr);
 void couv_buf_mem_release(lua_State *L, void *ptr);
 
+uv_buf_t couv_buf_alloc_cb(uv_handle_t* handle, size_t suggested_size);
+
 typedef struct couv_buf_s {
   void *orig;
   uv_buf_t buf;
