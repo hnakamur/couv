@@ -1,4 +1,4 @@
-#include "yaluv-private.h"
+#include "couv-private.h"
 
 
 int luv_dbg_print_ip4addr(const char *header, struct sockaddr_in *addr) {
@@ -96,7 +96,7 @@ static const struct luaL_Reg ipaddr_functions[] = {
   { NULL, NULL }
 };
 
-int luaopen_yaluv_ipaddr(lua_State *L) {
+int luaopen_couv_ipaddr(lua_State *L) {
   luaL_register(L, NULL, ipaddr_functions);
 
   luaL_newmetatable(L, LUV_IP4ADDR_MTBL_NAME);

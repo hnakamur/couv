@@ -1,4 +1,4 @@
-#include "yaluv-private.h"
+#include "couv-private.h"
 
 static void connection_cb(uv_stream_t *handle, int status) {
   uv_loop_t *loop;
@@ -205,17 +205,17 @@ static const struct luaL_Reg functions[] = {
   { NULL, NULL }
 };
 
-int luaopen_yaluv_native(lua_State *L) {
+int luaopen_couv_native(lua_State *L) {
   lua_createtable(L, 0, ARRAY_SIZE(functions) - 1);
   luaL_register(L, NULL, functions);
 
-  luaopen_yaluv_loop(L);
+  luaopen_couv_loop(L);
 
-  luaopen_yaluv_buffer(L);
-  luaopen_yaluv_fs(L);
-  luaopen_yaluv_ipaddr(L);
-  luaopen_yaluv_tcp(L);
-  luaopen_yaluv_udp(L);
+  luaopen_couv_buffer(L);
+  luaopen_couv_fs(L);
+  luaopen_couv_ipaddr(L);
+  luaopen_couv_tcp(L);
+  luaopen_couv_udp(L);
 
   return 1;
 }

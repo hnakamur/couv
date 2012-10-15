@@ -1,4 +1,4 @@
-#include "yaluv-private.h"
+#include "couv-private.h"
 
 typedef struct luv_udp_send_s {
   uv_buf_t *bufs;
@@ -208,7 +208,7 @@ static const struct luaL_Reg udp_functions[] = {
   { NULL, NULL }
 };
 
-int luaopen_yaluv_udp(lua_State *L) {
+int luaopen_couv_udp(lua_State *L) {
   luaL_register(L, NULL, udp_functions);
 
   return 1;

@@ -1,4 +1,4 @@
-local uv = require 'yaluv'
+local uv = require 'couv'
 local Buffer = uv.Buffer
 
 local exports = {}

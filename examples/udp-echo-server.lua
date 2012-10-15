@@ -1,4 +1,4 @@
-local uv = require 'yaluv'
+local uv = require 'couv'
 
 local co = coroutine.create(function()
   local ok, err = pcall(function()

@@ -1,4 +1,4 @@
-local native = require 'yaluv_native'
+local native = require 'couv_native'
 
 local uv = {}
 

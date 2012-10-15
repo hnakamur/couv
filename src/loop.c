@@ -1,4 +1,4 @@
-#include "yaluv-private.h"
+#include "couv-private.h"
 
 static int luv_default_loop(lua_State *L) {
   lua_pushlightuserdata(L, uv_default_loop());
@@ -51,7 +51,7 @@ static const struct luaL_Reg loop_functions[] = {
   { NULL, NULL }
 };
 
-int luaopen_yaluv_loop(lua_State *L) {
+int luaopen_couv_loop(lua_State *L) {
   luv_default_loop(L);
   luv_set_loop(L);
 

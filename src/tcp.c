@@ -1,4 +1,4 @@
-#include "yaluv-private.h"
+#include "couv-private.h"
 
 static int tcp_create(lua_State *L) {
   uv_loop_t *loop;
@@ -73,7 +73,7 @@ static const struct luaL_Reg tcp_functions[] = {
   { NULL, NULL }
 };
 
-int luaopen_yaluv_tcp(lua_State *L) {
+int luaopen_couv_tcp(lua_State *L) {
   luaL_register(L, NULL, tcp_functions);
   return 1;
 }

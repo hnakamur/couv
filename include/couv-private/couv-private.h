@@ -1,5 +1,5 @@
-#ifndef _YALUV_PRIVATE_H
-#define _YALUV_PRIVATE_H
+#ifndef _COUV_PRIVATE_H
+#define _COUV_PRIVATE_H
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -11,7 +11,7 @@ extern "C" {
 #include <lauxlib.h>
 #include <uv.h>
 
-#include "yaluv.h"
+#include "couv.h"
 #include "ngx-queue.h"
 
 typedef void *(*luv_alloc_t)(lua_State *L, size_t nbytes);
@@ -74,7 +74,7 @@ typedef struct luv_tcp_s {
 /*
  * buffer
  */
-int luaopen_yaluv_buffer(lua_State *L);
+int luaopen_couv_buffer(lua_State *L);
 
 #define LUV_BUFFER_MTBL_NAME "luv.Buffer"
 #define luv_checkbuf(L, index) \
@@ -95,7 +95,7 @@ void luv_dbg_print_bufs(const char *header, uv_buf_t *bufs, size_t bufcnt);
 /*
  * loop
  */
-int luaopen_yaluv_loop(lua_State *L);
+int luaopen_couv_loop(lua_State *L);
 uv_loop_t *luv_loop(lua_State *L);
 
 #define LUV_LOOP_REGISTRY_KEY "luv.loop"
@@ -111,24 +111,24 @@ uv_loop_t *luv_loop(lua_State *L);
 #define luv_checkip6addr(L, index) \
   (struct sockaddr_in6 *)luaL_checkudata(L, index, LUV_IP6ADDR_MTBL_NAME)
 
-int luaopen_yaluv_ipaddr(lua_State *L);
+int luaopen_couv_ipaddr(lua_State *L);
 
 int luv_dbg_print_ip4addr(const char *header, struct sockaddr_in *addr);
 
 /*
  * fs
  */
-int luaopen_yaluv_fs(lua_State *L);
+int luaopen_couv_fs(lua_State *L);
 
 /*
  * tcp
  */
-int luaopen_yaluv_tcp(lua_State *L);
+int luaopen_couv_tcp(lua_State *L);
 
 /*
  * udp
  */
-int luaopen_yaluv_udp(lua_State *L);
+int luaopen_couv_udp(lua_State *L);
 
 /*
  * auxlib
@@ -163,4 +163,4 @@ int luv_registry_delete_for_ptr(lua_State *L, void *ptr);
 #ifdef __cplusplus
 }
 #endif
-#endif /* _YALUV_PRIVATE_H */
+#endif /* _COUV_PRIVATE_H */

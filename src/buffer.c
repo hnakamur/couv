@@ -1,4 +1,4 @@
-#include "yaluv-private.h"
+#include "couv-private.h"
 
 #define FLOAT_SIZE ((int)sizeof(float))
 #define DOUBLE_SIZE ((int)sizeof(double))
@@ -685,7 +685,7 @@ static const struct luaL_Reg buffer_functions[] = {
   { NULL, NULL }
 };
 
-int luaopen_yaluv_buffer(lua_State *L) {
+int luaopen_couv_buffer(lua_State *L) {
   luaL_newmetatable(L, LUV_BUFFER_MTBL_NAME);
   luaL_register(L, NULL, buffer_methods);
   lua_pop(L, 1);

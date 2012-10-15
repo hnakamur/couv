@@ -1,9 +1,9 @@
 return {
-  name = "yaluv",
+  name = "couv",
   version = "0.0.1",
-  description = "Yet Another Lua UV wrapper library",
+  description = "Coroutine based libuv wrapper for lua",
   author = "Hiroaki Nakamura <hnakamur@gmail.com>",
-  main = "yaluv.so",
+  main = "init.lua",
   dependencies = {
   }
 }

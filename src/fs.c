@@ -1,4 +1,4 @@
-#include "yaluv-private.h"
+#include "couv-private.h"
 
 #define LUV_FS_STAT_MTBL_NAME "luv.fs.Stat"
 #define luv_checkfsstat(L, index) \
@@ -747,7 +747,7 @@ static const struct luaL_Reg fs_functions[] = {
   { NULL, NULL }
 };
 
-int luaopen_yaluv_fs(lua_State *L) {
+int luaopen_couv_fs(lua_State *L) {
   luaL_register(L, NULL, fs_functions);
 
   luaL_newmetatable(L, LUV_FS_STAT_MTBL_NAME);
