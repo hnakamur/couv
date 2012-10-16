@@ -7,6 +7,7 @@ uv.Buffer = native.Buffer
 uv.accept = native.accept
 uv.listen = native.listen
 uv.close = native.close
+uv.hrtime = native.hrtime
 uv.read_start = native.read_start
 uv.read_stop = native.read_stop
 uv.write = native.write

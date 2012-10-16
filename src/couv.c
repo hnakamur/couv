@@ -183,10 +183,16 @@ static int couv_close(lua_State *L) {
   return lua_yield(L, 0);
 }
 
+static int couv_hrtime(lua_State *L) {
+  lua_pushnumber(L, uv_hrtime() / 1e9);
+  return 1;
+}
+
 static const struct luaL_Reg functions[] = {
   { "accept", couv_accept },
   { "listen", couv_listen },
   { "close", couv_close },
+  { "hrtime", couv_hrtime },
   { "prim_read", couv_prim_read },
   { "read_start", couv_read_start },
   { "read_stop", couv_read_stop },
