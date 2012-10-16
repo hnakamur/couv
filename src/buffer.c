@@ -6,12 +6,11 @@
 void *couv_buf_mem_alloc(lua_State *L, size_t nbytes) {
   couv_buf_mem_t *mem;
 
-  mem = couv_alloc(L, sizeof(int) + sizeof(couv_free_t) + nbytes);
+  mem = couv_alloc(L, offsetof(couv_buf_mem_t, mem) + nbytes);
   if (!mem)
     return NULL;
 
   mem->ref_cnt = 1;
-  mem->free = couv_free;
   return mem->mem;
 }
 
@@ -27,7 +26,7 @@ void couv_buf_mem_release(lua_State *L, void *ptr) {
 
   mem = container_of(ptr, couv_buf_mem_t, mem);
   if (!--mem->ref_cnt) {
-    mem->free(L, mem);
+    couv_free(L, mem);
   }
 }
 

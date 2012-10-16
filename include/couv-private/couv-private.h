@@ -20,7 +20,6 @@ typedef void (*couv_free_t)(lua_State *L, void *ptr);
 typedef struct couv_buf_mem_s couv_buf_mem_t;
 struct couv_buf_mem_s {
   int ref_cnt;
-  couv_free_t free;
   char mem[1];
 };
 
