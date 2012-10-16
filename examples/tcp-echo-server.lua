@@ -14,9 +14,7 @@ local co = coroutine.create(function()
       repeat
         nread, buf = uv.read(stream)
         if nread and nread > 0 then
-          print("tcp_server read msg=", buf:toString(1, nread))
           uv.write(stream, {buf:toString(1, nread)})
-          print("tcp_server write msg=", buf:toString(1, nread))
         end
       until nread and nread == 0
 

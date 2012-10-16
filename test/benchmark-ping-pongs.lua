@@ -4,7 +4,7 @@ local MSG = "PING\n"
 
 local startTime = uv.hrtime()
 
-local co = coroutine.create(function()
+coroutine.wrap(function()
   local ok, err = pcall(function()
     local handle = uv.tcp_create()
     uv.tcp_bind(handle, uv.ip4addr('0.0.0.0', 0))
@@ -29,7 +29,6 @@ local co = coroutine.create(function()
   if not ok then
     print("err=", err)
   end
-end)
-coroutine.resume(co)
+end)()
 
 uv.run()
