@@ -333,18 +333,23 @@ static int fs_push_common_results(lua_State *L, uv_fs_t* req) {
 }
 
 static void fs_common_callback(uv_fs_t* req) {
+  couv_fs_t *w_req;
   lua_State *L = req->data;
   int nresults;
   nresults = fs_push_common_results(L, req);
+  w_req = container_of(req, couv_fs_t, req);
+  luaL_unref(L, LUA_REGISTRYINDEX, w_req->threadref);
   couv_resume(L, L, nresults);
 }
 
+/* alloc req and anchor coroutine. */
 static uv_fs_t *fs_alloc_req(lua_State *L) {
-  uv_fs_t *req = couv_alloc(L, sizeof(uv_fs_t));
+  couv_fs_t *req = couv_alloc(L, sizeof(couv_fs_t));
   if (!req)
     return NULL;
-  req->data = L;
-  return req;
+  req->req.data = L;
+  req->threadref = luaL_ref(L, LUA_REGISTRYINDEX);
+  return &req->req;
 }
 
 static int fs_chown(lua_State *L) {
@@ -352,7 +357,7 @@ static int fs_chown(lua_State *L) {
   const char *path = luaL_checkstring(L, 1);
   int uid = luaL_checkint(L, 2);
   int gid = luaL_checkint(L, 3);
-  if (couvL_is_in_mainthread(L)) {
+  if (couvL_is_mainthread(L)) {
     uv_fs_t req;
     uv_fs_chown(loop, &req, path, uid, gid, NULL);
     return fs_push_common_results(L, &req);
@@ -367,7 +372,7 @@ static int fs_chmod(lua_State *L) {
   uv_loop_t *loop = couv_loop(L);
   const char *path = luaL_checkstring(L, 1);
   int mode = fs_checkmode(L, 2);
-  if (couvL_is_in_mainthread(L)) {
+  if (couvL_is_mainthread(L)) {
     uv_fs_t req;
     uv_fs_chmod(loop, &req, path, mode, NULL);
     return fs_push_common_results(L, &req);
@@ -381,7 +386,7 @@ static int fs_chmod(lua_State *L) {
 static int fs_close(lua_State *L) {
   uv_loop_t *loop = couv_loop(L);
   int fd = luaL_checkint(L, 1);
-  if (couvL_is_in_mainthread(L)) {
+  if (couvL_is_mainthread(L)) {
     uv_fs_t req;
     uv_fs_close(loop, &req, fd, NULL);
     return fs_push_common_results(L, &req);
@@ -395,7 +400,7 @@ static int fs_close(lua_State *L) {
 static int fs_exists(lua_State *L) {
   uv_loop_t *loop = couv_loop(L);
   const char *path = luaL_checkstring(L, 1);
-  if (couvL_is_in_mainthread(L)) {
+  if (couvL_is_mainthread(L)) {
     uv_fs_t req;
     uv_fs_stat(loop, &req, path, NULL);
     return fs_push_exists_results(L, &req);
@@ -410,7 +415,7 @@ static int fs_fchmod(lua_State *L) {
   uv_loop_t *loop = couv_loop(L);
   int fd = luaL_checkint(L, 1);
   int mode = fs_checkmode(L, 2);
-  if (couvL_is_in_mainthread(L)) {
+  if (couvL_is_mainthread(L)) {
     uv_fs_t req;
     uv_fs_fchmod(loop, &req, fd, mode, NULL);
     return fs_push_common_results(L, &req);
@@ -426,7 +431,7 @@ static int fs_fchown(lua_State *L) {
   int fd = luaL_checkint(L, 1);
   int uid = luaL_checkint(L, 2);
   int gid = luaL_checkint(L, 3);
-  if (couvL_is_in_mainthread(L)) {
+  if (couvL_is_mainthread(L)) {
     uv_fs_t req;
     uv_fs_fchown(loop, &req, fd, uid, gid, NULL);
     return fs_push_common_results(L, &req);
@@ -440,7 +445,7 @@ static int fs_fchown(lua_State *L) {
 static int fs_fstat(lua_State *L) {
   uv_loop_t *loop = couv_loop(L);
   int fd = luaL_checkint(L, 1);
-  if (couvL_is_in_mainthread(L)) {
+  if (couvL_is_mainthread(L)) {
     uv_fs_t req;
     uv_fs_fstat(loop, &req, fd, NULL);
     return fs_push_common_results(L, &req);
@@ -454,7 +459,7 @@ static int fs_fstat(lua_State *L) {
 static int fs_fsync(lua_State *L) {
   uv_loop_t *loop = couv_loop(L);
   int fd = luaL_checkint(L, 1);
-  if (couvL_is_in_mainthread(L)) {
+  if (couvL_is_mainthread(L)) {
     uv_fs_t req;
     uv_fs_fsync(loop, &req, fd, NULL);
     return fs_push_common_results(L, &req);
@@ -469,7 +474,7 @@ static int fs_ftruncate(lua_State *L) {
   uv_loop_t *loop = couv_loop(L);
   int fd = luaL_checkint(L, 1);
   long len = luaL_optlong(L, 2, 0);
-  if (couvL_is_in_mainthread(L)) {
+  if (couvL_is_mainthread(L)) {
     uv_fs_t req;
     uv_fs_ftruncate(loop, &req, fd, len, NULL);
     return fs_push_common_results(L, &req);
@@ -485,7 +490,7 @@ static int fs_futime(lua_State *L) {
   int fd = luaL_checkint(L, 1);
   double atime = luaL_checknumber(L, 2);
   double mtime = luaL_checknumber(L, 3);
-  if (couvL_is_in_mainthread(L)) {
+  if (couvL_is_mainthread(L)) {
     uv_fs_t req;
     uv_fs_futime(loop, &req, fd, atime, mtime, NULL);
     return fs_push_common_results(L, &req);
@@ -500,7 +505,7 @@ static int fs_link(lua_State *L) {
   uv_loop_t *loop = couv_loop(L);
   const char *path = luaL_checkstring(L, 1);
   const char *new_path = luaL_checkstring(L, 2);
-  if (couvL_is_in_mainthread(L)) {
+  if (couvL_is_mainthread(L)) {
     uv_fs_t req;
     uv_fs_link(loop, &req, path, new_path, NULL);
     return fs_push_common_results(L, &req);
@@ -514,7 +519,7 @@ static int fs_link(lua_State *L) {
 static int fs_lstat(lua_State *L) {
   uv_loop_t *loop = couv_loop(L);
   const char *path = luaL_checkstring(L, 1);
-  if (couvL_is_in_mainthread(L)) {
+  if (couvL_is_mainthread(L)) {
     uv_fs_t req;
     uv_fs_lstat(loop, &req, path, NULL);
     return fs_push_common_results(L, &req);
@@ -529,7 +534,7 @@ static int fs_mkdir(lua_State *L) {
   uv_loop_t *loop = couv_loop(L);
   const char *path = luaL_checkstring(L, 1);
   int mode = fs_optmode(L, 2, 0777);
-  if (couvL_is_in_mainthread(L)) {
+  if (couvL_is_mainthread(L)) {
     uv_fs_t req;
     uv_fs_mkdir(loop, &req, path, mode, NULL);
     return fs_push_common_results(L, &req);
@@ -545,7 +550,7 @@ static int fs_open(lua_State *L) {
   const char *path = luaL_checkstring(L, 1);
   int flags = fs_checkflags(L, 2);
   int mode = fs_optmode(L, 3, 0666);
-  if (couvL_is_in_mainthread(L)) {
+  if (couvL_is_mainthread(L)) {
     uv_fs_t req;
     uv_fs_open(loop, &req, path, flags, mode, NULL);
     return fs_push_common_results(L, &req);
@@ -559,7 +564,7 @@ static int fs_open(lua_State *L) {
 static int fs_readlink(lua_State *L) {
   uv_loop_t *loop = couv_loop(L);
   const char *path = luaL_checkstring(L, 1);
-  if (couvL_is_in_mainthread(L)) {
+  if (couvL_is_mainthread(L)) {
     uv_fs_t req;
     uv_fs_readlink(loop, &req, path, NULL);
     return fs_push_common_results(L, &req);
@@ -574,7 +579,7 @@ static int fs_rename(lua_State *L) {
   uv_loop_t *loop = couv_loop(L);
   const char *old_path = luaL_checkstring(L, 1);
   const char *new_path = luaL_checkstring(L, 2);
-  if (couvL_is_in_mainthread(L)) {
+  if (couvL_is_mainthread(L)) {
     uv_fs_t req;
     uv_fs_rename(loop, &req, old_path, new_path, NULL);
     return fs_push_common_results(L, &req);
@@ -588,7 +593,7 @@ static int fs_rename(lua_State *L) {
 static int fs_rmdir(lua_State *L) {
   uv_loop_t *loop = couv_loop(L);
   const char *path = luaL_checkstring(L, 1);
-  if (couvL_is_in_mainthread(L)) {
+  if (couvL_is_mainthread(L)) {
     uv_fs_t req;
     uv_fs_rmdir(loop, &req, path, NULL);
     return fs_push_common_results(L, &req);
@@ -602,7 +607,7 @@ static int fs_rmdir(lua_State *L) {
 static int fs_stat(lua_State *L) {
   uv_loop_t *loop = couv_loop(L);
   const char *path = luaL_checkstring(L, 1);
-  if (couvL_is_in_mainthread(L)) {
+  if (couvL_is_mainthread(L)) {
     uv_fs_t req;
     uv_fs_stat(loop, &req, path, NULL);
     return fs_push_common_results(L, &req);
@@ -617,7 +622,7 @@ static int fs_symlink(lua_State *L) {
   uv_loop_t *loop = couv_loop(L);
   const char *path = luaL_checkstring(L, 1);
   const char *new_path = luaL_checkstring(L, 2);
-  if (couvL_is_in_mainthread(L)) {
+  if (couvL_is_mainthread(L)) {
     uv_fs_t req;
     uv_fs_symlink(loop, &req, path, new_path, 0, NULL);
     return fs_push_common_results(L, &req);
@@ -631,7 +636,7 @@ static int fs_symlink(lua_State *L) {
 static int fs_unlink(lua_State *L) {
   uv_loop_t *loop = couv_loop(L);
   const char *path = luaL_checkstring(L, 1);
-  if (couvL_is_in_mainthread(L)) {
+  if (couvL_is_mainthread(L)) {
     uv_fs_t req;
     uv_fs_unlink(loop, &req, path, NULL);
     return fs_push_common_results(L, &req);
@@ -647,7 +652,7 @@ static int fs_utime(lua_State *L) {
   const char *path = luaL_checkstring(L, 1);
   double atime = luaL_checknumber(L, 2);
   double mtime = luaL_checknumber(L, 3);
-  if (couvL_is_in_mainthread(L)) {
+  if (couvL_is_mainthread(L)) {
     uv_fs_t req;
     uv_fs_utime(loop, &req, path, atime, mtime, NULL);
     return fs_push_common_results(L, &req);
@@ -668,7 +673,7 @@ static int fs_read(lua_State *L) {
   long file_offset = luaL_optlong(L, 5, -1);
   couv_argcheckindex(L, 3, buf_pos, 1, buf->len);
   couv_argcheckindex(L, 4, length, 0, buf->len - buf_pos + 1);
-  if (couvL_is_in_mainthread(L)) {
+  if (couvL_is_mainthread(L)) {
     uv_fs_t req;
     uv_fs_read(loop, &req, fd, (void *)&p[buf_pos - 1], length, file_offset,
         NULL);
@@ -684,7 +689,7 @@ static int fs_read(lua_State *L) {
 static int fs_readdir(lua_State *L) {
   uv_loop_t *loop = couv_loop(L);
   const char *path = luaL_checkstring(L, 1);
-  if (couvL_is_in_mainthread(L)) {
+  if (couvL_is_mainthread(L)) {
     uv_fs_t req;
     uv_fs_readdir(loop, &req, path, 0, NULL);
     return fs_push_common_results(L, &req);
@@ -706,7 +711,7 @@ static int fs_write(lua_State *L) {
   long file_offset = luaL_optlong(L, 5, -1);
   couv_argcheckindex(L, 3, buf_pos, 1, (int)buflen);
   couv_argcheckindex(L, 4, length, 0, (int)buflen - buf_pos + 1);
-  if (couvL_is_in_mainthread(L)) {
+  if (couvL_is_mainthread(L)) {
     uv_fs_t req;
     uv_fs_write(loop, &req, fd, (void *)&p[buf_pos - 1], length, file_offset,
         NULL);
