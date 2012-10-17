@@ -30,5 +30,5 @@ set_property(SOURCE ${SRCS} PROPERTY
   COMPILE_DEFINITIONS _XOPEN_SOURCE=500 _GNU_SOURCE)
 set_property(SOURCE ${SRCS} PROPERTY
   COMPILE_FLAGS "--std=c89 -pedantic -Wall -Wextra -Wno-unused-parameter")
-add_checkit_test(test/*.lua)
+add_checkit_test(test/test-*.lua)
 target_link_libraries(couv_native uv pthread rt)

@@ -4,7 +4,7 @@ local Buffer = uv.Buffer
 local exports = {}
 
 exports['uv.fs_open.sync.OK'] = function(test)
-  local fd = uv.fs_open('../test/fs.lua', 'r', '0666')
+  local fd = uv.fs_open('../test/test-fs.lua', 'r', '0666')
   test.is_number(fd)
 
   uv.fs_close(fd)
@@ -28,7 +28,7 @@ end
 
 exports['uv.fs_open.async.OK'] = function(test)
   local co = coroutine.create(function()
-    local fd = uv.fs_open('../test/fs.lua', 'r', '0666')
+    local fd = uv.fs_open('../test/test-fs.lua', 'r', '0666')
     test.is_number(fd)
 
     uv.fs_close(fd)

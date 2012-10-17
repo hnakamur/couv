@@ -1,17 +1,13 @@
 #include "couv-private.h"
 
 static void connection_cb(uv_stream_t *handle, int status) {
-  uv_loop_t *loop;
   lua_State *L;
-  couv_stream_t *w_handle;
 
   L = handle->data;
-  loop = handle->loop;
-  w_handle = container_of(handle, couv_stream_t, handle);
-  couv_registry_get_for_ptr(L, ((char *)w_handle) + 1);
-  couv_registry_get_for_ptr(L, w_handle);
+  couv_registry_get_for_ptr(L, handle);
+  lua_pushlightuserdata(L, handle);
   if (status < 0) {
-    lua_pushstring(L, couvL_uv_errname(uv_last_error(loop).code));
+    lua_pushstring(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
     lua_call(L, 2, 0);
   } else {
     lua_call(L, 1, 0);
@@ -20,18 +16,15 @@ static void connection_cb(uv_stream_t *handle, int status) {
 
 static int couv_listen(lua_State *L) {
   int r;
-  couv_stream_t *w_handle;
+  uv_stream_t *handle;
   int backlog;
 
-  w_handle = lua_touserdata(L, 1);
+  handle = lua_touserdata(L, 1);
   backlog = luaL_checkint(L, 2);
-
   luaL_checktype(L, 3, LUA_TFUNCTION);
+  couv_registry_set_for_ptr(L, handle, 3);
 
-  couv_registry_set_for_ptr(L, w_handle, 1);
-  couv_registry_set_for_ptr(L, ((char *)w_handle) + 1, 3);
-
-  r = uv_listen(&w_handle->handle, backlog, connection_cb);
+  r = uv_listen(handle, backlog, connection_cb);
   if (r < 0) {
     luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
   }
@@ -39,13 +32,13 @@ static int couv_listen(lua_State *L) {
 }
 
 static int couv_accept(lua_State *L) {
-  couv_stream_t *server;
-  couv_stream_t *client;
+  uv_stream_t *server;
+  uv_stream_t *client;
   int r;
 
   server = lua_touserdata(L, 1);
   client = lua_touserdata(L, 2);
-  r = uv_accept(&server->handle, &client->handle);
+  r = uv_accept(server, client);
   if (r < 0) {
     luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
   }
@@ -76,11 +69,11 @@ static void read_cb(uv_stream_t *handle, ssize_t nread, uv_buf_t buf) {
 }
 
 static int couv_read_start(lua_State *L) {
-  couv_stream_t *w_handle;
+  uv_stream_t *handle;
   int r;
 
-  w_handle = lua_touserdata(L, 1);
-  r = uv_read_start(&w_handle->handle, couv_buf_alloc_cb, read_cb);
+  handle = lua_touserdata(L, 1);
+  r = uv_read_start(handle, couv_buf_alloc_cb, read_cb);
   if (r < 0) {
     luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
   }
@@ -88,11 +81,11 @@ static int couv_read_start(lua_State *L) {
 }
 
 static int couv_read_stop(lua_State *L) {
-  couv_stream_t *w_handle;
+  uv_stream_t *handle;
   int r;
 
-  w_handle = lua_touserdata(L, 1);
-  r = uv_read_stop(&w_handle->handle);
+  handle = lua_touserdata(L, 1);
+  r = uv_read_stop(handle);
   if (r < 0) {
     luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
   }
@@ -100,11 +93,13 @@ static int couv_read_stop(lua_State *L) {
 }
 
 static int couv_prim_read(lua_State *L) {
+  uv_stream_t *handle;
   couv_stream_t *w_handle;
   couv_stream_input_t *input;
   couv_buf_t *w_buf;
 
-  w_handle = lua_touserdata(L, 1);
+  handle = lua_touserdata(L, 1);
+  w_handle = container_of(handle, couv_stream_t, handle);
 
   if (ngx_queue_empty(&w_handle->input_queue)) {
     w_handle->is_yielded_for_read = 1;
@@ -144,18 +139,18 @@ static void write_cb(uv_write_t *req, int status) {
 
 static int couv_write(lua_State *L) {
   uv_write_t *req;
-  couv_stream_t *w_handle;
+  uv_stream_t *handle;
   uv_buf_t *bufs;
   size_t bufcnt;
   int r;
 
-  w_handle = lua_touserdata(L, 1);
+  handle = lua_touserdata(L, 1);
   bufs = couv_checkbuforstrtable(L, 2, &bufcnt);
 
   req = couv_alloc(L, sizeof(uv_write_t));
   req->data = bufs;
 
-  r = uv_write(req, &w_handle->handle, bufs, (int)bufcnt, write_cb);
+  r = uv_write(req, handle, bufs, (int)bufcnt, write_cb);
   if (r < 0) {
     luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
   }
@@ -167,6 +162,18 @@ static void close_cb(uv_handle_t *handle) {
   lua_State *L;
 
   L = handle->data;
+
+  switch (handle->type) {
+  case UV_TCP:
+    couv_free_tcp_handle(L, (uv_tcp_t *)handle);
+    break;
+  case UV_UDP:
+    couv_free_udp_handle(L, (uv_udp_t *)handle);
+    break;
+  default:
+    /* do nothing */
+    break;
+  }
 
   /* If we close handle from another thread, the thread for handle is not
    * yielded, so no need to resume.
