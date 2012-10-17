@@ -121,6 +121,11 @@ int couv_dbg_print_ip4addr(const char *header, struct sockaddr_in *addr);
  */
 int luaopen_couv_fs(lua_State *L);
 
+typedef struct couv_fs_s {
+  int threadref;
+  uv_fs_t req;
+} couv_fs_t;
+
 /*
  * tcp
  */
@@ -145,7 +150,9 @@ int luaopen_couv_udp(lua_State *L);
 void *couv_alloc(lua_State *L, size_t size);
 void couv_free(lua_State *L, void *ptr);
 
-int couvL_is_in_mainthread(lua_State *L);
+/* return 1 if mainthread, 0 otherwise and push coroutine. */
+int couvL_is_mainthread(lua_State *L);
+
 int couvL_hasmetatablename(lua_State *L, int index, const char *tname);
 const char *couvL_uv_errname(int uv_errcode);
 

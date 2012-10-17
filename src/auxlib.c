@@ -33,9 +33,10 @@ void couv_free(lua_State *L, void *ptr) {
 #endif
 }
 
-int couvL_is_in_mainthread(lua_State *L) {
+int couvL_is_mainthread(lua_State *L) {
   int is_mainthread = lua_pushthread(L);
-  lua_pop(L, 1);
+  if (is_mainthread)
+    lua_pop(L, 1);
   return is_mainthread;
 }
 
