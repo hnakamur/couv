@@ -44,7 +44,7 @@ local function asyncBench(path)
     local count = NUM_ASYNC_REQS
     local before = uv.hrtime()
     for j = 1, i do
-      coroutine.wrap(function()
+      local co = coroutine.create(function()
         local ok, err = pcall(function()
           while count > 0 do
             uv.fs_stat(path)
@@ -54,7 +54,8 @@ local function asyncBench(path)
         if not ok then
           error(err)
         end
-      end)()
+      end)
+      coroutine.resume(co)
     end
     uv.run()
     local after = uv.hrtime()
