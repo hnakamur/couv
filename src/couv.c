@@ -209,7 +209,7 @@ static const struct luaL_Reg functions[] = {
 
 int luaopen_couv_native(lua_State *L) {
   lua_createtable(L, 0, ARRAY_SIZE(functions) - 1);
-  luaL_register(L, NULL, functions);
+  couvL_setfuncs(L, functions, 0);
 
   luaopen_couv_loop(L);
 

@@ -62,7 +62,7 @@ uv_buf_t *couv_checkbuforstrtable(lua_State *L, int index, size_t *bufcnt) {
   uv_buf_t *buffers;
 
   luaL_checktype(L, index, LUA_TTABLE);
-  n = lua_objlen(L, index);
+  n = couv_rawlen(L, index);
   buffers = couv_alloc(L, n * sizeof(uv_buf_t));
   if (!buffers)
     return NULL;
@@ -686,11 +686,11 @@ static const struct luaL_Reg buffer_functions[] = {
 
 int luaopen_couv_buffer(lua_State *L) {
   luaL_newmetatable(L, COUV_BUFFER_MTBL_NAME);
-  luaL_register(L, NULL, buffer_methods);
+  couvL_setfuncs(L, buffer_methods, 0);
   lua_pop(L, 1);
 
   lua_createtable(L, 0, ARRAY_SIZE(buffer_functions) - 1);
-  luaL_register(L, NULL, buffer_functions);
+  couvL_setfuncs(L, buffer_functions, 0);
   lua_setfield(L, -2, "Buffer");
   return 1;
 }

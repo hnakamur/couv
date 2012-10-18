@@ -55,6 +55,6 @@ int luaopen_couv_loop(lua_State *L) {
   couv_default_loop(L);
   couv_set_loop(L);
 
-  luaL_register(L, NULL, loop_functions);
+  couvL_setfuncs(L, loop_functions, 0);
   return 1;
 }

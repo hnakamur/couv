@@ -100,6 +100,6 @@ static const struct luaL_Reg tcp_functions[] = {
 };
 
 int luaopen_couv_tcp(lua_State *L) {
-  luaL_register(L, NULL, tcp_functions);
+  couvL_setfuncs(L, tcp_functions, 0);
   return 1;
 }

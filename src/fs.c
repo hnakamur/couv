@@ -806,10 +806,10 @@ static const struct luaL_Reg fs_functions[] = {
 };
 
 int luaopen_couv_fs(lua_State *L) {
-  luaL_register(L, NULL, fs_functions);
+  couvL_setfuncs(L, fs_functions, 0);
 
   luaL_newmetatable(L, COUV_FS_STAT_MTBL_NAME);
-  luaL_register(L, NULL, fs_stat_methods);
+  couvL_setfuncs(L, fs_stat_methods, 0);
   lua_setfield(L, -1, "__index");
   return 1;
 }

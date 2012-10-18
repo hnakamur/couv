@@ -164,8 +164,12 @@ int luaopen_couv_udp(lua_State *L);
  * auxlib
  */
 #if LUA_VERSION_NUM == 502
+#define couv_rawlen lua_rawlen
+#define couvL_setfuncs(L, l, nup) luaL_setfuncs(L, l, nup)
 #define couv_resume(L, from, nargs) lua_resume(L, from, nargs)
 #elif LUA_VERSION_NUM == 501
+#define couv_rawlen lua_objlen
+void couvL_setfuncs(lua_State *L, const luaL_Reg *l, int nup);
 #define couv_resume(L, from, nargs) lua_resume(L, nargs)
 #else
 #error

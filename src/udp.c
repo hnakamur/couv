@@ -227,7 +227,7 @@ static const struct luaL_Reg udp_functions[] = {
 };
 
 int luaopen_couv_udp(lua_State *L) {
-  luaL_register(L, NULL, udp_functions);
+  couvL_setfuncs(L, udp_functions, 0);
 
   return 1;
 }

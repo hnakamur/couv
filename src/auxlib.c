@@ -81,3 +81,11 @@ int couv_registry_delete_for_ptr(lua_State *L, void *ptr) {
   return 0;
 }
 
+#if LUA_VERSION_NUM == 501
+void couvL_setfuncs(lua_State *L, const luaL_Reg *l, int nup) {
+  for (; l->name; ++l) {
+    lua_pushcfunction(L, l->func);
+    lua_setfield(L, -2, l->name);
+  }
+}
+#endif

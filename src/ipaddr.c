@@ -97,14 +97,14 @@ static const struct luaL_Reg ipaddr_functions[] = {
 };
 
 int luaopen_couv_ipaddr(lua_State *L) {
-  luaL_register(L, NULL, ipaddr_functions);
+  couvL_setfuncs(L, ipaddr_functions, 0);
 
   luaL_newmetatable(L, COUV_IP4ADDR_MTBL_NAME);
-  luaL_register(L, NULL, ip4addr_methods);
+  couvL_setfuncs(L, ip4addr_methods, 0);
   lua_setfield(L, -1, "__index");
 
   luaL_newmetatable(L, COUV_IP6ADDR_MTBL_NAME);
-  luaL_register(L, NULL, ip6addr_methods);
+  couvL_setfuncs(L, ip6addr_methods, 0);
   lua_setfield(L, -1, "__index");
   return 1;
 }
