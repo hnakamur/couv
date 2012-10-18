@@ -31,4 +31,10 @@ set_property(SOURCE ${SRCS} PROPERTY
 set_property(SOURCE ${SRCS} PROPERTY
   COMPILE_FLAGS "--std=c89 -pedantic -Wall -Wextra -Wno-unused-parameter")
 add_checkit_test(test/test-*.lua)
+if(${APPLE})
+target_link_libraries(couv_native uv pthread)
+set_property(TARGET couv_native PROPERTY
+  LINK_FLAGS "-bundle -undefined dynamic_lookup")
+else(${APPLE})
 target_link_libraries(couv_native uv pthread rt)
+endif(${APPLE})
