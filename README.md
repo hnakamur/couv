@@ -1,13 +1,21 @@
 # couv - Coroutine based libuv wrapper library for lua
 
+## Goals
 * lua and native library (not a new language or a framework)
-* written in C89 (neither C++ nor C99)
-* to be supported on Linux, OSX, and Windows (tested on only Linux right now)
-* works on the latest LuaJIT. I would like to support Lua 5.1 + Coco and Lua 5.2 too in the future.
-* not object-oriented APIs right now. maybe change to object-oriented APIs in the futre if I find a simple way to implement inheritance of userdata with metatable.
-* embeddable in another event loop (not tested yet).
-* use coroutine yield/resume for non-blocking I/O.
+* use coroutine yield/resume for non-blocking I/O (to avoid callback hell).
   Thanks for this idea to https://github.com/grrrwaaa/luauv
+* to be supported on Linux, OSX, and Windows.
+* works on the LuaJIT 2.0, Lua 5.2.1.
+* embeddable in another event loop (not tested yet).
+
+couv APIs are not object-oriented right now. Maybe I change to object-oriented APIs in the future if I find a simple way to implement inheritance of userdata with metatable and perfomance loss is negligible.
+
+## Rules
+* must be written in C89 (neither C++ nor C99) for MSVC compatibility.
+
+## Tested environments
+* luajit-2.0.0-beta11 on Ubuntu 12.04.1 x86_64
+* homebrew lua 5.2.1 on Mac OS X Mountain Lion
 
 ## Build and test
 
@@ -23,7 +31,6 @@ make test
 MIT License
 
 ## TODO
-* Add fixed size buffer memory allocator with a memory pool.
 * Add benchmarks.
 * Implement more C/lua functions for functions in libuv.
-* Decide wether or not we switch to object-oriented APIs in lua side.
+* Decide whether or not we switch to object-oriented APIs in lua side.
