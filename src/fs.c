@@ -126,6 +126,7 @@ static int fs_stat_size(lua_State *L) {
   return 1;
 }
 
+#ifndef _WIN32
 static int fs_stat_blksize(lua_State *L) {
   uv_statbuf_t *s = couv_checkfsstat(L, 1);
   lua_pushnumber(L, s->st_blksize);
@@ -137,6 +138,7 @@ static int fs_stat_blocks(lua_State *L) {
   lua_pushnumber(L, s->st_blocks);
   return 1;
 }
+#endif
 
 static int fs_stat_atime(lua_State *L) {
   uv_statbuf_t *s = couv_checkfsstat(L, 1);
@@ -186,6 +188,7 @@ static int fs_stat_is_fifo(lua_State *L) {
   return 1;
 }
 
+#ifndef _WIN32
 static int fs_stat_is_symbolic_link(lua_State *L) {
   uv_statbuf_t *s = couv_checkfsstat(L, 1);
   lua_pushboolean(L, S_ISLNK(s->st_mode));
@@ -197,6 +200,7 @@ static int fs_stat_is_socket(lua_State *L) {
   lua_pushboolean(L, S_ISSOCK(s->st_mode));
   return 1;
 }
+#endif
 
 static int fs_stat_permission (lua_State *L) {
   char permission_buf[16];
@@ -215,8 +219,10 @@ static const struct luaL_Reg fs_stat_methods[] = {
   { "uid", fs_stat_uid },
   { "rdev", fs_stat_rdev },
   { "size", fs_stat_size },
+#ifndef _WIN32
   { "blksize", fs_stat_blksize },
   { "blocks", fs_stat_blocks },
+#endif
   { "atime", fs_stat_atime },
   { "mtime", fs_stat_mtime },
   { "ctime", fs_stat_ctime },
@@ -225,8 +231,10 @@ static const struct luaL_Reg fs_stat_methods[] = {
   { "isCharacterDevice", fs_stat_is_character_device },
   { "isBlockDevice", fs_stat_is_block_device },
   { "isFIFO", fs_stat_is_fifo },
+#ifndef _WIN32
   { "isSymbolicLink", fs_stat_is_symbolic_link },
   { "isSocket", fs_stat_is_socket },
+#endif
   { "permission", fs_stat_permission },
   { NULL, NULL }
 };

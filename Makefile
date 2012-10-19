@@ -3,8 +3,8 @@ SYS := $(shell gcc -dumpmachine)
 HEADERS= \
   include/couv.h \
   include/couv-private/couv-private.h \
-#  include/couv-private/couv-unix.h \
-#  include/couv-private/couv-win.h \
+  include/couv-private/couv-unix.h \
+  include/couv-private/couv-win.h \
 
 OBJS= \
   src/auxlib.o \
@@ -17,25 +17,37 @@ OBJS= \
   src/udp.o \
   src/couv.o \
 
-TARGET=couv_native.so
+TARGET_BASENAME=couv_native
 LIBUV_DIR=deps/uv
 LIBUV_A=$(LIBUV_DIR)/libuv.a
+
+LUA_INC_DIR=/usr/local/include
+LUA_LIB_DIR=/usr/local/lib
 
 CC=gcc
 
 CFLAGS += -g
-CFLAGS += --std=c89 -pedantic -Wall -Wextra -Wno-unused-parameter
-CFLAGS += -Iinclude -Iinclude/couv-private -I$(LIBUV_DIR)/include
+CFLAGS += -Iinclude -Iinclude/couv-private \
+	  -I$(LIBUV_DIR)/include -I$(LUA_INC_DIR)
 
-LDFLAGS += -L$(LIBUV_DIR) -luv -llua
+LDFLAGS += -L$(LIBUV_DIR) -luv -L$(LUA_LIB_DIR) -llua
 
 LUA_E=
 
 ifneq (, $(findstring linux, $(SYS)))
+TARGET=$(TARGET_BASENAME).so
+LUA_E=luajit
+CFLAGS += --std=c89 -pedantic -Wall -Wextra -Wno-unused-parameter
 else ifneq (, $(findstring darwin, $(SYS)))
+TARGET=$(TARGET_BASENAME).so
 LUA_E=lua
+CFLAGS += --std=c89 -pedantic -Wall -Wextra -Wno-unused-parameter
 LDFLAGS += -lpthread -bundle -undefined dynamic_lookup -framework CoreServices
 else ifneq (, $(findstring mingw, $(SYS)))
+TARGET=$(TARGET_BASENAME).dll
+LUA_E=lua
+CFLAGS += --std=gnu89 -D_WIN32_WINNT=0x0600
+LDFLAGS += -shared -Wl,--export-all-symbols -lws2_32 -lpsapi -liphlpapi
 endif
 
 all: $(TARGET)
