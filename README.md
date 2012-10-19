@@ -20,9 +20,6 @@ couv APIs are not object-oriented right now. Maybe I change to object-oriented A
 ## Build and test
 
 ```
-mkdir out
-cd out
-cmake ..
 make
 make test
 ```
