@@ -1,3 +1,4 @@
 tags
-out
+src/*.o
+*.so
 .*.swp

@@ -9,7 +9,7 @@ extern "C" {
 #include <sys/socket.h>
 
 #include <lauxlib.h>
-#include <uv.h>
+#include "uv.h"
 
 #include "couv.h"
 #include "ngx-queue.h"
