@@ -20,6 +20,7 @@ OBJS= \
 TARGET=couv_native.so
 LIBUV_DIR=deps/uv
 LIBUV_A=$(LIBUV_DIR)/libuv.a
+LIBUV_MAKE_OPT=
 
 CC=gcc
 
@@ -32,6 +33,10 @@ LDFLAGS += -L$(LIBUV_DIR) -luv -llua
 LUA_E=
 
 ifneq (, $(findstring linux, $(SYS)))
+LUA_E=luajit
+LIBUV_MAKE_OPT += CFLAGS=-fPIC
+CFLAGS += -fPIC -D_XOPEN_SOURCE=500 -D_GNU_SOURCE
+LDFLAGS += -shared -Wl,-soname,$(TARGET) -lpthread -lrt -lm
 else ifneq (, $(findstring darwin, $(SYS)))
 LUA_E=lua
 LDFLAGS += -lpthread -bundle -undefined dynamic_lookup -framework CoreServices
@@ -44,7 +49,7 @@ $(TARGET): $(LIBUV_A) $(OBJS)
 	$(CC) -o $(TARGET) $(OBJS) $(LDFLAGS)
 
 $(LIBUV_A):
-	cd $(LIBUV_DIR) && make
+	cd $(LIBUV_DIR) && make $(LIBUV_MAKE_OPT)
 
 .c.o:
 	$(CC) $(CFLAGS) -c $< -o $@
