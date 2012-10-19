@@ -1,4 +1,6 @@
 tags
 src/*.o
 *.so
+*.dll
+*~
 .*.swp

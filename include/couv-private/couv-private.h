@@ -6,7 +6,12 @@ extern "C" {
 
 #include <stdlib.h>
 #include <string.h>
-#include <sys/socket.h>
+
+#ifdef _WIN32
+#include "couv-win.h"
+#else
+#include "couv-unix.h"
+#endif
 
 #include <lauxlib.h>
 #include "uv.h"
