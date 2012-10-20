@@ -105,11 +105,78 @@ static int pipe_open(lua_State *L) {
   return 0;
 }
 
+static void read2_cb(uv_pipe_t *pipe, ssize_t nread, uv_buf_t buf,
+    uv_handle_type pending) {
+  couv_pipe_t *w_pipe;
+  lua_State *L;
+  couv_pipe_input_t *input;
+
+  L = pipe->data;
+  w_pipe = container_of(pipe, couv_pipe_t, handle);
+
+  input = couv_alloc(L, sizeof(couv_pipe_input_t));
+  if (!input)
+    return;
+
+  input->nread = nread;
+  input->w_buf.orig = buf.base;
+  input->w_buf.buf = buf;
+  input->pending = pending;
+  ngx_queue_insert_tail(&w_pipe->input_queue, (ngx_queue_t *)input);
+
+  if (lua_status(L) == LUA_YIELD && w_pipe->is_yielded_for_read) {
+    w_pipe->is_yielded_for_read = 0;
+    couv_resume(L, L, 0);
+  }
+}
+
+static int couv_read2_start(lua_State *L) {
+  uv_stream_t *handle;
+  int r;
+
+  handle = lua_touserdata(L, 1);
+  r = uv_read2_start(handle, couv_buf_alloc_cb, read2_cb);
+  if (r < 0) {
+    luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+  }
+  return 0;
+}
+
+static int couv_prim_read2(lua_State *L) {
+  uv_stream_t *handle;
+  couv_stream_t *w_handle;
+  couv_pipe_input_t *input;
+  couv_buf_t *w_buf;
+
+  handle = lua_touserdata(L, 1);
+  w_handle = container_of(handle, couv_stream_t, handle);
+
+  if (ngx_queue_empty(&w_handle->input_queue)) {
+    w_handle->is_yielded_for_read = 1;
+    return lua_yield(L, 0);
+  }
+  input = (couv_pipe_input_t *)ngx_queue_head(&w_handle->input_queue);
+  ngx_queue_remove(input);
+
+  lua_pushnumber(L, input->nread);
+
+  w_buf = lua_newuserdata(L, sizeof(couv_buf_t));
+  luaL_getmetatable(L, COUV_BUFFER_MTBL_NAME);
+  lua_setmetatable(L, -2);
+  *w_buf = input->w_buf;
+
+  lua_pushnumber(L, input->pending);
+
+  return 3;
+}
+
 static const struct luaL_Reg pipe_functions[] = {
   { "pipe_bind", pipe_bind },
   { "pipe_connect", pipe_connect },
   { "pipe_create", pipe_create },
   { "pipe_open", pipe_open },
+  { "prim_read2", couv_prim_read2 },
+  { "read2_start", couv_read2_start },
   { NULL, NULL }
 };
 

@@ -11,9 +11,11 @@ OBJS= \
   src/buf_alloc.o \
   src/buffer.o \
   src/fs.o \
+  src/handle.o \
   src/ipaddr.o \
   src/loop.o \
   src/pipe.o \
+  src/stream.o \
   src/tcp.o \
   src/udp.o \
   src/couv.o \
@@ -71,9 +73,11 @@ src/buf_alloc.o: src/buf_alloc.c $(HEADERS)
 src/buffer.o: src/buffer.c $(HEADERS)
 src/couv.o: src/couv.c $(HEADERS)
 src/fs.o: src/fs.c $(HEADERS)
+src/handle.o: src/handle.c $(HEADERS)
 src/ipaddr.o: src/ipaddr.c $(HEADERS)
 src/loop.o: src/loop.c $(HEADERS)
 src/pipe.o: src/pipe.c $(HEADERS)
+src/stream.o: src/stream.c $(HEADERS)
 src/tcp.o: src/tcp.c $(HEADERS)
 src/udp.o: src/udp.c $(HEADERS)
 

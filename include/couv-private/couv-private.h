@@ -171,34 +171,31 @@ typedef struct couv_fs_s {
 } couv_fs_t;
 
 
-/*
- * pipe
- */
+int luaopen_couv_handle(lua_State *L);
 int luaopen_couv_pipe(lua_State *L);
-
-/*
- * tcp
- */
+int luaopen_couv_stream(lua_State *L);
 int luaopen_couv_tcp(lua_State *L);
-
-/*
- * udp
- */
 int luaopen_couv_udp(lua_State *L);
 
 /*
  * auxlib
  */
 #if LUA_VERSION_NUM == 502
+
 #define couv_rawlen lua_rawlen
 #define couvL_setfuncs(L, l, nup) luaL_setfuncs(L, l, nup)
 #define couv_resume(L, from, nargs) lua_resume(L, from, nargs)
+
 #elif LUA_VERSION_NUM == 501
+
 #define couv_rawlen lua_objlen
 void couvL_setfuncs(lua_State *L, const luaL_Reg *l, int nup);
 #define couv_resume(L, from, nargs) lua_resume(L, nargs)
+
 #else
+
 #error
+
 #endif
 
 void *couv_alloc(lua_State *L, size_t size);
