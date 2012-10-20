@@ -61,13 +61,13 @@ uv.fs_exists = native.fs_exists
 
 local function error0(err)
   if err then
-    error(err)
+    error(err, 2)
   end
 end
 
 local function error1(ret, err)
   if err then
-    error(err)
+    error(err, 2)
   end
   return ret
 end
