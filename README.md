@@ -16,6 +16,7 @@ couv APIs are not object-oriented right now. Maybe I change to object-oriented A
 ## Tested environments
 * luajit-2.0.0-beta11 on Ubuntu 12.04.1 x86_64
 * homebrew lua 5.2.1 on Mac OS X Mountain Lion
+* luajit-2.0.0-beta11 on Windows XP Pro SP3 + MinGW
 
 ## Build and test
 
