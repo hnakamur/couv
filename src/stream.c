@@ -45,6 +45,22 @@ static int couv_accept(lua_State *L) {
   return 0;
 }
 
+static int couv_is_readable(lua_State *L) {
+  uv_stream_t *handle;
+
+  handle = lua_touserdata(L, 1);
+  lua_pushboolean(L, uv_is_readable(handle));
+  return 1;
+}
+
+static int couv_is_writable(lua_State *L) {
+  uv_stream_t *handle;
+
+  handle = lua_touserdata(L, 1);
+  lua_pushboolean(L, uv_is_writable(handle));
+  return 1;
+}
+
 static void read_cb(uv_stream_t *handle, ssize_t nread, uv_buf_t buf) {
   couv_stream_t *w_handle;
   lua_State *L;
@@ -118,6 +134,38 @@ static int couv_read_stop(lua_State *L) {
   return 0;
 }
 
+
+static void shutdown_cb(uv_shutdown_t *req, int status) {
+  lua_State *L;
+  uv_stream_t *handle;
+
+  handle = req->handle;
+  L = handle->data;
+
+  if (status < 0) {
+    couv_free(L, req);
+    luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    return;
+  }
+
+  couv_free(L, req);
+  couv_resume(L, L, 0);
+}
+
+static int couv_shutdown(lua_State *L) {
+  uv_stream_t *handle;
+  uv_shutdown_t* req;
+  int r;
+
+  handle = lua_touserdata(L, 1);
+  req = couv_alloc(L, sizeof(uv_shutdown_t));
+  r = uv_shutdown(req, handle, shutdown_cb);
+  if (r < 0) {
+    luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+  }
+  return lua_yield(L, 0);
+}
+
 static void write_cb(uv_write_t *req, int status) {
   lua_State *L;
   uv_stream_t *handle;
@@ -181,10 +229,13 @@ static int couv_write2(lua_State *L) {
 
 static const struct luaL_Reg stream_functions[] = {
   { "accept", couv_accept },
+  { "is_readable", couv_is_readable },
+  { "is_writable", couv_is_writable },
   { "listen", couv_listen },
   { "prim_read", couv_prim_read },
   { "read_start", couv_read_start },
   { "read_stop", couv_read_stop },
+  { "shutdown", couv_shutdown },
   { "write", couv_write },
   { "write2", couv_write2 },
   { NULL, NULL }

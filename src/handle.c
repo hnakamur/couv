@@ -33,8 +33,44 @@ static int couv_close(lua_State *L) {
   return lua_yield(L, 0);
 }
 
+static int couv_is_active(lua_State *L) {
+  uv_handle_t *handle;
+
+  handle = lua_touserdata(L, 1);
+  lua_pushboolean(L, uv_is_active(handle));
+  return 1;
+}
+
+static int couv_is_closing(lua_State *L) {
+  uv_handle_t *handle;
+
+  handle = lua_touserdata(L, 1);
+  lua_pushboolean(L, uv_is_closing(handle));
+  return 1;
+}
+
+static int couv_ref(lua_State *L) {
+  uv_handle_t *handle;
+
+  handle = lua_touserdata(L, 1);
+  uv_ref(handle);
+  return 0;
+}
+
+static int couv_unref(lua_State *L) {
+  uv_handle_t *handle;
+
+  handle = lua_touserdata(L, 1);
+  uv_unref(handle);
+  return 0;
+}
+
 static const struct luaL_Reg handle_functions[] = {
   { "close", couv_close },
+  { "is_active", couv_is_active },
+  { "is_closing", couv_is_closing },
+  { "ref", couv_ref },
+  { "unref", couv_unref },
   { NULL, NULL }
 };
 

@@ -29,8 +29,14 @@ uv.accept = native.accept
 uv.listen = native.listen
 uv.close = native.close
 uv.hrtime = native.hrtime
+uv.is_active = native.is_active
+uv.is_closing = native.is_closing
+uv.is_readable = native.is_readable
+uv.is_writable = native.is_writable
 uv.read_start = native.read_start
 uv.read_stop = native.read_stop
+uv.ref = native.ref
+uv.unref = native.unref
 uv.write = native.write
 
 uv.ip4addr = native.ip4addr
@@ -138,6 +144,10 @@ end
 
 uv.pipe_open = function(...)
   return error0(native.pipe_open(...))
+end
+
+uv.shutdown = function(...)
+  return error0(native.shutdown(...))
 end
 
 uv.tcp_connect = function(...)
