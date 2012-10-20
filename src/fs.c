@@ -279,7 +279,6 @@ static int fs_push_exists_results(lua_State *L, uv_fs_t* req) {
 static void fs_exists_callback(uv_fs_t* req) {
   lua_State *L;
   int nresults;
-  couv_fs_t *w_req;
 
   L = req->data;
   nresults = fs_push_exists_results(L, req);
