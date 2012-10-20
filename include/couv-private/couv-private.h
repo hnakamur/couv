@@ -58,6 +58,14 @@ typedef struct couv_stream_input_s {
   couv_buf_t w_buf;
 } couv_stream_input_t;
 
+typedef struct couv_pipe_input_s {
+  ngx_queue_t *prev;
+  ngx_queue_t *next;
+  ssize_t nread;
+  couv_buf_t w_buf;
+  uv_handle_type pending;
+} couv_pipe_input_t;
+
 /*
  * handles.
  *
@@ -90,6 +98,13 @@ typedef struct couv_stream_s {
   COUV_HANDLE_FIELDS
   uv_stream_t handle;
 } couv_stream_t;
+
+typedef struct couv_pipe_s {
+  int is_yielded_for_read;
+  ngx_queue_t input_queue;
+  COUV_HANDLE_FIELDS
+  uv_pipe_t handle;
+} couv_pipe_t;
 
 typedef struct couv_tcp_s {
   int is_yielded_for_read;
@@ -154,6 +169,12 @@ typedef struct couv_fs_s {
   int threadref;
   uv_fs_t req;
 } couv_fs_t;
+
+
+/*
+ * pipe
+ */
+int luaopen_couv_pipe(lua_State *L);
 
 /*
  * tcp

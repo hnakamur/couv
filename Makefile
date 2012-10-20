@@ -13,6 +13,7 @@ OBJS= \
   src/fs.o \
   src/ipaddr.o \
   src/loop.o \
+  src/pipe.o \
   src/tcp.o \
   src/udp.o \
   src/couv.o \
@@ -72,6 +73,7 @@ src/couv.o: src/couv.c $(HEADERS)
 src/fs.o: src/fs.c $(HEADERS)
 src/ipaddr.o: src/ipaddr.c $(HEADERS)
 src/loop.o: src/loop.c $(HEADERS)
+src/pipe.o: src/pipe.c $(HEADERS)
 src/tcp.o: src/tcp.c $(HEADERS)
 src/udp.o: src/udp.c $(HEADERS)
 

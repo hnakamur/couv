@@ -2,6 +2,27 @@ local native = require 'couv_native'
 
 local uv = {}
 
+-- handle types
+uv.UNKNOWN_HANDLE = native.UNKNOWN_HANDLE
+uv.ASYNC = native.ASYNC
+uv.CHECK = native.CHECK
+uv.FS_EVENT = native.FS_EVENT
+uv.FS_POLL = native.FS_POLL
+uv.HANDLE = native.HANDLE
+uv.IDLE = native.IDLE
+uv.NAMED_PIPE = native.NAMED_PIPE
+uv.POLL = native.POLL
+uv.PREPARE = native.PREPARE
+uv.PROCESS = native.PROCESS
+uv.STREAM = native.STREAM
+uv.TCP = native.TCP
+uv.TIMER = native.TIMER
+uv.TTY = native.TTY
+uv.UDP = native.UDP
+uv.SIGNAL = native.SIGNAL
+uv.FILE = native.FILE
+uv.HANDLE_TYPE_MAX = native.HANDLE_TYPE_MAX
+
 uv.Buffer = native.Buffer
 
 uv.accept = native.accept
@@ -22,10 +43,8 @@ uv.run_once = native.run_once
 uv.set_loop = native.set_loop
 
 uv.tcp_bind = native.tcp_bind
-uv.tcp_create = native.tcp_create
 
 uv.udp_bind = native.udp_bind
-uv.udp_create = native.udp_create
 uv.udp_open = native.udp_open
 uv.udp_recv_start = native.udp_recv_start
 uv.udp_recv_stop = native.udp_recv_stop
@@ -109,6 +128,18 @@ uv.fs_utime = function(...)
   return error0(native.fs_utime(...))
 end
 
+uv.pipe_bind = function(...)
+  return error0(native.pipe_bind(...))
+end
+
+uv.pipe_connect = function(...)
+  return error0(native.pipe_connect(...))
+end
+
+uv.pipe_open = function(...)
+  return error0(native.pipe_open(...))
+end
+
 uv.tcp_connect = function(...)
   return error0(native.tcp_connect(...))
 end
@@ -151,6 +182,14 @@ uv.fs_readdir = function(...)
   return error1(native.fs_readdir(...))
 end
 
+uv.pipe_create = function(...)
+  return error1(native.pipe_create(...))
+end
+
+uv.tcp_create = function(...)
+  return error1(native.tcp_create(...))
+end
+
 -- wrapper functions to circumvent the limitation that C function cannot yield
 -- by calling them inside a loop in lua.
 
@@ -165,9 +204,17 @@ end
 uv.read = function(handle)
   local nread, buf
   repeat
-    nread, buf, addr = native.prim_read(handle)
+    nread, buf = native.prim_read(handle)
   until nread
   return nread, buf
+end
+
+uv.read2 = function(...)
+  local nread, buf, pending
+  repeat
+    nread, buf, pending = native.prim_read2(...)
+  until nread
+  return nread, buf, pending
 end
 
 return uv
