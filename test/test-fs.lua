@@ -62,12 +62,11 @@ exports['uv.fs_stat.sync'] = function(test)
 end
 
 exports['uv.fs_stat.async'] = function(test)
-  local co = coroutine.create(function()
-    local stat = uv.fs_stat('couv/fs.lua')
+  coroutine.wrap(function()
+    local stat = uv.fs_stat('couv.lua')
     test.ok(stat:isFile())
     test.done()
-  end)
-  coroutine.resume(co)
+  end)()
 
   uv.run()
 end

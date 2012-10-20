@@ -23,21 +23,13 @@ OBJS= \
 TARGET_BASENAME=couv_native
 LIBUV_DIR=deps/uv
 LIBUV_A=$(LIBUV_DIR)/libuv.a
-LIBUV_MAKE_OPT=
-
-LUA_INC_DIR=/usr/local/include
-LUA_LIB_DIR=/usr/local/lib
 
 CC=gcc
-
 CFLAGS += -g
-CFLAGS += -Iinclude -Iinclude/couv-private \
-	  -I$(LIBUV_DIR)/include -I$(LUA_INC_DIR)
+CFLAGS += -Iinclude -Iinclude/couv-private -I$(LIBUV_DIR)/include
+LDFLAGS += -L$(LIBUV_DIR) -luv
 
-LDFLAGS += -L$(LIBUV_DIR) -luv -L$(LUA_LIB_DIR) -llua
-
-LUA_E=
-
+LIBUV_MAKE_OPT=
 ifneq (, $(findstring linux, $(SYS)))
 TARGET=$(TARGET_BASENAME).so
 LUA_E=luajit
@@ -45,17 +37,23 @@ LIBUV_MAKE_OPT += CFLAGS=-fPIC
 CFLAGS += -fPIC -D_XOPEN_SOURCE=500 -D_GNU_SOURCE
 CFLAGS += --std=c89 -pedantic -Wall -Wextra -Wno-unused-parameter
 LDFLAGS += -shared -Wl,-soname,$(TARGET) -lpthread -lrt -lm
+LDFLAGS += -llua
 else ifneq (, $(findstring darwin, $(SYS)))
 TARGET=$(TARGET_BASENAME).so
 LUA_E=lua
 CFLAGS += --std=c89 -pedantic -Wall -Wextra -Wno-unused-parameter
+LDFLAGS += -llua
 LDFLAGS += -lpthread -bundle -undefined dynamic_lookup -framework CoreServices
 else ifneq (, $(findstring mingw, $(SYS)))
 TARGET=$(TARGET_BASENAME).dll
-LUA_E=lua
+LUA_E=luajit
+LUA_INC_DIR=/usr/local/include/luajit-2.0
+LUA_LIB_DIR=/usr/local/lib
 CFLAGS += --std=gnu89 -D_WIN32_WINNT=0x0600
+LDFLAGS += -L/usr/local/bin -llua51
 LDFLAGS += -shared -Wl,--export-all-symbols -lws2_32 -lpsapi -liphlpapi
 endif
+
 
 all: $(TARGET)
 
