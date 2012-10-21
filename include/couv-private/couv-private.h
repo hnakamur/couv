@@ -157,6 +157,13 @@ typedef struct couv_tcp_s {
   uv_tcp_t handle;
 } couv_tcp_t;
 
+typedef struct couv_tty_s {
+  int is_yielded_for_read;
+  ngx_queue_t input_queue;
+  COUV_HANDLE_FIELDS
+  uv_tty_t handle;
+} couv_tty_t;
+
 typedef struct couv_timer_s {
   COUV_HANDLE_FIELDS
   uv_timer_t handle;
@@ -164,6 +171,7 @@ typedef struct couv_timer_s {
 
 void couv_free_tcp_handle(lua_State *L, uv_tcp_t *handle);
 void couv_free_timer_handle(lua_State *L, uv_timer_t *handle);
+void couv_free_tty_handle(lua_State *L, uv_tty_t *handle);
 void couv_free_udp_handle(lua_State *L, uv_udp_t *handle);
 
 /*
@@ -231,6 +239,7 @@ int luaopen_couv_pipe(lua_State *L);
 int luaopen_couv_stream(lua_State *L);
 int luaopen_couv_tcp(lua_State *L);
 int luaopen_couv_timer(lua_State *L);
+int luaopen_couv_tty(lua_State *L);
 int luaopen_couv_udp(lua_State *L);
 
 int couv_push_ipaddr_raw(lua_State *L, struct sockaddr *addr);

@@ -73,8 +73,19 @@ static int couv_unref(lua_State *L) {
   return 0;
 }
 
+static int couv_guess_handle(lua_State *L) {
+  uv_file file;
+  uv_handle_type type;
+
+  file = luaL_checkint(L, 1);
+  type = uv_guess_handle(file);
+  lua_pushnumber(L, type);
+  return 1;
+}
+
 static const struct luaL_Reg handle_functions[] = {
   { "close", couv_close },
+  { "guess_handle", couv_guess_handle },
   { "is_active", couv_is_active },
   { "is_closing", couv_is_closing },
   { "ref", couv_ref },

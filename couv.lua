@@ -31,6 +31,9 @@ uv.Buffer = native.Buffer
 uv.accept = native.accept
 uv.listen = native.listen
 uv.close = native.close
+
+uv.fs_exists = native.fs_exists
+
 uv.hrtime = native.hrtime
 uv.is_active = native.is_active
 uv.is_closing = native.is_closing
@@ -52,16 +55,38 @@ uv.run = native.run
 uv.run_once = native.run_once
 uv.set_loop = native.set_loop
 
-uv.tcp_bind = native.tcp_bind
+uv.guess_handle = native.guess_handle
 
+uv.tcp_bind = native.tcp_bind
+uv.tcp_create = native.tcp_create
+uv.tcp_open = native.tcp_open
+uv.tcp_keepalive = native.tcp_keepalive
+uv.tcp_nodelay = native.tcp_nodelay
+uv.tcp_simultaneous_accepts = native.tcp_simultaneous_accepts
+
+uv.timer_again = native.timer_again
 uv.timer_get_repeat = native.timer_get_repeat
 uv.timer_set_repeat = native.timer_set_repeat
+uv.timer_start = native.timer_start
+uv.timer_stop = native.timer_stop
+
+uv.tty_create = native.tty_create
+uv.tty_get_winsize = native.tty_get_winsize
+uv.tty_open_fd = native.tty_open_fd
+uv.tty_reset_mode = native.tty_reset_mode
+uv.tty_set_mode = native.tty_set_mode
 
 uv.udp_bind = native.udp_bind
+uv.udp_create = native.udp_create
+uv.udp_open = native.udp_open
 uv.udp_recv_start = native.udp_recv_start
 uv.udp_recv_stop = native.udp_recv_stop
+uv.udp_set_broadcast = native.udp_set_broadcast
+uv.udp_set_membership = native.udp_set_membership
+uv.udp_set_multicast_loop = native.udp_set_multicast_loop
+uv.udp_set_multicast_ttl = native.udp_set_multicast_ttl
+uv.udp_set_ttl = native.udp_set_ttl
 
-uv.fs_exists = native.fs_exists
 
 -- utility functions
 
@@ -77,6 +102,7 @@ local function error1(ret, err)
   end
   return ret
 end
+
 
 -- no return value functions
 
@@ -160,61 +186,10 @@ uv.tcp_connect = function(...)
   return error0(native.tcp_connect(...))
 end
 
-uv.tcp_keepalive = function(...)
-  return error0(native.tcp_keepalive(...))
-end
-
-uv.tcp_nodelay = function(...)
-  return error0(native.tcp_nodelay(...))
-end
-
-uv.tcp_open = function(...)
-  return error0(native.tcp_open(...))
-end
-
-uv.tcp_simultaneous_accepts = function(...)
-  return error0(native.tcp_simultaneous_accepts(...))
-end
-
-uv.timer_again = function(...)
-  return error0(native.timer_again(...))
-end
-
-uv.timer_stop = function(...)
-  return error0(native.timer_stop(...))
-end
-
-uv.timer_start = function(...)
-  return error0(native.timer_start(...))
-end
-
-uv.udp_open = function(...)
-  return error0(native.udp_open(...))
-end
-
 uv.udp_send = function(...)
   return error0(native.udp_send(...))
 end
 
-uv.udp_set_broadcast = function(...)
-  return error0(native.udp_set_broadcast(...))
-end
-
-uv.udp_set_membership = function(...)
-  return error0(native.udp_set_membership(...))
-end
-
-uv.udp_set_multicast_loop = function(...)
-  return error0(native.udp_set_multicast_loop(...))
-end
-
-uv.udp_set_multicast_ttl = function(...)
-  return error0(native.udp_set_multicast_ttl(...))
-end
-
-uv.udp_set_ttl = function(...)
-  return error0(native.udp_set_ttl(...))
-end
 
 -- one return value functions
 
@@ -254,10 +229,6 @@ uv.pipe_create = function(...)
   return error1(native.pipe_create(...))
 end
 
-uv.tcp_create = function(...)
-  return error1(native.tcp_create(...))
-end
-
 uv.timer_create = function(...)
   return error1(native.timer_create(...))
 end
@@ -270,13 +241,10 @@ uv.tcp_getsockname = function(...)
   return error1(native.tcp_getsockname(...))
 end
 
-uv.udp_create = function(...)
-  return error1(native.udp_create(...))
-end
-
 uv.udp_getsockname = function(...)
   return error1(native.udp_getsockname(...))
 end
+
 
 -- wrapper functions to circumvent the limitation that C function cannot yield
 -- by calling them inside a loop in lua.
