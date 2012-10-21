@@ -36,7 +36,7 @@ uv_buf_t couv_tobuforstr(lua_State *L, int index) {
   couv_buf_t *w_buf;
   int type = lua_type(L, index);
   if (type == LUA_TSTRING) {
-    buf.base = (char *)lua_tolstring(L, index, &buf.len);
+    buf.base = (char *)lua_tolstring(L, index, (size_t *)&buf.len);
     return buf;
   } else if (couvL_hasmetatablename(L, index, COUV_BUFFER_MTBL_NAME)) {
     w_buf = lua_touserdata(L, index);
