@@ -177,6 +177,8 @@ int luaopen_couv_stream(lua_State *L);
 int luaopen_couv_tcp(lua_State *L);
 int luaopen_couv_udp(lua_State *L);
 
+int couv_push_ipaddr_raw(lua_State *L, struct sockaddr *addr);
+
 /*
  * auxlib
  */

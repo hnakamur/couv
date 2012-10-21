@@ -82,7 +82,6 @@ src/udp.o: src/udp.c $(HEADERS)
 .PHONY: test clean
 
 test:
-	$(LUA_E) tool/checkit test/test-buffer.lua
 	$(LUA_E) tool/checkit test/test-*.lua
 
 clean:

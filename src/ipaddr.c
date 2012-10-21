@@ -69,6 +69,34 @@ static const struct luaL_Reg ip6addr_methods[] = {
   { NULL, NULL }
 };
 
+static int couv_push_ip4addr_raw(lua_State *L, struct sockaddr_in *addr) {
+  struct sockaddr_in *ud_addr;
+
+  ud_addr = lua_newuserdata(L, sizeof(struct sockaddr_in));
+  *ud_addr = *addr;
+  luaL_getmetatable(L, COUV_IP4ADDR_MTBL_NAME);
+  lua_setmetatable(L, -2);
+  return 1; 
+}
+
+static int couv_push_ip6addr_raw(lua_State *L, struct sockaddr_in6 *addr) {
+  struct sockaddr_in6 *ud_addr;
+
+  ud_addr = lua_newuserdata(L, sizeof(struct sockaddr_in6));
+  *ud_addr = *addr;
+  luaL_getmetatable(L, COUV_IP6ADDR_MTBL_NAME);
+  lua_setmetatable(L, -2);
+  return 1; 
+}
+
+int couv_push_ipaddr_raw(lua_State *L, struct sockaddr *addr) {
+  if (addr->sa_family == AF_INET)
+    return couv_push_ip4addr_raw(L, (struct sockaddr_in *)addr);
+  else if (addr->sa_family == AF_INET6)
+    return couv_push_ip6addr_raw(L, (struct sockaddr_in6 *)addr);
+  else
+    return luaL_error(L, "ENOTSUP");
+}
 
 int couv_ip4addr(lua_State *L) {
   const char *ip = luaL_checkstring(L, 1);

@@ -23,6 +23,9 @@ uv.SIGNAL = native.SIGNAL
 uv.FILE = native.FILE
 uv.HANDLE_TYPE_MAX = native.HANDLE_TYPE_MAX
 
+uv.JOIN_GROUP = native.JOIN_GROUP
+uv.LEAVE_GROUP = native.LEAVE_GROUP
+
 uv.Buffer = native.Buffer
 
 uv.accept = native.accept
@@ -51,7 +54,6 @@ uv.set_loop = native.set_loop
 uv.tcp_bind = native.tcp_bind
 
 uv.udp_bind = native.udp_bind
-uv.udp_open = native.udp_open
 uv.udp_recv_start = native.udp_recv_start
 uv.udp_recv_stop = native.udp_recv_stop
 
@@ -154,8 +156,48 @@ uv.tcp_connect = function(...)
   return error0(native.tcp_connect(...))
 end
 
+uv.tcp_keepalive = function(...)
+  return error0(native.tcp_keepalive(...))
+end
+
+uv.tcp_nodelay = function(...)
+  return error0(native.tcp_nodelay(...))
+end
+
+uv.tcp_open = function(...)
+  return error0(native.tcp_open(...))
+end
+
+uv.tcp_simultaneous_accepts = function(...)
+  return error0(native.tcp_simultaneous_accepts(...))
+end
+
+uv.udp_open = function(...)
+  return error0(native.udp_open(...))
+end
+
 uv.udp_send = function(...)
   return error0(native.udp_send(...))
+end
+
+uv.udp_set_broadcast = function(...)
+  return error0(native.udp_set_broadcast(...))
+end
+
+uv.udp_set_membership = function(...)
+  return error0(native.udp_set_membership(...))
+end
+
+uv.udp_set_multicast_loop = function(...)
+  return error0(native.udp_set_multicast_loop(...))
+end
+
+uv.udp_set_multicast_ttl = function(...)
+  return error0(native.udp_set_multicast_ttl(...))
+end
+
+uv.udp_set_ttl = function(...)
+  return error0(native.udp_set_ttl(...))
 end
 
 -- one return value functions
@@ -198,6 +240,22 @@ end
 
 uv.tcp_create = function(...)
   return error1(native.tcp_create(...))
+end
+
+uv.tcp_getpeername = function(...)
+  return error1(native.tcp_getpeername(...))
+end
+
+uv.tcp_getsockname = function(...)
+  return error1(native.tcp_getsockname(...))
+end
+
+uv.udp_create = function(...)
+  return error1(native.udp_create(...))
+end
+
+uv.udp_getsockname = function(...)
+  return error1(native.udp_getsockname(...))
 end
 
 -- wrapper functions to circumvent the limitation that C function cannot yield
