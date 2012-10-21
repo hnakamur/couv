@@ -1,7 +1,7 @@
 #include "couv-private.h"
 
 static int couv_hrtime(lua_State *L) {
-  lua_pushnumber(L, uv_hrtime() / 1e9);
+  lua_pushnumber(L, uv_hrtime());
   return 1;
 }
 
