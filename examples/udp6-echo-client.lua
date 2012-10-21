@@ -3,12 +3,14 @@ local uv = require 'couv'
 local TEST_PORT = 9123
 
 coroutine.wrap(function()
-  local addr = uv.ip4addr('127.0.0.1', TEST_PORT)
+  local serverAddr = uv.ip6addr('::1', TEST_PORT)
   local handle = uv.udp_create()
 
   uv.udp_recv_start(handle)
+  print('udp_client after recv_start')
 
-  uv.udp_send(handle, {"PING", "world"}, addr)
+  uv.udp_send(handle, {"PING", "world"}, serverAddr)
+  -- TODO: Fix to continue from here.
   print('udp_client sent {"PING", "world"}')
 
 --[[
@@ -18,7 +20,8 @@ coroutine.wrap(function()
     print("udp_client recv msg=", buf:toString(1, nread), ", host=", addr:host(), ", port=", addr:port())
   end
 
-  uv.udp_send(handle, {"hey"}, addr)
+
+  uv.udp_send(handle, {"hey"}, serverAddr)
   print('udp_client sent {"hey"}')
 
   nread, buf, addr = uv.udp_recv(handle)

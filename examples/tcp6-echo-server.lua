@@ -4,7 +4,7 @@ local TEST_PORT = 9123
 
 coroutine.wrap(function()
   local handle = uv.tcp_create()
-  uv.tcp_bind(handle, uv.ip4addr('0.0.0.0', TEST_PORT))
+  uv.tcp_bind(handle, uv.ip6addr('::1', TEST_PORT))
   uv.listen(handle, 128, function(server)
     coroutine.wrap(function()
       local stream = uv.tcp_create()

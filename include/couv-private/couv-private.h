@@ -19,6 +19,50 @@ extern "C" {
 #include "couv.h"
 #include "ngx-queue.h"
 
+/*
+ * auxlib
+ */
+#if LUA_VERSION_NUM == 502
+
+#define couv_rawlen lua_rawlen
+#define couvL_setfuncs(L, l, nup) luaL_setfuncs(L, l, nup)
+#define couvL_testudata luaL_testudata
+#define couv_resume(L, from, nargs) lua_resume(L, from, nargs)
+
+#elif LUA_VERSION_NUM == 501
+
+#define couv_rawlen lua_objlen
+void couvL_setfuncs(lua_State *L, const luaL_Reg *l, int nup);
+void *couvL_testudata (lua_State *L, int ud, const char *tname);
+#define couv_resume(L, from, nargs) lua_resume(L, nargs)
+
+#else
+
+#error
+
+#endif
+
+void *couv_alloc(lua_State *L, size_t size);
+void couv_free(lua_State *L, void *ptr);
+
+/* return 1 if mainthread, 0 otherwise and push coroutine. */
+int couvL_is_mainthread(lua_State *L);
+
+int couvL_hasmetatablename(lua_State *L, int index, const char *tname);
+const char *couvL_uv_errname(int uv_errcode);
+
+int couv_registry_set_for_ptr(lua_State *L, void *ptr, int index);
+int couv_registry_get_for_ptr(lua_State *L, void *ptr);
+int couv_registry_delete_for_ptr(lua_State *L, void *ptr);
+
+#define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
+#define container_of(ptr, type, member) \
+  ((type *) ((char *) (ptr) - offsetof(type, member)))
+
+#define couvL_SET_FIELD(L, name, type, val) \
+  lua_push##type(L, val);                   \
+  lua_setfield(L, -2, #name)
+
 typedef void *(*couv_alloc_t)(lua_State *L, size_t nbytes);
 typedef void (*couv_free_t)(lua_State *L, void *ptr);
 
@@ -156,6 +200,11 @@ uv_loop_t *couv_loop(lua_State *L);
 #define couv_checkip6addr(L, index) \
   (struct sockaddr_in6 *)luaL_checkudata(L, index, COUV_IP6ADDR_MTBL_NAME)
 
+#define couvL_testip4addr(L, index) \
+  (struct sockaddr_in *)couvL_testudata(L, index, COUV_IP4ADDR_MTBL_NAME)
+#define couvL_testip6addr(L, index) \
+  (struct sockaddr_in6 *)couvL_testudata(L, index, COUV_IP6ADDR_MTBL_NAME)
+
 int luaopen_couv_ipaddr(lua_State *L);
 
 int couv_dbg_print_ip4addr(const char *header, struct sockaddr_in *addr);
@@ -178,48 +227,6 @@ int luaopen_couv_tcp(lua_State *L);
 int luaopen_couv_udp(lua_State *L);
 
 int couv_push_ipaddr_raw(lua_State *L, struct sockaddr *addr);
-
-/*
- * auxlib
- */
-#if LUA_VERSION_NUM == 502
-
-#define couv_rawlen lua_rawlen
-#define couvL_setfuncs(L, l, nup) luaL_setfuncs(L, l, nup)
-#define couv_resume(L, from, nargs) lua_resume(L, from, nargs)
-
-#elif LUA_VERSION_NUM == 501
-
-#define couv_rawlen lua_objlen
-void couvL_setfuncs(lua_State *L, const luaL_Reg *l, int nup);
-#define couv_resume(L, from, nargs) lua_resume(L, nargs)
-
-#else
-
-#error
-
-#endif
-
-void *couv_alloc(lua_State *L, size_t size);
-void couv_free(lua_State *L, void *ptr);
-
-/* return 1 if mainthread, 0 otherwise and push coroutine. */
-int couvL_is_mainthread(lua_State *L);
-
-int couvL_hasmetatablename(lua_State *L, int index, const char *tname);
-const char *couvL_uv_errname(int uv_errcode);
-
-int couv_registry_set_for_ptr(lua_State *L, void *ptr, int index);
-int couv_registry_get_for_ptr(lua_State *L, void *ptr);
-int couv_registry_delete_for_ptr(lua_State *L, void *ptr);
-
-#define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
-#define container_of(ptr, type, member) \
-  ((type *) ((char *) (ptr) - offsetof(type, member)))
-
-#define couvL_SET_FIELD(L, name, type, val) \
-  lua_push##type(L, val);                   \
-  lua_setfield(L, -2, #name)
 
 #ifdef __cplusplus
 }

@@ -4,7 +4,7 @@ local TEST_PORT = 9123
 
 coroutine.wrap(function()
   local handle = uv.tcp_create()
-  uv.tcp_connect(handle, uv.ip4addr('127.0.0.1', TEST_PORT))
+  uv.tcp_connect(handle, uv.ip6addr('::1', TEST_PORT))
   uv.read_start(handle)
   uv.write(handle, {"PING"})
   print('tcp_client send message {"PING"}')

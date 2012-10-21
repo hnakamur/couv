@@ -4,7 +4,7 @@ local TEST_PORT = 9123
 
 coroutine.wrap(function()
   local handle = uv.udp_create()
-  uv.udp_bind(handle, uv.ip4addr('0.0.0.0', TEST_PORT))
+  uv.udp_bind(handle, uv.ip6addr('::0', TEST_PORT))
   uv.udp_recv_start(handle)
 
   local nread, buf, addr

@@ -65,12 +65,17 @@ static int tcp_open(lua_State *L) {
 
 static int tcp_bind(lua_State *L) {
   uv_tcp_t *handle;
-  struct sockaddr_in *addr;
+  struct sockaddr_in *ip4addr;
+  struct sockaddr_in6 *ip6addr;
   int r;
 
   handle = lua_touserdata(L, 1);
-  addr = couv_checkip4addr(L, 2);
-  r = uv_tcp_bind(handle, *addr);
+  if ((ip4addr = couvL_testip4addr(L, 2)) != NULL)
+    r = uv_tcp_bind(handle, *ip4addr);
+  else if ((ip6addr = couvL_testip6addr(L, 2)) != NULL)
+    r = uv_tcp_bind6(handle, *ip6addr);
+  else
+    return luaL_error(L, "must be ip4addr or ip6addr");
   if (r < 0) {
     return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
   }
@@ -93,15 +98,20 @@ static void connect_cb(uv_connect_t *req, int status) {
 
 static int tcp_connect(lua_State *L) {
   uv_tcp_t *handle;
-  struct sockaddr_in *addr;
+  struct sockaddr_in *ip4addr;
+  struct sockaddr_in6 *ip6addr;
   uv_connect_t *req;
   int r;
 
-  handle = lua_touserdata(L, 1);
-  addr = couv_checkip4addr(L, 2);
-
   req = couv_alloc(L, sizeof(uv_connect_t));
-  r = uv_tcp_connect(req, handle, *addr, connect_cb);
+
+  handle = lua_touserdata(L, 1);
+  if ((ip4addr = couvL_testip4addr(L, 2)) != NULL)
+    r = uv_tcp_connect(req, handle, *ip4addr, connect_cb);
+  else if ((ip6addr = couvL_testip6addr(L, 2)) != NULL)
+    r = uv_tcp_connect6(req, handle, *ip6addr, connect_cb);
+  else
+    return luaL_error(L, "must be ip4addr or ip6addr");
   if (r < 0) {
     return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
   }

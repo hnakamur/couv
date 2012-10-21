@@ -84,12 +84,19 @@ static int udp_open(lua_State *L) {
 
 static int udp_bind(lua_State *L) {
   uv_udp_t *handle;
-  struct sockaddr_in *addr;
+  struct sockaddr_in *ip4addr;
+  struct sockaddr_in6 *ip6addr;
+  unsigned flags;
   int r;
 
   handle = lua_touserdata(L, 1);
-  addr = couv_checkip4addr(L, 2);
-  r = uv_udp_bind(handle, *addr, 0);
+  flags = luaL_optint(L, 3, 0);
+  if ((ip4addr = couvL_testip4addr(L, 2)) != NULL)
+    r = uv_udp_bind(handle, *ip4addr, flags);
+  else if ((ip6addr = couvL_testip6addr(L, 2)) != NULL)
+    r = uv_udp_bind6(handle, *ip6addr, flags);
+  else
+    return luaL_error(L, "must be ip4addr or ip6addr");
   if (r < 0) {
     return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
   }
@@ -115,17 +122,24 @@ static void udp_send_cb(uv_udp_send_t* req, int status) {
 
 static int udp_send(lua_State *L) {
   uv_udp_t *handle;
-  struct sockaddr_in *addr;
+  struct sockaddr_in *ip4addr;
+  struct sockaddr_in6 *ip6addr;
   uv_buf_t *bufs;
   size_t bufcnt;
   couv_udp_send_t *holder;
+  uv_udp_send_t *req;
   int r;
 
   handle = lua_touserdata(L, 1);
   bufs = couv_checkbuforstrtable(L, 2, &bufcnt);
-  addr = couv_checkip4addr(L, 3);
   holder = couv_alloc_udp_send(L, bufs);
-  r = uv_udp_send(&holder->req, handle, bufs, (int)bufcnt, *addr, udp_send_cb);
+  req = &holder->req;
+  if ((ip4addr = couvL_testip4addr(L, 3)) != NULL)
+    r = uv_udp_send(req, handle, bufs, (int)bufcnt, *ip4addr, udp_send_cb);
+  else if ((ip6addr = couvL_testip6addr(L, 3)) != NULL)
+    r = uv_udp_send6(req, handle, bufs, (int)bufcnt, *ip6addr, udp_send_cb);
+  else
+    return luaL_error(L, "must be ip4addr or ip6addr");
   if (r < 0) {
     return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
   }
@@ -327,6 +341,8 @@ static const struct luaL_Reg udp_functions[] = {
 };
 
 int luaopen_couv_udp(lua_State *L) {
+  couvL_SET_FIELD(L, UDP_IPV6ONLY, number, UV_UDP_IPV6ONLY);
+
   couvL_SET_FIELD(L, JOIN_GROUP, number, UV_JOIN_GROUP);
   couvL_SET_FIELD(L, LEAVE_GROUP, number, UV_LEAVE_GROUP);
 
