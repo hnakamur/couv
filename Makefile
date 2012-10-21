@@ -47,9 +47,7 @@ LDFLAGS += -lpthread -bundle -undefined dynamic_lookup -framework CoreServices
 else ifneq (, $(findstring mingw, $(SYS)))
 TARGET=$(TARGET_BASENAME).dll
 LUA_E=luajit
-LUA_INC_DIR=/usr/local/include/luajit-2.0
-LUA_LIB_DIR=/usr/local/lib
-CFLAGS += --std=gnu89 -D_WIN32_WINNT=0x0600
+CFLAGS += --std=gnu89 -D_WIN32_WINNT=0x0600 -I/usr/local/include/luajit-2.0
 LDFLAGS += -L/usr/local/bin -llua51
 LDFLAGS += -shared -Wl,--export-all-symbols -lws2_32 -lpsapi -liphlpapi
 endif
