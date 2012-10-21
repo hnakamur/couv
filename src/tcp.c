@@ -20,6 +20,10 @@ void couv_free_tcp_handle(lua_State *L, uv_tcp_t *handle) {
 
   w_handle = container_of(handle, couv_tcp_t, handle);
   luaL_unref(L, LUA_REGISTRYINDEX, w_handle->threadref);
+
+  /* delete listen callback if set. */
+  couv_registry_delete_for_ptr(L, handle);
+
   couv_free(L, w_handle);
 }
 

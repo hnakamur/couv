@@ -47,11 +47,15 @@ uv.ip6addr = native.ip6addr
 
 uv.default_loop = native.default_loop
 uv.get_loop = native.get_loop
+uv.now = native.now
 uv.run = native.run
 uv.run_once = native.run_once
 uv.set_loop = native.set_loop
 
 uv.tcp_bind = native.tcp_bind
+
+uv.timer_get_repeat = native.timer_get_repeat
+uv.timer_set_repeat = native.timer_set_repeat
 
 uv.udp_bind = native.udp_bind
 uv.udp_recv_start = native.udp_recv_start
@@ -172,6 +176,18 @@ uv.tcp_simultaneous_accepts = function(...)
   return error0(native.tcp_simultaneous_accepts(...))
 end
 
+uv.timer_again = function(...)
+  return error0(native.timer_again(...))
+end
+
+uv.timer_stop = function(...)
+  return error0(native.timer_stop(...))
+end
+
+uv.timer_start = function(...)
+  return error0(native.timer_start(...))
+end
+
 uv.udp_open = function(...)
   return error0(native.udp_open(...))
 end
@@ -240,6 +256,10 @@ end
 
 uv.tcp_create = function(...)
   return error1(native.tcp_create(...))
+end
+
+uv.timer_create = function(...)
+  return error1(native.timer_create(...))
 end
 
 uv.tcp_getpeername = function(...)

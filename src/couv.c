@@ -24,6 +24,7 @@ int luaopen_couv_native(lua_State *L) {
   luaopen_couv_pipe(L);
   luaopen_couv_stream(L);
   luaopen_couv_tcp(L);
+  luaopen_couv_timer(L);
   luaopen_couv_udp(L);
 
   return 1;

@@ -10,6 +10,9 @@ static void close_cb(uv_handle_t *handle) {
   case UV_TCP:
     couv_free_tcp_handle(L, (uv_tcp_t *)handle);
     break;
+  case UV_TIMER:
+    couv_free_timer_handle(L, (uv_timer_t *)handle);
+    break;
   case UV_UDP:
     couv_free_udp_handle(L, (uv_udp_t *)handle);
     break;
@@ -30,7 +33,12 @@ static int couv_close(lua_State *L) {
 
   handle = lua_touserdata(L, 1);
   uv_close(handle, close_cb);
-  return lua_yield(L, 0);
+  if (couvL_is_mainthread(L))
+    return 0;
+  else {
+    lua_pop(L, 1);
+    return lua_yield(L, 0);
+  }
 }
 
 static int couv_is_active(lua_State *L) {

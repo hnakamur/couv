@@ -17,6 +17,7 @@ OBJS= \
   src/pipe.o \
   src/stream.o \
   src/tcp.o \
+  src/timer.o \
   src/udp.o \
   src/couv.o \
 
@@ -75,6 +76,7 @@ src/loop.o: src/loop.c $(HEADERS)
 src/pipe.o: src/pipe.c $(HEADERS)
 src/stream.o: src/stream.c $(HEADERS)
 src/tcp.o: src/tcp.c $(HEADERS)
+src/timer.o: src/timer.c $(HEADERS)
 src/udp.o: src/udp.c $(HEADERS)
 
 .PHONY: test clean
