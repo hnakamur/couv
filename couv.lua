@@ -28,6 +28,10 @@ uv.HANDLE_TYPE_MAX = native.HANDLE_TYPE_MAX
 uv.JOIN_GROUP = native.JOIN_GROUP
 uv.LEAVE_GROUP = native.LEAVE_GROUP
 
+-- fs_open mode flags
+uv.S_IREAD = native.S_IREAD
+uv.S_IWRITE = native.S_IWRITE
+
 -- process flags
 uv.PROCESS_SETUID = native.PROCESS_SETUID
 uv.PROCESS_SETGID = native.PROCESS_SETGID
