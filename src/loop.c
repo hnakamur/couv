@@ -24,6 +24,14 @@ uv_loop_t *couv_loop(lua_State *L) {
   return loop;
 }
 
+static int couv_update_time(lua_State *L) {
+  uv_loop_t *loop;
+
+  loop = couv_loop(L);
+  uv_update_time(loop);
+  return 0;
+}
+
 static int couv_now(lua_State *L) {
   uv_loop_t *loop;
   int64_t now;
@@ -59,6 +67,7 @@ static const struct luaL_Reg loop_functions[] = {
   { "run", couv_run },
   { "run_once", couv_run_once },
   { "set_loop", couv_set_loop },
+  { "update_time", couv_update_time },
   { NULL, NULL }
 };
 

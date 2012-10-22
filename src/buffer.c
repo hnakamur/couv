@@ -75,7 +75,7 @@ uv_buf_t *couv_checkbuforstrtable(lua_State *L, int index, size_t *bufcnt) {
       buffers[i - 1] = buf;
     } else {
       couv_free(L, buffers);
-      luaL_argerror(L, 1, "must be an array (table) of buffers");
+      luaL_argerror(L, 1, "must be an array (table) of buffers or strings");
       return NULL;
     }
   }

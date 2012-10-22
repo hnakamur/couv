@@ -45,6 +45,14 @@ static int couv_accept(lua_State *L) {
   return 0;
 }
 
+static int couv_get_write_queue_size(lua_State *L) {
+  uv_stream_t *handle;
+
+  handle = lua_touserdata(L, 1);
+  lua_pushnumber(L, handle->write_queue_size);
+  return 1;
+}
+
 static int couv_is_readable(lua_State *L) {
   uv_stream_t *handle;
 
@@ -229,6 +237,7 @@ static int couv_write2(lua_State *L) {
 
 static const struct luaL_Reg stream_functions[] = {
   { "accept", couv_accept },
+  { "get_write_queue_size", couv_get_write_queue_size },
   { "is_readable", couv_is_readable },
   { "is_writable", couv_is_writable },
   { "listen", couv_listen },

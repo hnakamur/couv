@@ -2,6 +2,8 @@ local native = require 'couv_native'
 
 local uv = {}
 
+uv.Buffer = native.Buffer
+
 -- handle types
 uv.UNKNOWN_HANDLE = native.UNKNOWN_HANDLE
 uv.ASYNC = native.ASYNC
@@ -26,15 +28,42 @@ uv.HANDLE_TYPE_MAX = native.HANDLE_TYPE_MAX
 uv.JOIN_GROUP = native.JOIN_GROUP
 uv.LEAVE_GROUP = native.LEAVE_GROUP
 
-uv.Buffer = native.Buffer
+-- process flags
+uv.PROCESS_SETUID = native.PROCESS_SETUID
+uv.PROCESS_SETGID = native.PROCESS_SETGID
+uv.PROCESS_WINDOWS_VERBATIM_ARGUMENTS = native.PROCESS_WINDOWS_VERBATIM_ARGUMENTS
+uv.PROCESS_DETACHED = native.PROCESS_DETACHED
 
+-- stdio flags
+uv.IGNORE = native.IGNORE
+uv.CREATE_PIPE = native.CREATE_PIPE
+uv.INHERIT_FD = native.INHERIT_FD
+uv.INHERIT_STREAM = native.INHERIT_STREAM
+uv.READABLE_PIPE = native.READABLE_PIPE
+uv.WRITABLE_PIPE = native.WRITABLE_PIPE
+
+-- stream
 uv.accept = native.accept
 uv.listen = native.listen
 uv.close = native.close
 
+-- fs
 uv.fs_exists = native.fs_exists
 
+-- core
+uv.chdir = native.chdir
+uv.cwd = native.cwd
+uv.exepath = native.exepath
+uv.get_free_memory = native.get_free_memory
+uv.get_total_memory = native.get_total_memory
+uv.kill = native.kill
+uv.loadavg = native.loadavg
 uv.hrtime = native.hrtime
+uv.resident_set_memory = native.resident_set_memory
+uv.uptime = native.uptime
+
+-- handle
+uv.get_write_queue_size = native.get_write_queue_size
 uv.is_active = native.is_active
 uv.is_closing = native.is_closing
 uv.is_readable = native.is_readable
@@ -43,11 +72,19 @@ uv.read_start = native.read_start
 uv.read_stop = native.read_stop
 uv.ref = native.ref
 uv.unref = native.unref
+uv.update_time = native.update_time
 uv.write = native.write
 
+-- process
+uv.spawn = native.spawn
+uv.get_pid = native.get_pid
+uv.process_kill = native.process_kill
+
+-- ipaddr
 uv.ip4addr = native.ip4addr
 uv.ip6addr = native.ip6addr
 
+-- loop
 uv.default_loop = native.default_loop
 uv.get_loop = native.get_loop
 uv.now = native.now

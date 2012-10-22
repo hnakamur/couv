@@ -15,6 +15,7 @@ OBJS= \
   src/ipaddr.o \
   src/loop.o \
   src/pipe.o \
+  src/process.o \
   src/stream.o \
   src/tcp.o \
   src/timer.o \
@@ -75,6 +76,7 @@ src/handle.o: src/handle.c $(HEADERS)
 src/ipaddr.o: src/ipaddr.c $(HEADERS)
 src/loop.o: src/loop.c $(HEADERS)
 src/pipe.o: src/pipe.c $(HEADERS)
+src/process.o: src/process.c $(HEADERS)
 src/stream.o: src/stream.c $(HEADERS)
 src/tcp.o: src/tcp.c $(HEADERS)
 src/timer.o: src/timer.c $(HEADERS)

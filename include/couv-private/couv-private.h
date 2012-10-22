@@ -169,6 +169,7 @@ typedef struct couv_timer_s {
   uv_timer_t handle;
 } couv_timer_t;
 
+void couv_free_process_handle(lua_State *L, uv_process_t *handle);
 void couv_free_tcp_handle(lua_State *L, uv_tcp_t *handle);
 void couv_free_timer_handle(lua_State *L, uv_timer_t *handle);
 void couv_free_tty_handle(lua_State *L, uv_tty_t *handle);
@@ -236,6 +237,7 @@ typedef struct couv_fs_s {
 
 int luaopen_couv_handle(lua_State *L);
 int luaopen_couv_pipe(lua_State *L);
+int luaopen_couv_process(lua_State *L);
 int luaopen_couv_stream(lua_State *L);
 int luaopen_couv_tcp(lua_State *L);
 int luaopen_couv_timer(lua_State *L);
