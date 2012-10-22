@@ -77,7 +77,7 @@ static uv_stdio_container_t *couv_checkstdiocontainers(lua_State *L, int index,
   luaL_argcheck(L, lua_istable(L, -1), index,
       "value at \"stdio\" key must be nil or table");
 
-  stdio_cnt = couv_rawlen(L, index);
+  stdio_cnt = couv_rawlen(L, -1);
   stdio = couv_alloc(L, stdio_cnt * sizeof(uv_stdio_container_t));
   if (!stdio)
     return NULL;
@@ -86,19 +86,17 @@ static uv_stdio_container_t *couv_checkstdiocontainers(lua_State *L, int index,
 
 #define STDIO_INVAL_ELEM "invalid array element value at \"stdio\" key"
   for (i = 1; i <= stdio_cnt; ++i) {
-    lua_rawgeti(L, index, i);
+    lua_rawgeti(L, -1, i);
     luaL_argcheck(L, lua_istable(L, -1), index, STDIO_INVAL_ELEM);
     elem_cnt = couv_rawlen(L, -1);
     luaL_argcheck(L, elem_cnt == 1 || elem_cnt == 2, index, STDIO_INVAL_ELEM);
 
-    /* stdio[i - 1].flags = args[index][i][1] */
     lua_rawgeti(L, -1, 1);
     luaL_argcheck(L, lua_isnumber(L, -1), index, STDIO_INVAL_ELEM);
     stdio[i - 1].flags = lua_tointeger(L, -1);
     lua_pop(L, 1);
 
     if (elem_cnt == 2) {
-      /* stdio[i - 1].flags = args[index][i][2] */
       lua_rawgeti(L, -1, 2);
       type = lua_type(L, -1);
       if (type == LUA_TNUMBER)
@@ -107,6 +105,8 @@ static uv_stdio_container_t *couv_checkstdiocontainers(lua_State *L, int index,
         stdio[i - 1].data.stream = lua_touserdata(L, -1);
       lua_pop(L, 1);
     }
+
+    lua_pop(L, 1);
   }
   if (cnt)
     *cnt = stdio_cnt;
@@ -162,11 +162,13 @@ static int couv_spawn(lua_State *L) {
   lua_pop(L, 1);
 
   options.stdio = couv_checkstdiocontainers(L, 1, &options.stdio_count);
+  lua_pop(L, 1);
 
   lua_getfield(L, 1, "exitCb");
   if (lua_isfunction(L, -1)) {
     options.exit_cb = exit_cb;
     couv_registry_set_for_ptr(L, handle, -1);
+    lua_pop(L, 1);
   } else
     luaL_argerror(L, 1, "value at \"exitCb\" key must be function");
 
