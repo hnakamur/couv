@@ -63,7 +63,7 @@ const char *couvL_uv_errname(int uv_errcode) {
 
 int couv_registry_set_for_ptr(lua_State *L, void *ptr, int index) {
   lua_pushlightuserdata(L, ptr);
-  lua_pushvalue(L, index);
+  lua_pushvalue(L, index > 0 ? index : index - 1);
   lua_rawset(L, LUA_REGISTRYINDEX);
   return 0;
 }
