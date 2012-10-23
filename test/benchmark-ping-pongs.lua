@@ -4,6 +4,13 @@ local MSG = "PING\n"
 
 local startTime = uv.hrtime()
 
+function exitCb(process, exitStatus, termSignal)
+  uv.close(process)
+end
+uv.spawn{args={uv.exepath(), 'examples/tcp-echo-server.lua'},
+    flags=uv.PROCESS_DETACHED,
+    exitCb=exitCb}
+
 coroutine.wrap(function()
   local handle = uv.tcp_create()
   uv.tcp_bind(handle, uv.ip4addr('0.0.0.0', 0))
