@@ -6,3 +6,35 @@ if arg[1] == 'spawn_helper2' then
   print("hello world")
   os.exit(1)
 end
+
+if arg[1] == 'spawn_helper3' then
+  local uv = require 'couv'
+  local buf = uv.Buffer.new(256)
+  local nread = uv.fs_read(0, buf)
+  uv.fs_write(1, buf, 1, nread)
+  uv.run()
+  os.exit(1)
+end
+
+if arg[1] == 'spawn_helper5' then
+  local uv = require 'couv'
+  uv.fs_write(3, 'fourth stdio!\n')
+  uv.run()
+  os.exit(1)
+end
+
+if arg[1] == 'spawn_helper4' then
+  -- Never surrender, never return!
+  local uv = require 'couv'
+  function cb(handle)
+  end
+  local timer = uv.timer_create()
+  uv.timer_start(timer, cb, 10000, 10000)
+  uv.run()
+end
+
+if arg[1] == 'spawn_helper6' then
+  io.stderr:write('hello world\n')
+  io.stderr:write('hello errworld\n')
+  os.exit(1)
+end
