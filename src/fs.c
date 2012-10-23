@@ -10,17 +10,17 @@ typedef struct flag_mapping_s {
 } flag_mapping_t;
 
 static flag_mapping_t flag_mappings[] = {
-  { "r",   O_RDONLY                      },
-  { "w",   O_WRONLY | O_CREAT | O_TRUNC  },
-  { "a",   O_WRONLY | O_CREAT | O_APPEND },
-  { "r+",  O_RDWR                        },
-  { "w+",  O_RDWR   | O_CREAT | O_TRUNC  },
-  { "a+",  O_RDWR   | O_CREAT | O_APPEND },
+   { "r",   O_RDONLY                      }
+  ,{ "w",   O_WRONLY | O_CREAT | O_TRUNC  }
+  ,{ "a",   O_WRONLY | O_CREAT | O_APPEND }
+  ,{ "r+",  O_RDWR                        }
+  ,{ "w+",  O_RDWR   | O_CREAT | O_TRUNC  }
+  ,{ "a+",  O_RDWR   | O_CREAT | O_APPEND }
 #ifndef _WIN32
-  { "rs",  O_RDONLY | O_SYNC             },
-  { "rs+", O_RDWR   | O_SYNC             },
+  ,{ "rs",  O_RDONLY | O_SYNC             }
+  ,{ "rs+", O_RDWR   | O_SYNC             }
 #endif
-  { NULL,  0                             }
+  ,{ NULL,  0                             }
 };
 
 static int fs_toflags(const char *flags_str) {
@@ -609,7 +609,7 @@ static int fs_open(lua_State *L) {
   uv_loop_t *loop = couv_loop(L);
   const char *path = luaL_checkstring(L, 1);
   int flags = fs_checkflags(L, 2);
-  int mode = luaL_optint(L, 3, 0);
+  int mode = fs_optmode(L, 3, 0666);
   if (couvL_is_mainthread(L)) {
     uv_fs_t req;
     uv_fs_open(loop, &req, path, flags, mode, NULL);
@@ -812,16 +812,8 @@ static const struct luaL_Reg fs_functions[] = {
   { NULL, NULL }
 };
 
-static int set_fs_open_mode_contants(lua_State *L) {
-  couvL_SET_FIELD(L, S_IREAD, number, S_IREAD);
-  couvL_SET_FIELD(L, S_IWRITE, number, S_IWRITE);
-  return 0;
-}
-
 int luaopen_couv_fs(lua_State *L) {
   couvL_setfuncs(L, fs_functions, 0);
-
-  set_fs_open_mode_contants(L);
 
   luaL_newmetatable(L, COUV_FS_STAT_MTBL_NAME);
   couvL_setfuncs(L, fs_stat_methods, 0);
