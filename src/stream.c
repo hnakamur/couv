@@ -4,7 +4,7 @@ static void connection_cb(uv_stream_t *handle, int status) {
   lua_State *L;
 
   L = handle->data;
-  couv_registry_get_for_ptr(L, handle);
+  couv_rawgetp(L, LUA_REGISTRYINDEX, COUV_LISTEN_CB_REG_KEY(handle));
   lua_pushlightuserdata(L, handle);
   if (status < 0) {
     lua_pushstring(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
@@ -22,7 +22,8 @@ static int couv_listen(lua_State *L) {
   handle = lua_touserdata(L, 1);
   backlog = luaL_checkint(L, 2);
   luaL_checktype(L, 3, LUA_TFUNCTION);
-  couv_registry_set_for_ptr(L, handle, 3);
+  lua_pushvalue(L, 3);
+  couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_LISTEN_CB_REG_KEY(handle));
 
   r = uv_listen(handle, backlog, connection_cb);
   if (r < 0) {

@@ -61,27 +61,9 @@ const char *couvL_uv_errname(int uv_errcode) {
   }
 }
 
-int couv_registry_set_for_ptr(lua_State *L, void *ptr, int index) {
-  lua_pushlightuserdata(L, ptr);
-  lua_pushvalue(L, index > 0 ? index : index - 1);
-  lua_rawset(L, LUA_REGISTRYINDEX);
-  return 0;
-}
-
-int couv_registry_get_for_ptr(lua_State *L, void *ptr) {
-  lua_pushlightuserdata(L, ptr);
-  lua_rawget(L, LUA_REGISTRYINDEX);
-  return 1;
-}
-
-int couv_registry_delete_for_ptr(lua_State *L, void *ptr) {
-  lua_pushlightuserdata(L, ptr);
-  lua_pushnil(L);
-  lua_rawset(L, LUA_REGISTRYINDEX);
-  return 0;
-}
 
 #if LUA_VERSION_NUM == 501
+
 void couvL_setfuncs(lua_State *L, const luaL_Reg *l, int nup) {
   for (; l->name; ++l) {
     lua_pushcfunction(L, l->func);
@@ -102,4 +84,16 @@ void *couvL_testudata (lua_State *L, int ud, const char *tname) {
   }
   return NULL;  /* value is not a userdata with a metatable */
 }
+
+void couv_rawsetp(lua_State *L, int index, const void *p) {
+  lua_pushlightuserdata(L, (void *)p);
+  lua_insert(L, -2);
+  lua_rawset(L, index);
+}
+
+void couv_rawgetp(lua_State *L, int index, const void *p) {
+  lua_pushlightuserdata(L, (void *)p);
+  lua_rawget(L, index);
+}
+
 #endif

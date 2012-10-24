@@ -7,6 +7,9 @@ static void close_cb(uv_handle_t *handle) {
   L = handle->data;
 
   switch (handle->type) {
+  case UV_PROCESS:
+    couv_free_process_handle(L, (uv_process_t *)handle);
+    break;
   case UV_TCP:
     couv_free_tcp_handle(L, (uv_tcp_t *)handle);
     break;
@@ -15,6 +18,9 @@ static void close_cb(uv_handle_t *handle) {
     break;
   case UV_UDP:
     couv_free_udp_handle(L, (uv_udp_t *)handle);
+    break;
+  case UV_TTY:
+    couv_free_tty_handle(L, (uv_tty_t *)handle);
     break;
   default:
     /* do nothing */

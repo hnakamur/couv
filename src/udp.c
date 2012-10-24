@@ -19,30 +19,29 @@ static couv_udp_send_t *couv_alloc_udp_send(lua_State *L, uv_buf_t *bufs) {
 
 static uv_udp_t *couv_alloc_udp_handle(lua_State *L) {
   couv_udp_t *w_handle;
+  uv_udp_t *handle;
 
   w_handle = couv_alloc(L, sizeof(couv_udp_t));
   if (!w_handle)
     return NULL;
 
+  handle =  &w_handle->handle;
+
   if (couvL_is_mainthread(L)) {
     luaL_error(L, "udp handle must be created in coroutine, not in main thread.");
     return NULL;
-  } else {
-    /* hold thread. */
-    couv_registry_set_for_ptr(L, ((char *)&w_handle->handle) + 1, -1);
-    lua_pop(L, 1);
-  }
-  return &w_handle->handle;
+  } else
+    couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_THREAD_REG_KEY(handle));
+  return handle;
 }
 
 void couv_free_udp_handle(lua_State *L, uv_udp_t *handle) {
   couv_udp_t *w_handle;
 
+  lua_pushnil(L);
+  couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_THREAD_REG_KEY(handle));
+
   w_handle = container_of(handle, couv_udp_t, handle);
-
-  /* release thread. */
-  couv_registry_delete_for_ptr(L, ((char *)handle) + 1);
-
   couv_free(L, w_handle);
 }
 

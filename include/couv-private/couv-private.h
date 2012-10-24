@@ -28,6 +28,8 @@ extern "C" {
 #define couvL_setfuncs(L, l, nup) luaL_setfuncs(L, l, nup)
 #define couvL_testudata luaL_testudata
 #define couv_resume(L, from, nargs) lua_resume(L, from, nargs)
+#define couv_rawsetp lua_rawsetp
+#define couv_rawgetp lua_rawgetp
 
 #elif LUA_VERSION_NUM == 501
 
@@ -35,6 +37,8 @@ extern "C" {
 void couvL_setfuncs(lua_State *L, const luaL_Reg *l, int nup);
 void *couvL_testudata (lua_State *L, int ud, const char *tname);
 #define couv_resume(L, from, nargs) lua_resume(L, nargs)
+void couv_rawsetp(lua_State *L, int index, const void *p);
+void couv_rawgetp(lua_State *L, int index, const void *p);
 
 #else
 
@@ -50,10 +54,6 @@ int couvL_is_mainthread(lua_State *L);
 
 int couvL_hasmetatablename(lua_State *L, int index, const char *tname);
 const char *couvL_uv_errname(int uv_errcode);
-
-int couv_registry_set_for_ptr(lua_State *L, void *ptr, int index);
-int couv_registry_get_for_ptr(lua_State *L, void *ptr);
-int couv_registry_delete_for_ptr(lua_State *L, void *ptr);
 
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
 #define container_of(ptr, type, member) \
@@ -155,15 +155,21 @@ typedef struct couv_tty_s {
   uv_tty_t handle;
 } couv_tty_t;
 
-typedef struct couv_timer_s {
-  uv_timer_t handle;
-} couv_timer_t;
+/*
+ * handle registry keys.
+ */
+#define COUV_USERDATA_REG_KEY(h)  h
+#define COUV_THREAD_REG_KEY(h)    (((char *)h) + 1)
+#define COUV_LISTEN_CB_REG_KEY(h) (((char *)h) + 2)
+#define COUV_TIMER_CB_REG_KEY(h)  (((char *)h) + 2)
+#define COUV_EXIT_CB_REG_KEY(h)   (((char *)h) + 2)
 
 void couv_free_process_handle(lua_State *L, uv_process_t *handle);
 void couv_free_tcp_handle(lua_State *L, uv_tcp_t *handle);
 void couv_free_timer_handle(lua_State *L, uv_timer_t *handle);
 void couv_free_tty_handle(lua_State *L, uv_tty_t *handle);
 void couv_free_udp_handle(lua_State *L, uv_udp_t *handle);
+void couv_free_pipe_handle(lua_State *L, uv_pipe_t *handle);
 
 /*
  * buffer

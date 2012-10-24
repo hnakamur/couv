@@ -5,8 +5,8 @@ static uv_timer_t *couv_alloc_timer_handle(lua_State *L) {
 }
 
 void couv_free_timer_handle(lua_State *L, uv_timer_t *handle) {
-  /* delete timer callback if set. */
-  couv_registry_delete_for_ptr(L, handle);
+  lua_pushnil(L);
+  couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_TIMER_CB_REG_KEY(handle));
 
   couv_free(L, handle);
 }
@@ -34,7 +34,7 @@ static void timer_cb(uv_timer_t *handle, int status) {
   lua_State *L;
 
   L = handle->data;
-  couv_registry_get_for_ptr(L, handle);
+  couv_rawgetp(L, LUA_REGISTRYINDEX, COUV_TIMER_CB_REG_KEY(handle));
   lua_pushlightuserdata(L, handle);
   if (status < 0) {
     lua_pushstring(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
@@ -52,7 +52,8 @@ static int timer_start(lua_State *L) {
 
   handle = lua_touserdata(L, 1);
   luaL_checktype(L, 2, LUA_TFUNCTION);
-  couv_registry_set_for_ptr(L, handle, 2);
+  lua_pushvalue(L, 2);
+  couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_TIMER_CB_REG_KEY(handle));
   timeout = luaL_optinteger(L, 3, 0);
   repeat = luaL_optinteger(L, 4, 0);
   r = uv_timer_start(handle, timer_cb, timeout, repeat);

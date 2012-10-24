@@ -2,30 +2,32 @@
 
 static uv_pipe_t *couv_alloc_pipe_handle(lua_State *L) {
   couv_pipe_t *w_handle;
+  uv_pipe_t *handle;
 
   w_handle = couv_alloc(L, sizeof(couv_pipe_t));
   if (!w_handle)
     return NULL;
 
+  handle = &w_handle->handle;
+
   if (couvL_is_mainthread(L)) {
     luaL_error(L, "pipe handle must be created in coroutine, not in main thread.");
     return NULL;
-  } else {
-    /* hold thread. */
-    couv_registry_set_for_ptr(L, ((char *)&w_handle->handle) + 1, -1);
-    lua_pop(L, 1);
-  }
-  return &w_handle->handle;
+  } else
+    couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_THREAD_REG_KEY(handle));
+  return handle;
 }
 
 void couv_free_pipe_handle(lua_State *L, uv_pipe_t *handle) {
   couv_pipe_t *w_handle;
 
+  lua_pushnil(L);
+  couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_THREAD_REG_KEY(handle));
+
+  lua_pushnil(L);
+  couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_LISTEN_CB_REG_KEY(handle));
+
   w_handle = container_of(handle, couv_pipe_t, handle);
-
-  /* release thread. */
-  couv_registry_delete_for_ptr(L, ((char *)handle) + 1);
-
   couv_free(L, w_handle);
 }
 

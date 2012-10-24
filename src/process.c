@@ -5,8 +5,8 @@ static uv_process_t *couv_alloc_process_handle(lua_State *L) {
 }
 
 void couv_free_process_handle(lua_State *L, uv_process_t *handle) {
-  /* delete exit_cb callback if set. */
-  couv_registry_delete_for_ptr(L, handle);
+  lua_pushnil(L);
+  couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_EXIT_CB_REG_KEY(handle));
 
   couv_free(L, handle);
 }
@@ -56,7 +56,7 @@ static void exit_cb(uv_process_t *handle, int exit_status, int term_signal) {
   lua_State *L;
 
   L = handle->data;
-  couv_registry_get_for_ptr(L, handle);
+  couv_rawgetp(L, LUA_REGISTRYINDEX, COUV_EXIT_CB_REG_KEY(handle));
   lua_pushlightuserdata(L, handle);
   lua_pushnumber(L, exit_status);
   lua_pushnumber(L, term_signal);
@@ -167,8 +167,7 @@ static int couv_spawn(lua_State *L) {
   lua_getfield(L, 1, "exitCb");
   if (lua_isfunction(L, -1)) {
     options.exit_cb = exit_cb;
-    couv_registry_set_for_ptr(L, handle, -1);
-    lua_pop(L, 1);
+    couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_EXIT_CB_REG_KEY(handle));
   } else
     luaL_argerror(L, 1, "value at \"exitCb\" key must be function");
 
