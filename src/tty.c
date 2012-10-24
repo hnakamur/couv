@@ -7,10 +7,11 @@ static uv_tty_t *couv_alloc_tty_handle(lua_State *L) {
   if (!w_handle)
     return NULL;
 
-  if (couvL_is_mainthread(L))
-    w_handle->threadref = LUA_NOREF;
-  else
-    w_handle->threadref = luaL_ref(L, LUA_REGISTRYINDEX);
+  if (!couvL_is_mainthread(L)) {
+    /* hold thread. */
+    couv_registry_set_for_ptr(L, ((char *)&w_handle->handle) + 1, -1);
+    lua_pop(L, 1);
+  }
   return &w_handle->handle;
 }
 
@@ -18,8 +19,9 @@ void couv_free_tty_handle(lua_State *L, uv_tty_t *handle) {
   couv_tty_t *w_handle;
 
   w_handle = container_of(handle, couv_tty_t, handle);
-  if (w_handle->threadref != LUA_NOREF)
-    luaL_unref(L, LUA_REGISTRYINDEX, w_handle->threadref);
+
+  /* release thread. */
+  couv_registry_delete_for_ptr(L, ((char *)handle) + 1);
 
   /* delete listen callback if set. */
   couv_registry_delete_for_ptr(L, handle);

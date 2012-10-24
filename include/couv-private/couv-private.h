@@ -121,51 +121,41 @@ typedef struct couv_pipe_input_s {
  * couv_handle_t *w_handle = container_of(handle, couv_handle_t, handle)
  */
 
-#define COUV_HANDLE_FIELDS                                                    \
-  int threadref;                                                              \
-
 typedef struct couv_handle_s {
-  COUV_HANDLE_FIELDS
   uv_handle_t handle;
 } couv_handle_t;
 
 typedef struct couv_udp_s {
   int is_yielded_for_recv;
   ngx_queue_t input_queue;
-  COUV_HANDLE_FIELDS
   uv_udp_t handle;
 } couv_udp_t;
 
 typedef struct couv_stream_s {
   int is_yielded_for_read;
   ngx_queue_t input_queue;
-  COUV_HANDLE_FIELDS
   uv_stream_t handle;
 } couv_stream_t;
 
 typedef struct couv_pipe_s {
   int is_yielded_for_read;
   ngx_queue_t input_queue;
-  COUV_HANDLE_FIELDS
   uv_pipe_t handle;
 } couv_pipe_t;
 
 typedef struct couv_tcp_s {
   int is_yielded_for_read;
   ngx_queue_t input_queue;
-  COUV_HANDLE_FIELDS
   uv_tcp_t handle;
 } couv_tcp_t;
 
 typedef struct couv_tty_s {
   int is_yielded_for_read;
   ngx_queue_t input_queue;
-  COUV_HANDLE_FIELDS
   uv_tty_t handle;
 } couv_tty_t;
 
 typedef struct couv_timer_s {
-  COUV_HANDLE_FIELDS
   uv_timer_t handle;
 } couv_timer_t;
 
