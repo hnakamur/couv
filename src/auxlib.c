@@ -62,6 +62,25 @@ const char *couvL_uv_errname(int uv_errcode) {
 }
 
 
+int couv_newmetatable(lua_State *L, const char *tname,
+    const char *super_tname) {
+  luaL_newmetatable(L, tname);
+
+printf("metatable %s %lx\n", tname, (unsigned long)lua_topointer(L, -1));
+
+  /* metatable.__index = metatable */
+  lua_pushvalue(L, -1);
+  lua_setfield(L, -2, "__index");
+
+  /* setmatable(metatable, super_metatable) */
+  if (super_tname) {
+    lua_getfield(L, LUA_REGISTRYINDEX, super_tname);
+    lua_setmetatable(L, -2);
+  }
+
+  return 1;
+}
+
 #if LUA_VERSION_NUM == 501
 
 void couvL_setfuncs(lua_State *L, const luaL_Reg *l, int nup) {

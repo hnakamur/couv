@@ -55,6 +55,8 @@ int couvL_is_mainthread(lua_State *L);
 int couvL_hasmetatablename(lua_State *L, int index, const char *tname);
 const char *couvL_uv_errname(int uv_errcode);
 
+int couv_newmetatable(lua_State *L, const char *tname, const char *super_tname);
+
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
 #define container_of(ptr, type, member) \
   ((type *) ((char *) (ptr) - offsetof(type, member)))
@@ -132,6 +134,15 @@ typedef struct couv_stream_handle_data_s {
 /*
  * handles.
  */
+#define COUV_HANDLE_METATABLE_NAME "couv.Handle"
+#define COUV_STREAM_METATABLE_NAME "couv.Stream"
+#define COUV_TCP_METATABLE_NAME "couv.Tcp"
+#define COUV_UDP_METATABLE_NAME "couv.Udp"
+#define COUV_TTY_METATABLE_NAME "couv.Tty"
+#define COUV_PIPE_METATABLE_NAME "couv.Pipe"
+#define COUV_PROCESS_METATABLE_NAME "couv.Process"
+#define COUV_TIMER_METATABLE_NAME "couv.Timer"
+
 typedef struct couv_handle_s {
   uv_handle_t handle;
 } couv_handle_t;

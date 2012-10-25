@@ -41,6 +41,9 @@ static int pipe_create(lua_State *L) {
   if (!handle)
     return 0;
 
+  lua_getfield(L, LUA_REGISTRYINDEX, COUV_PIPE_METATABLE_NAME);
+  lua_setmetatable(L, -2);
+
   loop = couv_loop(L);
   r = uv_pipe_init(loop, handle, ipc);
   if (r < 0) {
@@ -190,6 +193,9 @@ static const struct luaL_Reg pipe_functions[] = {
 };
 
 int luaopen_couv_pipe(lua_State *L) {
+  couv_newmetatable(L, COUV_PIPE_METATABLE_NAME, COUV_STREAM_METATABLE_NAME);
+  lua_pop(L, 1);
+
   couvL_setfuncs(L, pipe_functions, 0);
   return 1;
 }

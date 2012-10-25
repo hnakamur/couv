@@ -8,6 +8,9 @@ static uv_tty_t *couv_new_tty_handle(lua_State *L) {
   if (!w_handle)
     return NULL;
 
+  lua_getfield(L, LUA_REGISTRYINDEX, COUV_TTY_METATABLE_NAME);
+  lua_setmetatable(L, -2);
+
   handle = &w_handle->handle;
 
   if (!couvL_is_mainthread(L))
@@ -142,6 +145,9 @@ static const struct luaL_Reg tty_functions[] = {
 };
 
 int luaopen_couv_tty(lua_State *L) {
+  couv_newmetatable(L, COUV_TTY_METATABLE_NAME, COUV_STREAM_METATABLE_NAME);
+  lua_pop(L, 1);
+
   couvL_setfuncs(L, tty_functions, 0);
   return 1;
 }

@@ -1,7 +1,16 @@
 #include "couv-private.h"
 
 static uv_process_t *couv_new_process_handle(lua_State *L) {
-  return lua_newuserdata(L, sizeof(uv_process_t));
+  uv_process_t *handle;
+
+  handle = lua_newuserdata(L, sizeof(uv_process_t));
+  if (!handle)
+    return NULL;
+
+  lua_getfield(L, LUA_REGISTRYINDEX, COUV_PROCESS_METATABLE_NAME);
+  lua_setmetatable(L, -2);
+
+  return handle;
 }
 
 void couv_clean_process_handle(lua_State *L, uv_process_t *handle) {
@@ -239,6 +248,9 @@ static int set_stdio_flags_contants(lua_State *L) {
 }
 
 int luaopen_couv_process(lua_State *L) {
+  couv_newmetatable(L, COUV_PROCESS_METATABLE_NAME, COUV_HANDLE_METATABLE_NAME);
+  lua_pop(L, 1);
+
   set_process_flags_contants(L);
   set_stdio_flags_contants(L);
 

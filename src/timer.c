@@ -1,7 +1,16 @@
 #include "couv-private.h"
 
 static uv_timer_t *couv_new_timer_handle(lua_State *L) {
-  return lua_newuserdata(L, sizeof(uv_timer_t));
+  uv_timer_t *handle;
+
+  handle = lua_newuserdata(L, sizeof(uv_timer_t));
+  if (!handle)
+    return NULL;
+
+  lua_getfield(L, LUA_REGISTRYINDEX, COUV_TIMER_METATABLE_NAME);
+  lua_setmetatable(L, -2);
+
+  return handle;
 }
 
 void couv_clean_timer_handle(lua_State *L, uv_timer_t *handle) {
@@ -119,6 +128,9 @@ static const struct luaL_Reg timer_functions[] = {
 };
 
 int luaopen_couv_timer(lua_State *L) {
+  couv_newmetatable(L, COUV_TIMER_METATABLE_NAME, COUV_HANDLE_METATABLE_NAME);
+  lua_pop(L, 1);
+
   couvL_setfuncs(L, timer_functions, 0);
   return 1;
 }

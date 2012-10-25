@@ -110,6 +110,9 @@ static int set_handle_type_constants(lua_State *L) {
 }
 
 int luaopen_couv_handle(lua_State *L) {
+  couv_newmetatable(L, COUV_HANDLE_METATABLE_NAME, NULL);
+  lua_pop(L, 1);
+
   set_handle_type_constants(L);
 
   couvL_setfuncs(L, handle_functions, 0);

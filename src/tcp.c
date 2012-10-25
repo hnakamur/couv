@@ -8,6 +8,9 @@ static uv_tcp_t *couv_new_tcp_handle(lua_State *L) {
   if (!w_handle)
     return NULL;
 
+  lua_getfield(L, LUA_REGISTRYINDEX, COUV_TCP_METATABLE_NAME);
+  lua_setmetatable(L, -2);
+
   handle = &w_handle->handle;
 
   if (couvL_is_mainthread(L)) {
@@ -218,6 +221,9 @@ static const struct luaL_Reg tcp_functions[] = {
 };
 
 int luaopen_couv_tcp(lua_State *L) {
+  couv_newmetatable(L, COUV_TCP_METATABLE_NAME, COUV_STREAM_METATABLE_NAME);
+  lua_pop(L, 1);
+
   couvL_setfuncs(L, tcp_functions, 0);
   return 1;
 }

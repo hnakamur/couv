@@ -26,6 +26,9 @@ static couv_udp_t *couv_new_udp_handle(lua_State *L) {
   if (!w_handle)
     return NULL;
 
+  lua_getfield(L, LUA_REGISTRYINDEX, COUV_UDP_METATABLE_NAME);
+  lua_setmetatable(L, -2);
+
   if (couvL_is_mainthread(L)) {
     luaL_error(L, "udp handle must be created in coroutine, not in main thread.");
     return NULL;
@@ -345,6 +348,9 @@ static const struct luaL_Reg udp_functions[] = {
 };
 
 int luaopen_couv_udp(lua_State *L) {
+  couv_newmetatable(L, COUV_UDP_METATABLE_NAME, COUV_HANDLE_METATABLE_NAME);
+  lua_pop(L, 1);
+
   couvL_SET_FIELD(L, UDP_IPV6ONLY, number, UV_UDP_IPV6ONLY);
 
   couvL_SET_FIELD(L, JOIN_GROUP, number, UV_JOIN_GROUP);
