@@ -33,7 +33,7 @@ static int tty_create(lua_State *L) {
   uv_tty_t *handle;
   uv_file fd;
   int readable;
-  couv_tty_t *w_handle;
+  couv_stream_handle_data_t *hdata;
   int r;
 
   fd = luaL_checkint(L, 1);
@@ -43,15 +43,17 @@ static int tty_create(lua_State *L) {
   if (!handle)
     return 0;
 
-  w_handle = container_of(handle, couv_tty_t, handle);
-  w_handle->is_yielded_for_read = 0;
-  ngx_queue_init(&w_handle->input_queue);
   loop = couv_loop(L);
   r = uv_tty_init(loop, handle, fd, readable);
   if (r < 0) {
     return luaL_error(L, couvL_uv_errname(uv_last_error(loop).code));
   }
+
   handle->data = L;
+  hdata = couv_get_stream_handle_data((uv_stream_t *)handle);
+  hdata->is_yielded_for_input = 0;
+  ngx_queue_init(&hdata->input_queue);
+
   lua_pushlightuserdata(L, handle);
   return 1;
 }

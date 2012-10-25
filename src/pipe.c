@@ -34,7 +34,7 @@ void couv_free_pipe_handle(lua_State *L, uv_pipe_t *handle) {
 static int pipe_create(lua_State *L) {
   uv_loop_t *loop;
   uv_pipe_t *handle;
-  couv_pipe_t *w_handle;
+  couv_stream_handle_data_t *hdata;
   int r;
   int ipc;
 
@@ -43,15 +43,17 @@ static int pipe_create(lua_State *L) {
   if (!handle)
     return 0;
 
-  w_handle = container_of(handle, couv_pipe_t, handle);
-  w_handle->is_yielded_for_read = 0;
-  ngx_queue_init(&w_handle->input_queue);
   loop = couv_loop(L);
   r = uv_pipe_init(loop, handle, ipc);
   if (r < 0) {
     return luaL_error(L, couvL_uv_errname(uv_last_error(loop).code));
   }
+
   handle->data = L;
+  hdata = couv_get_stream_handle_data((uv_stream_t *)handle);
+  hdata->is_yielded_for_input = 0;
+  ngx_queue_init(&hdata->input_queue);
+
   lua_pushlightuserdata(L, handle);
   return 1;
 }
@@ -115,12 +117,11 @@ static int pipe_open(lua_State *L) {
 
 static void read2_cb(uv_pipe_t *pipe, ssize_t nread, uv_buf_t buf,
     uv_handle_type pending) {
-  couv_pipe_t *w_pipe;
+  couv_stream_handle_data_t *hdata;
   lua_State *L;
   couv_pipe_input_t *input;
 
   L = pipe->data;
-  w_pipe = container_of(pipe, couv_pipe_t, handle);
 
   input = couv_alloc(L, sizeof(couv_pipe_input_t));
   if (!input)
@@ -130,10 +131,11 @@ static void read2_cb(uv_pipe_t *pipe, ssize_t nread, uv_buf_t buf,
   input->w_buf.orig = buf.base;
   input->w_buf.buf = buf;
   input->pending = pending;
-  ngx_queue_insert_tail(&w_pipe->input_queue, (ngx_queue_t *)input);
+  hdata = couv_get_stream_handle_data((uv_stream_t *)pipe);
+  ngx_queue_insert_tail(&hdata->input_queue, (ngx_queue_t *)input);
 
-  if (lua_status(L) == LUA_YIELD && w_pipe->is_yielded_for_read) {
-    w_pipe->is_yielded_for_read = 0;
+  if (lua_status(L) == LUA_YIELD && hdata->is_yielded_for_input) {
+    hdata->is_yielded_for_input = 0;
     couv_resume(L, L, 0);
   }
 }
@@ -152,18 +154,18 @@ static int couv_read2_start(lua_State *L) {
 
 static int couv_prim_read2(lua_State *L) {
   uv_stream_t *handle;
-  couv_stream_t *w_handle;
+  couv_stream_handle_data_t *hdata;
   couv_pipe_input_t *input;
   couv_buf_t *w_buf;
 
   handle = lua_touserdata(L, 1);
-  w_handle = container_of(handle, couv_stream_t, handle);
+  hdata = couv_get_stream_handle_data(handle);
 
-  if (ngx_queue_empty(&w_handle->input_queue)) {
-    w_handle->is_yielded_for_read = 1;
+  if (ngx_queue_empty(&hdata->input_queue)) {
+    hdata->is_yielded_for_input = 1;
     return lua_yield(L, 0);
   }
-  input = (couv_pipe_input_t *)ngx_queue_head(&w_handle->input_queue);
+  input = (couv_pipe_input_t *)ngx_queue_head(&hdata->input_queue);
   ngx_queue_remove(input);
 
   lua_pushnumber(L, input->nread);

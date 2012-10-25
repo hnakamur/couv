@@ -34,30 +34,32 @@ void couv_free_tcp_handle(lua_State *L, uv_tcp_t *handle) {
 static int tcp_create(lua_State *L) {
   uv_loop_t *loop;
   uv_tcp_t *handle;
-  couv_tcp_t *w_handle;
+  couv_stream_handle_data_t *hdata;
   int r;
 
   handle = couv_alloc_tcp_handle(L);
   if (!handle)
     return 0;
 
-  w_handle = container_of(handle, couv_tcp_t, handle);
-  w_handle->is_yielded_for_read = 0;
-  ngx_queue_init(&w_handle->input_queue);
   loop = couv_loop(L);
   r = uv_tcp_init(loop, handle);
   if (r < 0) {
     return luaL_error(L, couvL_uv_errname(uv_last_error(loop).code));
   }
+
   handle->data = L;
+  hdata = couv_get_stream_handle_data((uv_stream_t *)handle);
+  hdata->is_yielded_for_input = 0;
+  ngx_queue_init(&hdata->input_queue);
+
   lua_pushlightuserdata(L, handle);
   return 1;
 }
 
 static int tcp_open(lua_State *L) {
   uv_tcp_t *handle;
-  couv_tcp_t *w_handle;
   uv_os_sock_t sock;
+  couv_stream_handle_data_t *hdata;
   int r;
 
   handle = lua_touserdata(L, 1);
@@ -66,8 +68,11 @@ static int tcp_open(lua_State *L) {
   if (r < 0) {
     return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
   }
-  w_handle = container_of(handle, couv_tcp_t, handle);
-  w_handle->is_yielded_for_read = 0;
+
+  handle->data = L;
+  hdata = couv_get_stream_handle_data((uv_stream_t *)handle);
+  hdata->is_yielded_for_input = 0;
+
   return 0;
 }
 

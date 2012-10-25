@@ -111,49 +111,52 @@ typedef struct couv_pipe_input_s {
 } couv_pipe_input_t;
 
 /*
- * handles.
- *
- * To save memory, lua_State *L is set to handle->data, not a member in
- * COUV_HANDLE_FIELDS.
- *
- * Members specific to handle types must be placed before COUV_HANDLE_FIELDS,
- * because we'd like to treat them couv_handle_t with
- * couv_handle_t *w_handle = container_of(handle, couv_handle_t, handle)
+ * handle data.
  */
+#define COUV_UDP_HANDLE_DATA_FIELDS \
+  ngx_queue_t input_queue;          \
+  int is_yielded_for_input;
 
+#define COUV_STREAM_HANDLE_DATA_FIELDS \
+  ngx_queue_t input_queue;             \
+  int is_yielded_for_input;
+
+typedef struct couv_udp_handle_data_s {
+  COUV_UDP_HANDLE_DATA_FIELDS 
+} couv_udp_handle_data_t;
+
+typedef struct couv_stream_handle_data_s {
+  COUV_STREAM_HANDLE_DATA_FIELDS 
+} couv_stream_handle_data_t;
+
+/*
+ * handles.
+ */
 typedef struct couv_handle_s {
   uv_handle_t handle;
 } couv_handle_t;
 
 typedef struct couv_udp_s {
-  int is_yielded_for_recv;
-  ngx_queue_t input_queue;
   uv_udp_t handle;
+  couv_udp_handle_data_t hdata;
 } couv_udp_t;
 
-typedef struct couv_stream_s {
-  int is_yielded_for_read;
-  ngx_queue_t input_queue;
-  uv_stream_t handle;
-} couv_stream_t;
-
 typedef struct couv_pipe_s {
-  int is_yielded_for_read;
-  ngx_queue_t input_queue;
   uv_pipe_t handle;
+  couv_stream_handle_data_t hdata;
 } couv_pipe_t;
 
 typedef struct couv_tcp_s {
-  int is_yielded_for_read;
-  ngx_queue_t input_queue;
   uv_tcp_t handle;
+  couv_stream_handle_data_t hdata;
 } couv_tcp_t;
 
 typedef struct couv_tty_s {
-  int is_yielded_for_read;
-  ngx_queue_t input_queue;
   uv_tty_t handle;
+  couv_stream_handle_data_t hdata;
 } couv_tty_t;
+
+couv_stream_handle_data_t *couv_get_stream_handle_data(uv_stream_t *handle);
 
 /*
  * handle registry keys.
