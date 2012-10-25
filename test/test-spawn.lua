@@ -68,7 +68,7 @@ exports['spawn.stdout_to_file'] = function(test)
   end
 
   local output = Buffer.new(1024)
-  local fd = uv.fs_open('stdout_file', 'w+', uv.S_IREAD + uv.S_IWRITE)
+  local fd = uv.fs_open('stdout_file', 'w+', '644')
   local process = uv.spawn{
     args={uv.exepath(), 'test/helper.lua', 'spawn_helper2'},
     stdio={{uv.IGNORE}, {uv.INHERIT_FD, fd}}, exitCb=exitCb}
