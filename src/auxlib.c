@@ -66,8 +66,6 @@ int couv_newmetatable(lua_State *L, const char *tname,
     const char *super_tname) {
   luaL_newmetatable(L, tname);
 
-printf("metatable %s %lx\n", tname, (unsigned long)lua_topointer(L, -1));
-
   /* metatable.__index = metatable */
   lua_pushvalue(L, -1);
   lua_setfield(L, -2, "__index");
