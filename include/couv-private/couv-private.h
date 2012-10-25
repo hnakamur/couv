@@ -167,12 +167,12 @@ couv_stream_handle_data_t *couv_get_stream_handle_data(uv_stream_t *handle);
 #define COUV_TIMER_CB_REG_KEY(h)  (((char *)h) + 2)
 #define COUV_EXIT_CB_REG_KEY(h)   (((char *)h) + 2)
 
-void couv_free_process_handle(lua_State *L, uv_process_t *handle);
-void couv_free_tcp_handle(lua_State *L, uv_tcp_t *handle);
-void couv_free_timer_handle(lua_State *L, uv_timer_t *handle);
-void couv_free_tty_handle(lua_State *L, uv_tty_t *handle);
-void couv_free_udp_handle(lua_State *L, uv_udp_t *handle);
-void couv_free_pipe_handle(lua_State *L, uv_pipe_t *handle);
+void couv_clean_process_handle(lua_State *L, uv_process_t *handle);
+void couv_clean_tcp_handle(lua_State *L, uv_tcp_t *handle);
+void couv_clean_timer_handle(lua_State *L, uv_timer_t *handle);
+void couv_clean_tty_handle(lua_State *L, uv_tty_t *handle);
+void couv_clean_udp_handle(lua_State *L, uv_udp_t *handle);
+void couv_clean_pipe_handle(lua_State *L, uv_pipe_t *handle);
 
 /*
  * buffer

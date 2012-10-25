@@ -42,6 +42,8 @@ static int couv_listen(lua_State *L) {
   if (r < 0) {
     luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
   }
+  lua_pushvalue(L, 1);
+  couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_USERDATA_REG_KEY(handle));
   return 0;
 }
 

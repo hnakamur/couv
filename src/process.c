@@ -1,14 +1,15 @@
 #include "couv-private.h"
 
-static uv_process_t *couv_alloc_process_handle(lua_State *L) {
-  return couv_alloc(L, sizeof(uv_process_t));
+static uv_process_t *couv_new_process_handle(lua_State *L) {
+  return lua_newuserdata(L, sizeof(uv_process_t));
 }
 
-void couv_free_process_handle(lua_State *L, uv_process_t *handle) {
+void couv_clean_process_handle(lua_State *L, uv_process_t *handle) {
+  lua_pushnil(L);
+  couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_USERDATA_REG_KEY(handle));
+
   lua_pushnil(L);
   couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_EXIT_CB_REG_KEY(handle));
-
-  couv_free(L, handle);
 }
 
 static const char **couv_tonullterminatedstrarray(lua_State *L, int index,
@@ -57,7 +58,7 @@ static void exit_cb(uv_process_t *handle, int exit_status, int term_signal) {
 
   L = handle->data;
   couv_rawgetp(L, LUA_REGISTRYINDEX, COUV_EXIT_CB_REG_KEY(handle));
-  lua_pushlightuserdata(L, handle);
+  couv_rawgetp(L, LUA_REGISTRYINDEX, COUV_USERDATA_REG_KEY(handle));
   lua_pushnumber(L, exit_status);
   lua_pushnumber(L, term_signal);
   lua_call(L, 3, 0);
@@ -101,7 +102,7 @@ static uv_stdio_container_t *couv_checkstdiocontainers(lua_State *L, int index,
       type = lua_type(L, -1);
       if (type == LUA_TNUMBER)
         stdio[i - 1].data.fd = lua_tointeger(L, -1);
-      else if (type == LUA_TLIGHTUSERDATA) /* TODO: check data type. */
+      else if (type == LUA_TUSERDATA) /* TODO: check data type. */
         stdio[i - 1].data.stream = lua_touserdata(L, -1);
       lua_pop(L, 1);
     }
@@ -120,7 +121,7 @@ static int couv_spawn(lua_State *L) {
   int argc;
   int r;
 
-  handle = couv_alloc_process_handle(L);
+  handle = couv_new_process_handle(L);
   if (!handle)
     return 0;
 
@@ -180,7 +181,10 @@ static int couv_spawn(lua_State *L) {
   if (options.env)
     couv_free(L, options.env);
   handle->data = L;
-  lua_pushlightuserdata(L, handle);
+
+  lua_pushvalue(L, -1);
+  couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_USERDATA_REG_KEY(handle));
+
   return 1;
 }
 

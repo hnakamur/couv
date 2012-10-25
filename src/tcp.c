@@ -1,10 +1,10 @@
 #include "couv-private.h"
 
-static uv_tcp_t *couv_alloc_tcp_handle(lua_State *L) {
+static uv_tcp_t *couv_new_tcp_handle(lua_State *L) {
   couv_tcp_t *w_handle;
   uv_tcp_t *handle;
 
-  w_handle = couv_alloc(L, sizeof(couv_tcp_t));
+  w_handle = lua_newuserdata(L, sizeof(couv_tcp_t));
   if (!w_handle)
     return NULL;
 
@@ -18,17 +18,15 @@ static uv_tcp_t *couv_alloc_tcp_handle(lua_State *L) {
   return handle;
 }
 
-void couv_free_tcp_handle(lua_State *L, uv_tcp_t *handle) {
-  couv_tcp_t *w_handle;
+void couv_clean_tcp_handle(lua_State *L, uv_tcp_t *handle) {
+  lua_pushnil(L);
+  couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_USERDATA_REG_KEY(handle));
 
   lua_pushnil(L);
   couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_THREAD_REG_KEY(handle));
 
   lua_pushnil(L);
   couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_LISTEN_CB_REG_KEY(handle));
-
-  w_handle = container_of(handle, couv_tcp_t, handle);
-  couv_free(L, w_handle);
 }
 
 static int tcp_create(lua_State *L) {
@@ -37,7 +35,7 @@ static int tcp_create(lua_State *L) {
   couv_stream_handle_data_t *hdata;
   int r;
 
-  handle = couv_alloc_tcp_handle(L);
+  handle = couv_new_tcp_handle(L);
   if (!handle)
     return 0;
 
@@ -52,7 +50,8 @@ static int tcp_create(lua_State *L) {
   hdata->is_yielded_for_input = 0;
   ngx_queue_init(&hdata->input_queue);
 
-  lua_pushlightuserdata(L, handle);
+  lua_pushvalue(L, -1);
+  couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_USERDATA_REG_KEY(handle));
   return 1;
 }
 

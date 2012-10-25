@@ -1,14 +1,14 @@
 #include "couv-private.h"
 
-static uv_timer_t *couv_alloc_timer_handle(lua_State *L) {
-  return couv_alloc(L, sizeof(uv_timer_t));
+static uv_timer_t *couv_new_timer_handle(lua_State *L) {
+  return lua_newuserdata(L, sizeof(uv_timer_t));
 }
 
-void couv_free_timer_handle(lua_State *L, uv_timer_t *handle) {
+void couv_clean_timer_handle(lua_State *L, uv_timer_t *handle) {
   lua_pushnil(L);
   couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_TIMER_CB_REG_KEY(handle));
-
-  couv_free(L, handle);
+  lua_pushnil(L);
+  couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_USERDATA_REG_KEY(handle));
 }
 
 static int couv_timer_create(lua_State *L) {
@@ -16,7 +16,7 @@ static int couv_timer_create(lua_State *L) {
   uv_timer_t *handle;
   int r;
 
-  handle = couv_alloc_timer_handle(L);
+  handle = couv_new_timer_handle(L);
   if (!handle)
     return 0;
 
@@ -26,7 +26,6 @@ static int couv_timer_create(lua_State *L) {
     return luaL_error(L, couvL_uv_errname(uv_last_error(loop).code));
   }
   handle->data = L;
-  lua_pushlightuserdata(L, handle);
   return 1;
 }
 
@@ -35,7 +34,7 @@ static void timer_cb(uv_timer_t *handle, int status) {
 
   L = handle->data;
   couv_rawgetp(L, LUA_REGISTRYINDEX, COUV_TIMER_CB_REG_KEY(handle));
-  lua_pushlightuserdata(L, handle);
+  couv_rawgetp(L, LUA_REGISTRYINDEX, COUV_USERDATA_REG_KEY(handle));
   if (status < 0) {
     lua_pushstring(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
     lua_call(L, 2, 0);
@@ -60,6 +59,8 @@ static int timer_start(lua_State *L) {
   if (r < 0) {
     return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
   }
+  lua_pushvalue(L, 1);
+  couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_USERDATA_REG_KEY(handle));
   return 0;
 }
 

@@ -19,32 +19,27 @@ static couv_udp_send_t *couv_alloc_udp_send(lua_State *L, uv_buf_t *bufs) {
 }
 
 
-static uv_udp_t *couv_alloc_udp_handle(lua_State *L) {
+static couv_udp_t *couv_new_udp_handle(lua_State *L) {
   couv_udp_t *w_handle;
-  uv_udp_t *handle;
 
-  w_handle = couv_alloc(L, sizeof(couv_udp_t));
+  w_handle = lua_newuserdata(L, sizeof(couv_udp_t));
   if (!w_handle)
     return NULL;
-
-  handle = &w_handle->handle;
 
   if (couvL_is_mainthread(L)) {
     luaL_error(L, "udp handle must be created in coroutine, not in main thread.");
     return NULL;
   } else
-    couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_THREAD_REG_KEY(handle));
-  return handle;
+    couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_THREAD_REG_KEY(w_handle));
+  return w_handle;
 }
 
-void couv_free_udp_handle(lua_State *L, uv_udp_t *handle) {
-  couv_udp_t *w_handle;
+void couv_clean_udp_handle(lua_State *L, uv_udp_t *handle) {
+  lua_pushnil(L);
+  couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_USERDATA_REG_KEY(handle));
 
   lua_pushnil(L);
   couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_THREAD_REG_KEY(handle));
-
-  w_handle = container_of(handle, couv_udp_t, handle);
-  couv_free(L, w_handle);
 }
 
 static int udp_create(lua_State *L) {
@@ -53,7 +48,7 @@ static int udp_create(lua_State *L) {
   couv_udp_handle_data_t *hdata;
   int r;
 
-  handle = couv_alloc_udp_handle(L);
+  handle = (couv_udp_t *)couv_new_udp_handle(L);
   if (!handle)
     return 0;
 
@@ -68,7 +63,8 @@ static int udp_create(lua_State *L) {
   hdata->is_yielded_for_input = 0;
   ngx_queue_init(&hdata->input_queue);
 
-  lua_pushlightuserdata(L, handle);
+  lua_pushvalue(L, -1);
+  couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_USERDATA_REG_KEY(handle));
   return 1;
 }
 

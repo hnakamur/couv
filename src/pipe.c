@@ -1,10 +1,10 @@
 #include "couv-private.h"
 
-static uv_pipe_t *couv_alloc_pipe_handle(lua_State *L) {
+static uv_pipe_t *couv_new_pipe_handle(lua_State *L) {
   couv_pipe_t *w_handle;
   uv_pipe_t *handle;
 
-  w_handle = couv_alloc(L, sizeof(couv_pipe_t));
+  w_handle = lua_newuserdata(L, sizeof(couv_pipe_t));
   if (!w_handle)
     return NULL;
 
@@ -18,17 +18,15 @@ static uv_pipe_t *couv_alloc_pipe_handle(lua_State *L) {
   return handle;
 }
 
-void couv_free_pipe_handle(lua_State *L, uv_pipe_t *handle) {
-  couv_pipe_t *w_handle;
+void couv_clean_pipe_handle(lua_State *L, uv_pipe_t *handle) {
+  lua_pushnil(L);
+  couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_USERDATA_REG_KEY(handle));
 
   lua_pushnil(L);
   couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_THREAD_REG_KEY(handle));
 
   lua_pushnil(L);
   couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_LISTEN_CB_REG_KEY(handle));
-
-  w_handle = container_of(handle, couv_pipe_t, handle);
-  couv_free(L, w_handle);
 }
 
 static int pipe_create(lua_State *L) {
@@ -39,7 +37,7 @@ static int pipe_create(lua_State *L) {
   int ipc;
 
   ipc = lua_toboolean(L, 1);
-  handle = couv_alloc_pipe_handle(L);
+  handle = couv_new_pipe_handle(L);
   if (!handle)
     return 0;
 
@@ -54,7 +52,8 @@ static int pipe_create(lua_State *L) {
   hdata->is_yielded_for_input = 0;
   ngx_queue_init(&hdata->input_queue);
 
-  lua_pushlightuserdata(L, handle);
+  lua_pushvalue(L, -1);
+  couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_USERDATA_REG_KEY(handle));
   return 1;
 }
 
