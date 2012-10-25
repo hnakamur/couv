@@ -180,6 +180,8 @@ static int couv_spawn(lua_State *L) {
     couv_free(L, options.args);
   if (options.env)
     couv_free(L, options.env);
+  if (options.stdio)
+    couv_free(L, options.stdio);
   handle->data = L;
 
   lua_pushvalue(L, -1);
