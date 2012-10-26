@@ -38,14 +38,14 @@ uv_buf_t couv_tobuforstr(lua_State *L, int index) {
   if (type == LUA_TSTRING) {
     buf.base = (char *)lua_tolstring(L, index, (size_t *)&buf.len);
     return buf;
-  } else if (couvL_hasmetatablename(L, index, COUV_BUFFER_MTBL_NAME)) {
-    w_buf = lua_touserdata(L, index);
-    return w_buf->buf;
-  } else {
-    buf.base = NULL;
-    buf.len = 0;
-    return buf;
   }
+
+  if ((w_buf = couvL_testudataclass(L, index, COUV_BUFFER_MTBL_NAME)) != NULL)
+    return w_buf->buf;
+
+  buf.base = NULL;
+  buf.len = 0;
+  return buf;
 }
 
 uv_buf_t couv_checkbuforstr(lua_State *L, int index) {
@@ -607,7 +607,7 @@ static const struct luaL_Reg buffer_methods[] = {
 };
 
 static int buffer_is_buffer(lua_State *L) {
-  lua_pushboolean(L, couvL_hasmetatablename(L, 1, COUV_BUFFER_MTBL_NAME));
+  lua_pushboolean(L, couvL_testudataclass(L, 1, COUV_BUFFER_MTBL_NAME) != NULL);
   return 1;
 }
 
@@ -663,7 +663,7 @@ static int buffer_concat(lua_State *L) {
   lua_pushnumber(L, total_length);
   lua_call(L, 1, 1);
   /* stack: target [total_length] list */
-  target = (couv_buf_t *)lua_touserdata(L, -1);
+  target = lua_touserdata(L, -1);
   dst = target->buf.base;
 
   for (i = 0; i < n && total_length > 0; ++i, dst += len, total_length -= len) {

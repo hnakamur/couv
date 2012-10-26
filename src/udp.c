@@ -348,7 +348,7 @@ static const struct luaL_Reg udp_functions[] = {
 };
 
 int luaopen_couv_udp(lua_State *L) {
-  couv_newmetatable(L, COUV_UDP_MTBL_NAME, COUV_HANDLE_METATABLE_NAME);
+  couv_newmetatable(L, COUV_UDP_MTBL_NAME, COUV_HANDLE_MTBL_NAME);
   lua_pop(L, 1);
 
   couvL_SET_FIELD(L, UDP_IPV6ONLY, number, UV_UDP_IPV6ONLY);

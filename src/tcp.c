@@ -221,7 +221,7 @@ static const struct luaL_Reg tcp_functions[] = {
 };
 
 int luaopen_couv_tcp(lua_State *L) {
-  couv_newmetatable(L, COUV_TCP_MTBL_NAME, COUV_STREAM_METATABLE_NAME);
+  couv_newmetatable(L, COUV_TCP_MTBL_NAME, COUV_STREAM_MTBL_NAME);
   lua_pop(L, 1);
 
   couvL_setfuncs(L, tcp_functions, 0);

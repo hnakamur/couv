@@ -250,7 +250,7 @@ static int set_stdio_flags_contants(lua_State *L) {
 }
 
 int luaopen_couv_process(lua_State *L) {
-  couv_newmetatable(L, COUV_PROCESS_MTBL_NAME, COUV_HANDLE_METATABLE_NAME);
+  couv_newmetatable(L, COUV_PROCESS_MTBL_NAME, COUV_HANDLE_MTBL_NAME);
   lua_pop(L, 1);
 
   set_process_flags_contants(L);

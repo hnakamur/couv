@@ -267,7 +267,7 @@ static const struct luaL_Reg stream_functions[] = {
 };
 
 int luaopen_couv_stream(lua_State *L) {
-  couv_newmetatable(L, COUV_STREAM_MTBL_NAME, COUV_HANDLE_METATABLE_NAME);
+  couv_newmetatable(L, COUV_STREAM_MTBL_NAME, COUV_HANDLE_MTBL_NAME);
   lua_pop(L, 1);
 
   couvL_setfuncs(L, stream_functions, 0);

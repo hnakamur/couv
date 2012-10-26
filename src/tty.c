@@ -145,7 +145,7 @@ static const struct luaL_Reg tty_functions[] = {
 };
 
 int luaopen_couv_tty(lua_State *L) {
-  couv_newmetatable(L, COUV_TTY_MTBL_NAME, COUV_STREAM_METATABLE_NAME);
+  couv_newmetatable(L, COUV_TTY_MTBL_NAME, COUV_STREAM_MTBL_NAME);
   lua_pop(L, 1);
 
   couvL_setfuncs(L, tty_functions, 0);

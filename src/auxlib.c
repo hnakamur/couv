@@ -40,18 +40,6 @@ int couvL_is_mainthread(lua_State *L) {
   return is_mainthread;
 }
 
-int couvL_hasmetatablename(lua_State *L, int index, const char *tname) {
-  if (lua_getmetatable(L, index)) {
-    luaL_getmetatable(L, tname);
-    if (lua_rawequal(L, -1, -2)) {
-      lua_pop(L, 2);
-      return 1;
-    }
-    lua_pop(L, 2);
-  }
-  return 0;
-}
-
 #define COUV_UV_ERRNAME_GEN(val, name, s) case val: return #name;
 
 const char *couvL_uv_errname(int uv_errcode) {
@@ -83,7 +71,7 @@ int couv_absindex(lua_State *L, int idx) {
   return idx < 0 ? lua_gettop(L) + idx + 1 : idx;
 }
 
-void *couvL_checkudataclass(lua_State *L, int arg, const char *tname) {
+void *couvL_testudataclass(lua_State *L, int arg, const char *tname) {
   void *p;
 
   arg = couv_absindex(L, arg);
@@ -107,8 +95,16 @@ void *couvL_checkudataclass(lua_State *L, int arg, const char *tname) {
     }
     lua_pop(L, 1); /* remove tname matatable. */
   }
-  luaL_typerror(L, arg, tname);
   return NULL;
+}
+
+void *couvL_checkudataclass(lua_State *L, int arg, const char *tname) {
+  void *p;
+
+  p = couvL_testudataclass(L, arg, tname);
+  if (!p)
+    luaL_typerror(L, arg, tname);
+  return p;
 }
 
 #if LUA_VERSION_NUM == 501
