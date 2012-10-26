@@ -79,6 +79,10 @@ int couv_newmetatable(lua_State *L, const char *tname,
   return 1;
 }
 
+int couv_absindex(lua_State *L, int idx) {
+  return idx < 0 ? lua_gettop(L) + idx + 1 : idx;
+}
+
 #if LUA_VERSION_NUM == 501
 
 void couvL_setfuncs(lua_State *L, const luaL_Reg *l, int nup) {

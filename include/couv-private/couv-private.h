@@ -27,6 +27,7 @@ extern "C" {
 #define couv_rawlen lua_rawlen
 #define couvL_setfuncs(L, l, nup) luaL_setfuncs(L, l, nup)
 #define couvL_testudata luaL_testudata
+#define couv_absindex lua_absindex
 #define couv_resume(L, from, nargs) lua_resume(L, from, nargs)
 #define couv_rawsetp lua_rawsetp
 #define couv_rawgetp lua_rawgetp
@@ -36,6 +37,7 @@ extern "C" {
 #define couv_rawlen lua_objlen
 void couvL_setfuncs(lua_State *L, const luaL_Reg *l, int nup);
 void *couvL_testudata (lua_State *L, int ud, const char *tname);
+int couv_absindex(lua_State *L, int idx);
 #define couv_resume(L, from, nargs) lua_resume(L, nargs)
 void couv_rawsetp(lua_State *L, int index, const void *p);
 void couv_rawgetp(lua_State *L, int index, const void *p);
