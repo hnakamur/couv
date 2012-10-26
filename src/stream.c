@@ -18,7 +18,7 @@ static void connection_cb(uv_stream_t *handle, int status) {
 
   L = handle->data;
   couv_rawgetp(L, LUA_REGISTRYINDEX, COUV_LISTEN_CB_REG_KEY(handle));
-  lua_pushlightuserdata(L, handle);
+  couv_rawgetp(L, LUA_REGISTRYINDEX, COUV_USERDATA_REG_KEY(handle));
   if (status < 0) {
     lua_pushstring(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
     lua_call(L, 2, 0);
@@ -32,7 +32,7 @@ static int couv_listen(lua_State *L) {
   uv_stream_t *handle;
   int backlog;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_STREAM_MTBL_NAME);
   backlog = luaL_checkint(L, 2);
   luaL_checktype(L, 3, LUA_TFUNCTION);
   lua_pushvalue(L, 3);
@@ -52,8 +52,8 @@ static int couv_accept(lua_State *L) {
   uv_stream_t *client;
   int r;
 
-  server = lua_touserdata(L, 1);
-  client = lua_touserdata(L, 2);
+  server = couvL_checkudataclass(L, 1, COUV_STREAM_MTBL_NAME);
+  client = couvL_checkudataclass(L, 2, COUV_STREAM_MTBL_NAME);
   r = uv_accept(server, client);
   if (r < 0) {
     luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
@@ -64,7 +64,7 @@ static int couv_accept(lua_State *L) {
 static int couv_get_write_queue_size(lua_State *L) {
   uv_stream_t *handle;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_STREAM_MTBL_NAME);
   lua_pushnumber(L, handle->write_queue_size);
   return 1;
 }
@@ -72,7 +72,7 @@ static int couv_get_write_queue_size(lua_State *L) {
 static int couv_is_readable(lua_State *L) {
   uv_stream_t *handle;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_STREAM_MTBL_NAME);
   lua_pushboolean(L, uv_is_readable(handle));
   return 1;
 }
@@ -80,7 +80,7 @@ static int couv_is_readable(lua_State *L) {
 static int couv_is_writable(lua_State *L) {
   uv_stream_t *handle;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_STREAM_MTBL_NAME);
   lua_pushboolean(L, uv_is_writable(handle));
   return 1;
 }
@@ -112,7 +112,7 @@ static int couv_read_start(lua_State *L) {
   uv_stream_t *handle;
   int r;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_STREAM_MTBL_NAME);
   r = uv_read_start(handle, couv_buf_alloc_cb, read_cb);
   if (r < 0) {
     luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
@@ -126,7 +126,7 @@ static int couv_prim_read(lua_State *L) {
   couv_stream_handle_data_t *hdata;
   couv_buf_t *w_buf;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_STREAM_MTBL_NAME);
 
   hdata = couv_get_stream_handle_data(handle);
   if (ngx_queue_empty(&hdata->input_queue)) {
@@ -150,7 +150,7 @@ static int couv_read_stop(lua_State *L) {
   uv_stream_t *handle;
   int r;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_STREAM_MTBL_NAME);
   r = uv_read_stop(handle);
   if (r < 0) {
     luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
@@ -181,7 +181,7 @@ static int couv_shutdown(lua_State *L) {
   uv_shutdown_t* req;
   int r;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_STREAM_MTBL_NAME);
   req = couv_alloc(L, sizeof(uv_shutdown_t));
   r = uv_shutdown(req, handle, shutdown_cb);
   if (r < 0) {
@@ -216,7 +216,7 @@ static int couv_write(lua_State *L) {
   size_t bufcnt;
   int r;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_STREAM_MTBL_NAME);
   bufs = couv_checkbuforstrtable(L, 2, &bufcnt);
 
   req = couv_alloc(L, sizeof(uv_write_t));
@@ -237,9 +237,9 @@ static int couv_write2(lua_State *L) {
   uv_stream_t *send_handle;
   int r;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_STREAM_MTBL_NAME);
   bufs = couv_checkbuforstrtable(L, 2, &bufcnt);
-  send_handle = lua_touserdata(L, 3);
+  send_handle = couvL_checkudataclass(L, 3, COUV_STREAM_MTBL_NAME);
 
   req = couv_alloc(L, sizeof(uv_write_t));
   req->data = bufs;
@@ -267,7 +267,7 @@ static const struct luaL_Reg stream_functions[] = {
 };
 
 int luaopen_couv_stream(lua_State *L) {
-  couv_newmetatable(L, COUV_STREAM_METATABLE_NAME, COUV_HANDLE_METATABLE_NAME);
+  couv_newmetatable(L, COUV_STREAM_MTBL_NAME, COUV_HANDLE_METATABLE_NAME);
   lua_pop(L, 1);
 
   couvL_setfuncs(L, stream_functions, 0);

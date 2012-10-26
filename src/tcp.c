@@ -8,7 +8,7 @@ static uv_tcp_t *couv_new_tcp_handle(lua_State *L) {
   if (!w_handle)
     return NULL;
 
-  lua_getfield(L, LUA_REGISTRYINDEX, COUV_TCP_METATABLE_NAME);
+  lua_getfield(L, LUA_REGISTRYINDEX, COUV_TCP_MTBL_NAME);
   lua_setmetatable(L, -2);
 
   handle = &w_handle->handle;
@@ -64,7 +64,7 @@ static int tcp_open(lua_State *L) {
   couv_stream_handle_data_t *hdata;
   int r;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_TCP_MTBL_NAME);
   sock = (uv_os_sock_t)luaL_checkinteger(L, 2);
   r = uv_tcp_open(handle, sock);
   if (r < 0) {
@@ -84,7 +84,7 @@ static int tcp_bind(lua_State *L) {
   struct sockaddr_in6 *ip6addr;
   int r;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_TCP_MTBL_NAME);
   if ((ip4addr = couvL_testip4addr(L, 2)) != NULL)
     r = uv_tcp_bind(handle, *ip4addr);
   else if ((ip6addr = couvL_testip6addr(L, 2)) != NULL)
@@ -120,7 +120,7 @@ static int tcp_connect(lua_State *L) {
 
   req = couv_alloc(L, sizeof(uv_connect_t));
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_TCP_MTBL_NAME);
   if ((ip4addr = couvL_testip4addr(L, 2)) != NULL)
     r = uv_tcp_connect(req, handle, *ip4addr, connect_cb);
   else if ((ip6addr = couvL_testip6addr(L, 2)) != NULL)
@@ -138,7 +138,7 @@ static int tcp_nodelay(lua_State *L) {
   int enable;
   int r;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_TCP_MTBL_NAME);
   enable = lua_toboolean(L, 2);
   r = uv_tcp_nodelay(handle, enable);
   if (r < 0) {
@@ -153,7 +153,7 @@ static int tcp_keepalive(lua_State *L) {
   unsigned int delay;
   int r;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_TCP_MTBL_NAME);
   enable = lua_toboolean(L, 2);
   delay = luaL_optinteger(L, 3, 0);
   r = uv_tcp_keepalive(handle, enable, delay);
@@ -168,7 +168,7 @@ static int tcp_simultaneous_accepts(lua_State *L) {
   int enable;
   int r;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_TCP_MTBL_NAME);
   enable = lua_toboolean(L, 2);
   r = uv_tcp_simultaneous_accepts(handle, enable);
   if (r < 0) {
@@ -183,7 +183,7 @@ static int tcp_getsockname(lua_State *L) {
   int namelen;
   int r;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_TCP_MTBL_NAME);
   namelen = sizeof(name);
   r = uv_tcp_getsockname(handle, (struct sockaddr *)&name, &namelen);
   if (r < 0) {
@@ -198,7 +198,7 @@ static int tcp_getpeername(lua_State *L) {
   int namelen;
   int r;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_TCP_MTBL_NAME);
   namelen = sizeof(name);
   r = uv_tcp_getpeername(handle, (struct sockaddr *)&name, &namelen);
   if (r < 0) {
@@ -221,7 +221,7 @@ static const struct luaL_Reg tcp_functions[] = {
 };
 
 int luaopen_couv_tcp(lua_State *L) {
-  couv_newmetatable(L, COUV_TCP_METATABLE_NAME, COUV_STREAM_METATABLE_NAME);
+  couv_newmetatable(L, COUV_TCP_MTBL_NAME, COUV_STREAM_METATABLE_NAME);
   lua_pop(L, 1);
 
   couvL_setfuncs(L, tcp_functions, 0);

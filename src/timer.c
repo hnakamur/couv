@@ -7,7 +7,7 @@ static uv_timer_t *couv_new_timer_handle(lua_State *L) {
   if (!handle)
     return NULL;
 
-  lua_getfield(L, LUA_REGISTRYINDEX, COUV_TIMER_METATABLE_NAME);
+  lua_getfield(L, LUA_REGISTRYINDEX, COUV_TIMER_MTBL_NAME);
   lua_setmetatable(L, -2);
 
   return handle;
@@ -58,7 +58,7 @@ static int timer_start(lua_State *L) {
   int64_t repeat;
   int r;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_TIMER_MTBL_NAME);
   luaL_checktype(L, 2, LUA_TFUNCTION);
   lua_pushvalue(L, 2);
   couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_TIMER_CB_REG_KEY(handle));
@@ -77,7 +77,7 @@ static int timer_stop(lua_State *L) {
   uv_timer_t *handle;
   int r;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_TIMER_MTBL_NAME);
   r = uv_timer_stop(handle);
   if (r < 0) {
     return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
@@ -89,7 +89,7 @@ static int timer_again(lua_State *L) {
   uv_timer_t *handle;
   int r;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_TIMER_MTBL_NAME);
   r = uv_timer_again(handle);
   if (r < 0) {
     return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
@@ -101,7 +101,7 @@ static int timer_set_repeat(lua_State *L) {
   uv_timer_t *handle;
   int64_t repeat;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_TIMER_MTBL_NAME);
   repeat = luaL_checkinteger(L, 2);
   uv_timer_set_repeat(handle, repeat);
   return 0;
@@ -111,7 +111,7 @@ static int timer_get_repeat(lua_State *L) {
   uv_timer_t *handle;
   int64_t repeat;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_TIMER_MTBL_NAME);
   repeat = uv_timer_get_repeat(handle);
   lua_pushnumber(L, repeat);
   return 1;
@@ -128,7 +128,7 @@ static const struct luaL_Reg timer_functions[] = {
 };
 
 int luaopen_couv_timer(lua_State *L) {
-  couv_newmetatable(L, COUV_TIMER_METATABLE_NAME, COUV_HANDLE_METATABLE_NAME);
+  couv_newmetatable(L, COUV_TIMER_MTBL_NAME, COUV_HANDLE_METATABLE_NAME);
   lua_pop(L, 1);
 
   couvL_setfuncs(L, timer_functions, 0);

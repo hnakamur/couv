@@ -7,7 +7,7 @@ static uv_process_t *couv_new_process_handle(lua_State *L) {
   if (!handle)
     return NULL;
 
-  lua_getfield(L, LUA_REGISTRYINDEX, COUV_PROCESS_METATABLE_NAME);
+  lua_getfield(L, LUA_REGISTRYINDEX, COUV_PROCESS_MTBL_NAME);
   lua_setmetatable(L, -2);
 
   return handle;
@@ -111,8 +111,10 @@ static uv_stdio_container_t *couv_checkstdiocontainers(lua_State *L, int index,
       type = lua_type(L, -1);
       if (type == LUA_TNUMBER)
         stdio[i - 1].data.fd = lua_tointeger(L, -1);
-      else if (type == LUA_TUSERDATA) /* TODO: check data type. */
-        stdio[i - 1].data.stream = lua_touserdata(L, -1);
+      else if (type == LUA_TUSERDATA) {
+        stdio[i - 1].data.stream =
+            couvL_checkudataclass(L, -1, COUV_STREAM_MTBL_NAME);
+      }
       lua_pop(L, 1);
     }
 
@@ -204,7 +206,7 @@ static int couv_process_kill(lua_State *L) {
   int signum;
   int r;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_PROCESS_MTBL_NAME);
   signum = luaL_checkint(L, 2);
   r = uv_process_kill(handle, signum);
   if (r < 0)
@@ -216,7 +218,7 @@ static int couv_process_kill(lua_State *L) {
 static int couv_get_pid(lua_State *L) {
   uv_process_t *handle;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_PROCESS_MTBL_NAME);
   lua_pushnumber(L, handle->pid);
   return 1;
 }
@@ -248,7 +250,7 @@ static int set_stdio_flags_contants(lua_State *L) {
 }
 
 int luaopen_couv_process(lua_State *L) {
-  couv_newmetatable(L, COUV_PROCESS_METATABLE_NAME, COUV_HANDLE_METATABLE_NAME);
+  couv_newmetatable(L, COUV_PROCESS_MTBL_NAME, COUV_HANDLE_METATABLE_NAME);
   lua_pop(L, 1);
 
   set_process_flags_contants(L);

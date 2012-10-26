@@ -37,7 +37,7 @@ static void close_cb(uv_handle_t *handle) {
 static int couv_close(lua_State *L) {
   uv_handle_t *handle;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_HANDLE_MTBL_NAME);
   uv_close(handle, close_cb);
   if (couvL_is_mainthread(L))
     return 0;
@@ -50,7 +50,7 @@ static int couv_close(lua_State *L) {
 static int couv_is_active(lua_State *L) {
   uv_handle_t *handle;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_HANDLE_MTBL_NAME);
   lua_pushboolean(L, uv_is_active(handle));
   return 1;
 }
@@ -58,7 +58,7 @@ static int couv_is_active(lua_State *L) {
 static int couv_is_closing(lua_State *L) {
   uv_handle_t *handle;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_HANDLE_MTBL_NAME);
   lua_pushboolean(L, uv_is_closing(handle));
   return 1;
 }
@@ -66,7 +66,7 @@ static int couv_is_closing(lua_State *L) {
 static int couv_ref(lua_State *L) {
   uv_handle_t *handle;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_HANDLE_MTBL_NAME);
   uv_ref(handle);
   return 0;
 }
@@ -74,7 +74,7 @@ static int couv_ref(lua_State *L) {
 static int couv_unref(lua_State *L) {
   uv_handle_t *handle;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_HANDLE_MTBL_NAME);
   uv_unref(handle);
   return 0;
 }
@@ -110,7 +110,7 @@ static int set_handle_type_constants(lua_State *L) {
 }
 
 int luaopen_couv_handle(lua_State *L) {
-  couv_newmetatable(L, COUV_HANDLE_METATABLE_NAME, NULL);
+  couv_newmetatable(L, COUV_HANDLE_MTBL_NAME, NULL);
   lua_pop(L, 1);
 
   set_handle_type_constants(L);

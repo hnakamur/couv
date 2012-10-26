@@ -26,7 +26,7 @@ static couv_udp_t *couv_new_udp_handle(lua_State *L) {
   if (!w_handle)
     return NULL;
 
-  lua_getfield(L, LUA_REGISTRYINDEX, COUV_UDP_METATABLE_NAME);
+  lua_getfield(L, LUA_REGISTRYINDEX, COUV_UDP_MTBL_NAME);
   lua_setmetatable(L, -2);
 
   if (couvL_is_mainthread(L)) {
@@ -77,7 +77,7 @@ static int udp_open(lua_State *L) {
   couv_udp_handle_data_t *hdata;
   int r;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_UDP_MTBL_NAME);
   sock = (uv_os_sock_t)luaL_checkinteger(L, 2);
   r = uv_udp_open(handle, sock);
   if (r < 0) {
@@ -95,7 +95,7 @@ static int udp_bind(lua_State *L) {
   unsigned flags;
   int r;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_UDP_MTBL_NAME);
   flags = luaL_optint(L, 3, 0);
   if ((ip4addr = couvL_testip4addr(L, 2)) != NULL)
     r = uv_udp_bind(handle, *ip4addr, flags);
@@ -136,7 +136,7 @@ static int udp_send(lua_State *L) {
   uv_udp_send_t *req;
   int r;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_UDP_MTBL_NAME);
   bufs = couv_checkbuforstrtable(L, 2, &bufcnt);
   holder = couv_alloc_udp_send(L, bufs);
   req = &holder->req;
@@ -183,7 +183,7 @@ static int udp_recv_start(lua_State *L) {
   uv_udp_t *handle;
   int r;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_UDP_MTBL_NAME);
   r = uv_udp_recv_start(handle, couv_buf_alloc_cb, udp_recv_cb);
   if (r < 0) {
     return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
@@ -195,7 +195,7 @@ static int udp_recv_stop(lua_State *L) {
   uv_udp_t *handle;
   int r;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_UDP_MTBL_NAME);
   r = uv_udp_recv_stop(handle);
   if (r < 0) {
     return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
@@ -210,7 +210,7 @@ static int udp_prim_recv(lua_State *L) {
   struct sockaddr_in *ip4addr;
   couv_udp_handle_data_t *hdata;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_UDP_MTBL_NAME);
   hdata = couv_get_udp_handle_data(handle);
   if (ngx_queue_empty(&hdata->input_queue)) {
     hdata->is_yielded_for_input = 1;
@@ -240,7 +240,7 @@ static int udp_getsockname(lua_State *L) {
   int namelen;
   int r;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_UDP_MTBL_NAME);
   namelen = sizeof(name);
   r = uv_udp_getsockname(handle, (struct sockaddr *)&name, &namelen);
   if (r < 0) {
@@ -257,7 +257,7 @@ static int udp_set_membership(lua_State *L) {
   uv_membership membership;
   int r;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_UDP_MTBL_NAME);
   multicast_addr = luaL_checkstring(L, 2);
   interface_addr_type = lua_type(L, 3);
   if (interface_addr_type == LUA_TSTRING)
@@ -279,7 +279,7 @@ static int udp_set_multicast_loop(lua_State *L) {
   int on;
   int r;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_UDP_MTBL_NAME);
   on = lua_toboolean(L, 2);
   r = uv_udp_set_multicast_loop(handle, on);
   if (r < 0) {
@@ -293,7 +293,7 @@ static int udp_set_multicast_ttl(lua_State *L) {
   int ttl;
   int r;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_UDP_MTBL_NAME);
   ttl = luaL_checkint(L, 2);
   r = uv_udp_set_multicast_ttl(handle, ttl);
   if (r < 0) {
@@ -307,7 +307,7 @@ static int udp_set_broadcast(lua_State *L) {
   int on;
   int r;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_UDP_MTBL_NAME);
   on = lua_toboolean(L, 2);
   r = uv_udp_set_broadcast(handle, on);
   if (r < 0) {
@@ -321,7 +321,7 @@ static int udp_set_ttl(lua_State *L) {
   int ttl;
   int r;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_UDP_MTBL_NAME);
   ttl = luaL_checkint(L, 2);
   r = uv_udp_set_ttl(handle, ttl);
   if (r < 0) {
@@ -348,7 +348,7 @@ static const struct luaL_Reg udp_functions[] = {
 };
 
 int luaopen_couv_udp(lua_State *L) {
-  couv_newmetatable(L, COUV_UDP_METATABLE_NAME, COUV_HANDLE_METATABLE_NAME);
+  couv_newmetatable(L, COUV_UDP_MTBL_NAME, COUV_HANDLE_METATABLE_NAME);
   lua_pop(L, 1);
 
   couvL_SET_FIELD(L, UDP_IPV6ONLY, number, UV_UDP_IPV6ONLY);

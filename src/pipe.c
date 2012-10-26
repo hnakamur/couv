@@ -8,6 +8,9 @@ static uv_pipe_t *couv_new_pipe_handle(lua_State *L) {
   if (!w_handle)
     return NULL;
 
+  lua_getfield(L, LUA_REGISTRYINDEX, COUV_PIPE_MTBL_NAME);
+  lua_setmetatable(L, -2);
+
   handle = &w_handle->handle;
 
   if (couvL_is_mainthread(L)) {
@@ -40,9 +43,6 @@ static int pipe_create(lua_State *L) {
   handle = couv_new_pipe_handle(L);
   if (!handle)
     return 0;
-
-  lua_getfield(L, LUA_REGISTRYINDEX, COUV_PIPE_METATABLE_NAME);
-  lua_setmetatable(L, -2);
 
   loop = couv_loop(L);
   r = uv_pipe_init(loop, handle, ipc);
@@ -79,7 +79,7 @@ static int pipe_connect(lua_State *L) {
   uv_connect_t *req;
   const char *name;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_PIPE_MTBL_NAME);
   name = luaL_checkstring(L, 2);
 
   req = couv_alloc(L, sizeof(uv_connect_t));
@@ -94,7 +94,7 @@ static int pipe_bind(lua_State *L) {
   const char *name;
   int r;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_PIPE_MTBL_NAME);
   name = luaL_checkstring(L, 2);
   r = uv_pipe_bind(handle, name);
   if (r < 0) {
@@ -108,7 +108,7 @@ static int pipe_open(lua_State *L) {
   int file;
   int r;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_PIPE_MTBL_NAME);
   file = luaL_checkint(L, 2);
   r = uv_pipe_open(handle, file);
   if (r < 0) {
@@ -146,7 +146,7 @@ static int couv_read2_start(lua_State *L) {
   uv_stream_t *handle;
   int r;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_PIPE_MTBL_NAME);
   r = uv_read2_start(handle, couv_buf_alloc_cb, read2_cb);
   if (r < 0) {
     luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
@@ -160,7 +160,7 @@ static int couv_prim_read2(lua_State *L) {
   couv_pipe_input_t *input;
   couv_buf_t *w_buf;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_PIPE_MTBL_NAME);
   hdata = couv_get_stream_handle_data(handle);
 
   if (ngx_queue_empty(&hdata->input_queue)) {
@@ -193,7 +193,7 @@ static const struct luaL_Reg pipe_functions[] = {
 };
 
 int luaopen_couv_pipe(lua_State *L) {
-  couv_newmetatable(L, COUV_PIPE_METATABLE_NAME, COUV_STREAM_METATABLE_NAME);
+  couv_newmetatable(L, COUV_PIPE_MTBL_NAME, COUV_STREAM_METATABLE_NAME);
   lua_pop(L, 1);
 
   couvL_setfuncs(L, pipe_functions, 0);

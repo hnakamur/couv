@@ -144,14 +144,19 @@ int luaopen_couv_native(lua_State *L) {
   luaopen_couv_fs(L);
   luaopen_couv_ipaddr(L);
 
+  /* order superclass to subclasses. */
   luaopen_couv_handle(L);
-  luaopen_couv_pipe(L);
+
+  /* subclasses of handle. */
   luaopen_couv_process(L);
-  luaopen_couv_stream(L);
-  luaopen_couv_tcp(L);
   luaopen_couv_timer(L);
-  luaopen_couv_tty(L);
   luaopen_couv_udp(L);
+  luaopen_couv_stream(L);
+
+  /* subclasses of streams. */
+  luaopen_couv_pipe(L);
+  luaopen_couv_tcp(L);
+  luaopen_couv_tty(L);
 
   return 1;
 }

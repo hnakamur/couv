@@ -8,7 +8,7 @@ static uv_tty_t *couv_new_tty_handle(lua_State *L) {
   if (!w_handle)
     return NULL;
 
-  lua_getfield(L, LUA_REGISTRYINDEX, COUV_TTY_METATABLE_NAME);
+  lua_getfield(L, LUA_REGISTRYINDEX, COUV_TTY_MTBL_NAME);
   lua_setmetatable(L, -2);
 
   handle = &w_handle->handle;
@@ -105,7 +105,7 @@ static int tty_set_mode(lua_State *L) {
   int mode;
   int r;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_TTY_MTBL_NAME);
   mode = luaL_checkint(L, 2);
   r = uv_tty_set_mode(handle, mode);
   if (r < 0) {
@@ -125,7 +125,7 @@ static int tty_get_winsize(lua_State *L) {
   int height;
   int r;
 
-  handle = lua_touserdata(L, 1);
+  handle = couvL_checkudataclass(L, 1, COUV_TTY_MTBL_NAME);
   r = uv_tty_get_winsize(handle, &width, &height);
   if (r) {
     return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
@@ -145,7 +145,7 @@ static const struct luaL_Reg tty_functions[] = {
 };
 
 int luaopen_couv_tty(lua_State *L) {
-  couv_newmetatable(L, COUV_TTY_METATABLE_NAME, COUV_STREAM_METATABLE_NAME);
+  couv_newmetatable(L, COUV_TTY_MTBL_NAME, COUV_STREAM_METATABLE_NAME);
   lua_pop(L, 1);
 
   couvL_setfuncs(L, tty_functions, 0);
