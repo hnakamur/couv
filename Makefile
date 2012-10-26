@@ -12,7 +12,7 @@ OBJS= \
   src/buffer.o \
   src/fs.o \
   src/handle.o \
-  src/ipaddr.o \
+  src/sockaddr.o \
   src/loop.o \
   src/pipe.o \
   src/process.o \
@@ -73,7 +73,7 @@ src/buffer.o: src/buffer.c $(HEADERS)
 src/couv.o: src/couv.c $(HEADERS)
 src/fs.o: src/fs.c $(HEADERS)
 src/handle.o: src/handle.c $(HEADERS)
-src/ipaddr.o: src/ipaddr.c $(HEADERS)
+src/sockaddr.o: src/sockaddr.c $(HEADERS)
 src/loop.o: src/loop.c $(HEADERS)
 src/pipe.o: src/pipe.c $(HEADERS)
 src/process.o: src/process.c $(HEADERS)
