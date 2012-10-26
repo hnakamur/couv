@@ -57,6 +57,7 @@ int couvL_is_mainthread(lua_State *L);
 int couvL_hasmetatablename(lua_State *L, int index, const char *tname);
 const char *couvL_uv_errname(int uv_errcode);
 
+void *couvL_checkudataclass(lua_State *L, int arg, const char *tname);
 int couv_newmetatable(lua_State *L, const char *tname, const char *super_tname);
 
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))

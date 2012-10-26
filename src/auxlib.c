@@ -83,6 +83,34 @@ int couv_absindex(lua_State *L, int idx) {
   return idx < 0 ? lua_gettop(L) + idx + 1 : idx;
 }
 
+void *couvL_checkudataclass(lua_State *L, int arg, const char *tname) {
+  void *p;
+
+  arg = couv_absindex(L, arg);
+  p = lua_touserdata(L, arg);
+  if (p) {
+    lua_getfield(L, LUA_REGISTRYINDEX, tname); /* get tname metatable. */
+    if (lua_getmetatable(L, arg)) { /* get direct metatable. */
+      if (lua_rawequal(L, -1, -2)) {
+        lua_pop(L, 2);
+        return p;
+      } else {
+        while (lua_getmetatable(L, -1)) { /* get parent metatable. */
+          lua_remove(L, -2); /* remove child metatable. */
+          if (lua_rawequal(L, -1, -2)) {
+            lua_pop(L, 2);
+            return p;
+          }
+        }
+      }
+      lua_pop(L, 1); /* remove direct metatable. */
+    }
+    lua_pop(L, 1); /* remove tname matatable. */
+  }
+  luaL_typerror(L, arg, tname);
+  return NULL;
+}
+
 #if LUA_VERSION_NUM == 501
 
 void couvL_setfuncs(lua_State *L, const luaL_Reg *l, int nup) {
