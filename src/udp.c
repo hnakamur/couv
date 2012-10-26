@@ -358,7 +358,7 @@ int luaopen_couv_udp(lua_State *L) {
   lua_newtable(L);
   couvL_setfuncs(L, udp_functions, 0);
 
-  couvL_SET_FIELD(L, UDP_IPV6ONLY, number, UV_UDP_IPV6ONLY);
+  couvL_SET_FIELD(L, IPV6ONLY, number, UV_UDP_IPV6ONLY);
 
   couvL_SET_FIELD(L, JOIN_GROUP, number, UV_JOIN_GROUP);
   couvL_SET_FIELD(L, LEAVE_GROUP, number, UV_LEAVE_GROUP);
