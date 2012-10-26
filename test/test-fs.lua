@@ -27,29 +27,27 @@ exports['uv.fs_open.sync.ENOENT'] = function(test)
 end
 
 exports['uv.fs_open.async.OK'] = function(test)
-  local co = coroutine.create(function()
+  coroutine.wrap(function()
     local fd = uv.fs_open('couv.lua', 'r', '0666')
     test.is_number(fd)
 
     uv.fs_close(fd)
 
     test.done()
-  end)
-  coroutine.resume(co)
+  end)()
 
   uv.run()
 end
 
 exports['uv.fs_open.async.ENOENT'] = function(test)
-  local co = coroutine.create(function()
+  coroutine.wrap(function()
     local ok, err = pcall(function()
       uv.fs_open('not_exist_file', 'r', '0666')
     end)
     test.ok(not ok)
     test.equal(string.sub(err, -string.len('ENOENT'), -1), 'ENOENT')
     test.done()
-  end)
-  coroutine.resume(co)
+  end)()
 
   uv.run()
 end
@@ -91,7 +89,7 @@ exports['uv.fs_write_and_read.sync'] = function(test)
 end
 
 exports['uv.fs_write_and_read.async'] = function(test)
-  local co = coroutine.create(function()
+  coroutine.wrap(function()
     local path = '_test_uv.fs_write_and_read.async'
     local fd = uv.fs_open(path, 'w', '0666')
     local str = 'Hello, libuv!\n'
@@ -108,8 +106,7 @@ exports['uv.fs_write_and_read.async'] = function(test)
     uv.fs_unlink(path)
 
     test.done()
-  end)
-  coroutine.resume(co)
+  end)()
 
   uv.run()
 end
@@ -126,7 +123,7 @@ exports['uv.fs_unlink.sync'] = function(test)
 end
 
 exports['uv.fs_unlink.async'] = function(test)
-  local co = coroutine.create(function()
+  coroutine.wrap(function()
     local path = '_test_uv.fs_unlink.async'
     local fd = uv.fs_open(path, 'w', '0666')
     uv.fs_close(fd)
@@ -135,8 +132,7 @@ exports['uv.fs_unlink.async'] = function(test)
 
     test.ok(true)
     test.done()
-  end)
-  coroutine.resume(co)
+  end)()
 
   uv.run()
 end
@@ -154,7 +150,7 @@ exports['uv.fs_mkdir_rmdir.sync'] = function(test)
 end
 
 exports['uv.fs_mkdir_rmdir.async'] = function(test)
-  local co = coroutine.create(function()
+  coroutine.wrap(function()
     local path = '_test_fs_mkdir_rmdir.async'
     uv.fs_mkdir(path)
 
@@ -164,8 +160,7 @@ exports['uv.fs_mkdir_rmdir.async'] = function(test)
     uv.fs_rmdir(path)
 
     test.done()
-  end)
-  coroutine.resume(co)
+  end)()
 
   uv.run()
 end
@@ -191,7 +186,7 @@ exports['uv.fs_rename_dir.sync'] = function(test)
 end
 
 exports['uv.fs_rename_dir.async'] = function(test)
-  local co = coroutine.create(function()
+  coroutine.wrap(function()
     local oldPath = '_test_fs_rename_dir.async.old'
     local newPath = '_test_fs_rename_dir.async.new'
 
@@ -209,8 +204,7 @@ exports['uv.fs_rename_dir.async'] = function(test)
     uv.fs_rmdir(newPath)
 
     test.done()
-  end)
-  coroutine.resume(co)
+  end)()
 
   uv.run()
 end
@@ -239,7 +233,7 @@ exports['uv.fs_ftruncate.sync'] = function(test)
 end
 
 exports['uv.fs_ftruncate.async'] = function(test)
-  local co = coroutine.create(function()
+  coroutine.wrap(function()
     local path = '_test_fs_ftruncate.async'
     local fd = uv.fs_open(path, 'w', '0666')
     local str = 'Hello, libuv!\n'
@@ -260,8 +254,7 @@ exports['uv.fs_ftruncate.async'] = function(test)
     uv.fs_unlink(path)
 
     test.done()
-  end)
-  coroutine.resume(co)
+  end)()
 
   uv.run()
 end

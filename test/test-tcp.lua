@@ -3,12 +3,12 @@ local uv = require 'couv'
 local exports = {}
 
 exports['tcp.echo'] = function(test)
-  local server = coroutine.create(function()
+  coroutine.wrap(function()
     local ok, err = pcall(function()
       local handle = uv.tcp_create()
       uv.tcp_bind(handle, uv.ip4addr('0.0.0.0', 9123))
       uv.listen(handle, 128, function(server)
-        local co2 = coroutine.create(function()
+        coroutine.wrap(function()
           local stream = uv.tcp_create()
           uv.accept(server, stream)
 
@@ -26,17 +26,15 @@ exports['tcp.echo'] = function(test)
 
           uv.close(stream)
           uv.close(server)
-        end)
-        coroutine.resume(co2)
+        end)()
       end)
     end)
     if not ok then
       print("err=", err)
     end
-  end)
-  coroutine.resume(server)
+  end)()
   
-  local client = coroutine.create(function()
+  coroutine.wrap(function()
     local ok, err = pcall(function()
       local handle = uv.tcp_create()
       uv.tcp_connect(handle, uv.ip4addr('127.0.0.1', 9123))
@@ -63,8 +61,7 @@ exports['tcp.echo'] = function(test)
     if not ok then
       print("err=", err)
     end
-  end)
-  coroutine.resume(client)
+  end)()
 
   uv.run()
   test.done()
