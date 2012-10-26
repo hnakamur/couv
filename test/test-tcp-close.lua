@@ -6,25 +6,25 @@ local TEST_PORT = 9123
 
 exports['tcp.close'] = function(test)
   coroutine.wrap(function()
-    local handle = uv.tcp_create()
-    uv.tcp_bind(handle, uv.ip4addr('127.0.0.1', TEST_PORT))
-    uv.listen(handle, 128, function(server)
+    local handle = uv.Tcp.new()
+    handle:bind(uv.ip4addr('127.0.0.1', TEST_PORT))
+    handle:listen(128, function(server)
       test.ok(true)
     end)
-    uv.unref(handle)
+    handle:unref()
   end)()
   
   coroutine.wrap(function()
     local NUM_WRITE_REQS = 32
 
-    local handle = uv.tcp_create()
-    uv.tcp_connect(handle, uv.ip4addr('127.0.0.1', TEST_PORT))
+    local handle = uv.Tcp.new()
+    handle:connect(uv.ip4addr('127.0.0.1', TEST_PORT))
 
     for i = 1, NUM_WRITE_REQS do
-      uv.write(handle, {"PING"})
+      handle:write({"PING"})
     end
 
-    uv.close(handle)
+    handle:close()
     test.ok(true)
   end)()
 

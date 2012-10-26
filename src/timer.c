@@ -117,20 +117,28 @@ static int timer_get_repeat(lua_State *L) {
   return 1;
 }
 
+static const struct luaL_Reg timer_methods[] = {
+  { "again", timer_again },
+  { "getRepeat", timer_get_repeat },
+  { "setRepeat", timer_set_repeat },
+  { "stop", timer_stop },
+  { "start", timer_start },
+  { NULL, NULL }
+};
+
 static const struct luaL_Reg timer_functions[] = {
-  { "timer_again", timer_again },
-  { "timer_create", couv_timer_create },
-  { "timer_get_repeat", timer_get_repeat },
-  { "timer_set_repeat", timer_set_repeat },
-  { "timer_stop", timer_stop },
-  { "timer_start", timer_start },
+  { "new", couv_timer_create },
   { NULL, NULL }
 };
 
 int luaopen_couv_timer(lua_State *L) {
-  couv_newmetatable(L, COUV_TIMER_MTBL_NAME, COUV_HANDLE_MTBL_NAME);
-  lua_pop(L, 1);
-
+  lua_newtable(L);
   couvL_setfuncs(L, timer_functions, 0);
-  return 1;
+
+  couv_newmetatable(L, COUV_TIMER_MTBL_NAME, COUV_HANDLE_MTBL_NAME);
+  couvL_setfuncs(L, timer_methods, 0);
+  lua_setmetatable(L, -2);
+
+  lua_setfield(L, -2, "Timer");
+  return 0;
 }

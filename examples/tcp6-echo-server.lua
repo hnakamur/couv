@@ -3,31 +3,31 @@ local uv = require 'couv'
 local TEST_PORT = 9123
 
 coroutine.wrap(function()
-  local handle = uv.tcp_create()
-  uv.tcp_bind(handle, uv.ip6addr('::1', TEST_PORT))
-  uv.listen(handle, 128, function(server)
+  local handle = uv.Tcp.new()
+  handle:bind(uv.ip6addr('::1', TEST_PORT))
+  handle:listen(128, function(server)
     coroutine.wrap(function()
-      local stream = uv.tcp_create()
-      uv.accept(server, stream)
+      local stream = uv.Tcp.new()
+      server:accept(stream)
 
-      uv.read_start(stream)
+      stream:startRead()
 
       local nread, buf
       repeat
-        nread, buf = uv.read(stream)
+        nread, buf = stream:read()
         if nread and nread > 0 then
           local msg = buf:toString(1, nread)
           if msg == 'QUIT' then
-            uv.close(server)
+            server:close()
             break
           end
-          uv.write(stream, {msg})
+          stream:write({msg})
         end
       until nread and nread == 0
 
-      uv.read_stop(stream)
+      stream:stopRead()
 
-      uv.close(stream)
+      stream:close()
     end)()
   end)
 end)()

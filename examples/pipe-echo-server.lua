@@ -3,34 +3,34 @@ local uv = require 'couv'
 local PIPENAME = "/tmp/couv-test-sock"
 
 coroutine.wrap(function()
-  local handle = uv.pipe_create()
+  local handle = uv.Pipe.new()
   if uv.fs_exists(PIPENAME) then
     uv.fs_unlink(PIPENAME)
   end
-  uv.pipe_bind(handle, PIPENAME)
-  uv.listen(handle, 128, function(server)
+  handle:bind(PIPENAME)
+  handle:listen(128, function(server)
     coroutine.wrap(function()
-      local stream = uv.pipe_create()
-      uv.accept(server, stream)
+      local stream = uv.Pipe.new()
+      server:accept(stream)
 
-      uv.read_start(stream)
+      stream:startRead()
 
       local nread, buf
       repeat
-        nread, buf = uv.read(stream)
+        nread, buf = stream:read()
         if nread and nread > 0 then
           local msg = buf:toString(1, nread)
           if msg == 'QUIT' then
-            uv.close(handle)
+            handle:close()
             break
           end
-          uv.write(stream, {msg})
+          stream:write({msg})
         end
       until nread and nread == 0
 
-      uv.read_stop(stream)
+      stream:stopRead()
 
-      uv.close(stream)
+      stream:close()
     end)()
   end)
 end)()

@@ -7,57 +7,57 @@ local TEST_PORT = 9123
 exports['tcp.sockname'] = function(test)
   local connectPort
   coroutine.wrap(function()
-    local handle = uv.tcp_create()
-    uv.tcp_bind(handle, uv.ip4addr('127.0.0.1', TEST_PORT))
-    uv.listen(handle, 128, function(server)
+    local handle = uv.Tcp.new()
+    handle:bind(uv.ip4addr('127.0.0.1', TEST_PORT))
+    handle:listen(128, function(server)
       coroutine.wrap(function()
-        local stream = uv.tcp_create()
-        uv.accept(server, stream)
+        local stream = uv.Tcp.new()
+        server:accept(stream)
 
 
-        local sockname = uv.tcp_getsockname(stream)
+        local sockname = stream:getsockname()
         test.equal(sockname:host(), '127.0.0.1')
         test.equal(sockname:port(), TEST_PORT)
 
-        local ok, err = pcall(uv.tcp_getpeername, stream)
-        local peername = uv.tcp_getpeername(stream)
+        local ok, err = pcall(stream.getpeername, stream)
+        local peername = stream:getpeername()
         test.equal(peername:host(), '127.0.0.1')
         test.equal(peername:port(), connectPort)
 
-        uv.read_start(stream)
+        stream:startRead()
         local nread, buf
         repeat
-          nread, buf = uv.read(stream)
+          nread, buf = stream:read()
         until nread and nread <= 0
-        uv.read_stop(stream)
-        uv.close(stream)
+        stream:stopRead()
+        stream:close()
 
-        uv.close(server)
+        server:close()
       end)()
     end)
 
-    local sockname = uv.tcp_getsockname(handle)
+    local sockname = handle:getsockname()
     test.equal(sockname:host(), '127.0.0.1')
     test.equal(sockname:port(), TEST_PORT)
 
-    local ok, err = pcall(uv.tcp_getpeername, handle)
+    local ok, err = pcall(handle.getpeername, handle)
     test.ok(not ok)
     test.equal(string.sub(err, -#'ENOTCONN'), 'ENOTCONN')
   end)()
   
   coroutine.wrap(function()
-    local handle = uv.tcp_create()
-    uv.tcp_connect(handle, uv.ip4addr('127.0.0.1', TEST_PORT))
-    local sockname = uv.tcp_getsockname(handle)
+    local handle = uv.Tcp.new()
+    handle:connect(uv.ip4addr('127.0.0.1', TEST_PORT))
+    local sockname = handle:getsockname()
     test.ok(sockname)
     test.ok(sockname:port() > 0)
     connectPort = sockname:port()
 
-    local peername = uv.tcp_getpeername(handle)
+    local peername = handle:getpeername()
     test.equal(peername:host(), '127.0.0.1')
     test.equal(peername:port(), TEST_PORT)
 
-    uv.close(handle)
+    handle:close()
   end)()
 
   uv.run()
@@ -67,30 +67,30 @@ end
 exports['udp.sockname'] = function(test)
   -- listener
   coroutine.wrap(function()
-    local handle = uv.udp_create()
-    uv.udp_bind(handle, uv.ip4addr('0.0.0.0', TEST_PORT))
+    local handle = uv.Udp.new()
+    handle:bind(uv.ip4addr('0.0.0.0', TEST_PORT))
 
-    local sockname = uv.udp_getsockname(handle)
+    local sockname = handle:getsockname()
     test.equal(sockname:host(), '0.0.0.0')
     test.equal(sockname:port(), TEST_PORT)
 
-    uv.udp_recv_start(handle)
+    handle:startRecv()
 
-    uv.close(handle)
+    handle:close()
   end)()
 
   -- sender
   coroutine.wrap(function()
-    local handle = uv.udp_create()
+    local handle = uv.Udp.new()
     local serverAddr = uv.ip4addr('127.0.0.1', TEST_PORT)
 
-    uv.udp_send(handle, {"PING"}, serverAddr)
+    handle:send({"PING"}, serverAddr)
 
-    local sockname = uv.udp_getsockname(handle)
+    local sockname = handle:getsockname()
     test.equal(sockname:host(), '0.0.0.0')
     test.ok(sockname:port() > 0)
 
-    uv.close(handle)
+    handle:close()
   end)()
 
   uv.run()

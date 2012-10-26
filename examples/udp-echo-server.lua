@@ -3,24 +3,24 @@ local uv = require 'couv'
 local TEST_PORT = 9123
 
 coroutine.wrap(function()
-  local handle = uv.udp_create()
-  uv.udp_bind(handle, uv.ip4addr('0.0.0.0', TEST_PORT))
-  uv.udp_recv_start(handle)
+  local handle = uv.Udp.new()
+  handle:bind(uv.ip4addr('0.0.0.0', TEST_PORT))
+  handle:startRecv()
 
   local nread, buf, addr
   repeat
-    nread, buf, addr = uv.udp_recv(handle)
+    nread, buf, addr = handle:recv()
     print("udp_server recv nread=", nread)
     if nread and nread > 0 then
       print("udp_server type(nread)=", type(nread))
       print("udp_server recv nread=", nread, ", msg=", buf:toString(1, nread), ", host=", addr:host(), ", port=", addr:port())
-      uv.udp_send(handle, {buf:toString(1, nread)}, addr)
+      handle:send({buf:toString(1, nread)}, addr)
       print("udp_server sent msg=", buf:toString(1, nread))
     end
   until nread and nread == 0
 
-  uv.udp_recv_stop(handle)
-  uv.close(handle)
+  handle:stopRecv()
+  handle:close()
 end)()
 
 uv.run()

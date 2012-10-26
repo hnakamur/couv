@@ -8,19 +8,19 @@ exports['udp.multicast-ttl'] = function(test)
   coroutine.wrap(function()
     local addr = uv.ip4addr('239.255.0.1', TEST_PORT)
 
-    local server = uv.udp_create()
+    local server = uv.Udp.new()
     test.ok(server)
 
-    uv.udp_bind(server, uv.ip4addr('0.0.0.0', 0))
+    server:bind(uv.ip4addr('0.0.0.0', 0))
     test.ok(true)
 
-    uv.udp_set_multicast_ttl(server, 32)
+    server:setMulticastTtl(32)
     test.ok(true)
 
-    uv.udp_send(server, {"PING"}, addr)
+    server:send({"PING"}, addr)
     test.ok(true)
 
-    uv.close(server)
+    server:close()
   end)()
 
   uv.run()

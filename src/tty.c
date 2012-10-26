@@ -29,7 +29,7 @@ void couv_clean_tty_handle(lua_State *L, uv_tty_t *handle) {
   couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_LISTEN_CB_REG_KEY(handle));
 }
 
-static int tty_create(lua_State *L) {
+static int tty_new(lua_State *L) {
   uv_loop_t *loop;
   uv_tty_t *handle;
   uv_file fd;
@@ -135,19 +135,27 @@ static int tty_get_winsize(lua_State *L) {
   return 2;
 }
 
+static const struct luaL_Reg tty_methods[] = {
+  { "getWinSize", tty_get_winsize },
+  { "resetMode", tty_reset_mode },
+  { "setMode", tty_set_mode },
+  { NULL, NULL }
+};
+
 static const struct luaL_Reg tty_functions[] = {
-  { "tty_create", tty_create },
-  { "tty_get_winsize", tty_get_winsize },
-  { "tty_open_fd", tty_open_fd },
-  { "tty_reset_mode", tty_reset_mode },
-  { "tty_set_mode", tty_set_mode },
+  { "new", tty_new },
+  { "openFd", tty_open_fd },
   { NULL, NULL }
 };
 
 int luaopen_couv_tty(lua_State *L) {
-  couv_newmetatable(L, COUV_TTY_MTBL_NAME, COUV_STREAM_MTBL_NAME);
-  lua_pop(L, 1);
-
+  lua_newtable(L);
   couvL_setfuncs(L, tty_functions, 0);
-  return 1;
+
+  couv_newmetatable(L, COUV_TTY_MTBL_NAME, COUV_STREAM_MTBL_NAME);
+  couvL_setfuncs(L, tty_methods, 0);
+  lua_setmetatable(L, -2);
+
+  lua_setfield(L, -2, "Tty");
+  return 0;
 }

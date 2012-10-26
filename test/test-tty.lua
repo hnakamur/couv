@@ -3,19 +3,19 @@ local uv = require 'couv'
 local exports = {}
 
 exports['tty'] = function(test)
-  local ttyInFd = uv.tty_open_fd(0)
-  local ttyOutFd = uv.tty_open_fd(1)
+  local ttyInFd = uv.Tty.openFd(0)
+  local ttyOutFd = uv.Tty.openFd(1)
   test.ok(ttyInFd >= 0)
   test.ok(ttyOutFd >= 0)
 
-  test.equal(uv.guess_handle(-1), uv.UNKNOWN_HANDLE)
-  test.equal(uv.guess_handle(ttyInFd), uv.TTY)
-  test.equal(uv.guess_handle(ttyOutFd), uv.TTY)
+  test.equal(uv.Handle.guess(-1), uv.Handle.UNKNOWN_HANDLE)
+  test.equal(uv.Handle.guess(ttyInFd), uv.Handle.TTY)
+  test.equal(uv.Handle.guess(ttyOutFd), uv.Handle.TTY)
 
-  local ttyIn = uv.tty_create(ttyInFd, 1)
-  local ttyOut = uv.tty_create(ttyOutFd, 2)
+  local ttyIn = uv.Tty.new(ttyInFd, 1)
+  local ttyOut = uv.Tty.new(ttyOutFd, 2)
 
-  local width, height = uv.tty_get_winsize(ttyOut)
+  local width, height = ttyOut:getWinSize()
   print(string.format("width=%d height=%d", width, height))
 
   -- Is it a safe assumption that most people have terminals larger than 10x10?
@@ -23,15 +23,15 @@ exports['tty'] = function(test)
   test.ok(height > 10)
 
   -- Turn on raw mode.
-  uv.tty_set_mode(ttyIn, 1)
+  ttyIn:setMode(1)
 
   -- Turn off raw mode.
-  uv.tty_set_mode(ttyIn, 0)
+  ttyIn:setMode(0)
 
   -- TODO: check the actual mode!
 
-  uv.close(ttyIn)
-  uv.close(ttyOut)
+  ttyIn:close()
+  ttyOut:close()
 
   uv.run()
   test.done()

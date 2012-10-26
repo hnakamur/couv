@@ -32,7 +32,7 @@ void couv_clean_tcp_handle(lua_State *L, uv_tcp_t *handle) {
   couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_LISTEN_CB_REG_KEY(handle));
 }
 
-static int tcp_create(lua_State *L) {
+static int tcp_new(lua_State *L) {
   uv_loop_t *loop;
   uv_tcp_t *handle;
   couv_stream_handle_data_t *hdata;
@@ -207,23 +207,31 @@ static int tcp_getpeername(lua_State *L) {
   return couv_push_ipaddr_raw(L, (struct sockaddr *)&name);
 }
 
+static const struct luaL_Reg tcp_methods[] = {
+  { "bind", tcp_bind },
+  { "_connect", tcp_connect },
+  { "open", tcp_open },
+  { "keepalive", tcp_keepalive },
+  { "nodelay", tcp_nodelay },
+  { "getpeername", tcp_getpeername },
+  { "simultaneousAccepts", tcp_simultaneous_accepts },
+  { "getsockname", tcp_getsockname },
+  { NULL, NULL }
+};
+
 static const struct luaL_Reg tcp_functions[] = {
-  { "tcp_bind", tcp_bind },
-  { "tcp_connect", tcp_connect },
-  { "tcp_create", tcp_create },
-  { "tcp_open", tcp_open },
-  { "tcp_keepalive", tcp_keepalive },
-  { "tcp_nodelay", tcp_nodelay },
-  { "tcp_getpeername", tcp_getpeername },
-  { "tcp_simultaneous_accepts", tcp_simultaneous_accepts },
-  { "tcp_getsockname", tcp_getsockname },
+  { "new", tcp_new },
   { NULL, NULL }
 };
 
 int luaopen_couv_tcp(lua_State *L) {
-  couv_newmetatable(L, COUV_TCP_MTBL_NAME, COUV_STREAM_MTBL_NAME);
-  lua_pop(L, 1);
-
+  lua_newtable(L);
   couvL_setfuncs(L, tcp_functions, 0);
-  return 1;
+
+  couv_newmetatable(L, COUV_TCP_MTBL_NAME, COUV_STREAM_MTBL_NAME);
+  couvL_setfuncs(L, tcp_methods, 0);
+  lua_setmetatable(L, -2);
+
+  lua_setfield(L, -2, "Tcp");
+  return 0;
 }

@@ -5,27 +5,27 @@ local exports = {}
 exports['tcp.echo'] = function(test)
   coroutine.wrap(function()
     local ok, err = pcall(function()
-      local handle = uv.tcp_create()
-      uv.tcp_bind(handle, uv.ip4addr('0.0.0.0', 9123))
-      uv.listen(handle, 128, function(server)
+      local handle = uv.Tcp.new()
+      handle:bind(uv.ip4addr('0.0.0.0', 9123))
+      handle:listen(128, function(server)
         coroutine.wrap(function()
-          local stream = uv.tcp_create()
-          uv.accept(server, stream)
+          local stream = uv.Tcp.new()
+          server:accept(stream)
 
-          uv.read_start(stream)
+          stream:startRead()
 
           local nread, buf
           repeat
-            nread, buf = uv.read(stream)
+            nread, buf = stream:read()
             if nread and nread > 0 then
-              uv.write(stream, {buf:toString(1, nread)})
+              stream:write({buf:toString(1, nread)})
             end
           until nread and nread == -1
 
-          uv.read_stop(stream)
+          stream:stopRead()
 
-          uv.close(stream)
-          uv.close(server)
+          stream:close()
+          server:close()
         end)()
       end)
     end)
@@ -36,27 +36,27 @@ exports['tcp.echo'] = function(test)
   
   coroutine.wrap(function()
     local ok, err = pcall(function()
-      local handle = uv.tcp_create()
-      uv.tcp_connect(handle, uv.ip4addr('127.0.0.1', 9123))
-      uv.read_start(handle)
-      uv.write(handle, {"PING"})
+      local handle = uv.Tcp.new()
+      handle:connect(uv.ip4addr('127.0.0.1', 9123))
+      handle:startRead()
+      handle:write({"PING"})
 
-      local nread, buf = uv.read(handle)
+      local nread, buf = handle:read()
       test.ok(nread)
       test.ok(buf)
       test.equal(nread, #"PING")
       test.equal(buf:toString(1, nread), "PING")
 
-      uv.write(handle, {"hello, ", "tcp"})
+      handle:write({"hello, ", "tcp"})
 
-      nread, buf = uv.read(handle)
+      nread, buf = handle:read()
       test.ok(nread)
       test.ok(buf)
       test.equal(nread, #"hello, tcp")
       test.equal(buf:toString(1, nread), "hello, tcp")
 
-      uv.read_stop(handle)
-      uv.close(handle)
+      handle:stopRead()
+      handle:close()
     end)
     if not ok then
       print("err=", err)

@@ -32,7 +32,7 @@ void couv_clean_pipe_handle(lua_State *L, uv_pipe_t *handle) {
   couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_LISTEN_CB_REG_KEY(handle));
 }
 
-static int pipe_create(lua_State *L) {
+static int pipe_new(lua_State *L) {
   uv_loop_t *loop;
   uv_pipe_t *handle;
   couv_stream_handle_data_t *hdata;
@@ -182,20 +182,28 @@ static int couv_prim_read2(lua_State *L) {
   return 3;
 }
 
+static const struct luaL_Reg pipe_methods[] = {
+  { "bind", pipe_bind },
+  { "_connect", pipe_connect },
+  { "open", pipe_open },
+  { "_read2", couv_prim_read2 },
+  { "startRead2", couv_read2_start },
+  { NULL, NULL }
+};
+
 static const struct luaL_Reg pipe_functions[] = {
-  { "pipe_bind", pipe_bind },
-  { "pipe_connect", pipe_connect },
-  { "pipe_create", pipe_create },
-  { "pipe_open", pipe_open },
-  { "prim_read2", couv_prim_read2 },
-  { "read2_start", couv_read2_start },
+  { "new", pipe_new },
   { NULL, NULL }
 };
 
 int luaopen_couv_pipe(lua_State *L) {
-  couv_newmetatable(L, COUV_PIPE_MTBL_NAME, COUV_STREAM_MTBL_NAME);
-  lua_pop(L, 1);
-
+  lua_newtable(L);
   couvL_setfuncs(L, pipe_functions, 0);
-  return 1;
+
+  couv_newmetatable(L, COUV_PIPE_MTBL_NAME, COUV_STREAM_MTBL_NAME);
+  couvL_setfuncs(L, pipe_methods, 0);
+  lua_setmetatable(L, -2);
+
+  lua_setfield(L, -2, "Pipe");
+  return 0;
 }

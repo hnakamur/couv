@@ -79,7 +79,7 @@ static int couv_unref(lua_State *L) {
   return 0;
 }
 
-static int couv_guess_handle(lua_State *L) {
+static int couv_handle_guess(lua_State *L) {
   uv_file file;
   uv_handle_type type;
 
@@ -89,13 +89,17 @@ static int couv_guess_handle(lua_State *L) {
   return 1;
 }
 
-static const struct luaL_Reg handle_functions[] = {
+static const struct luaL_Reg handle_methods[] = {
   { "close", couv_close },
-  { "guess_handle", couv_guess_handle },
-  { "is_active", couv_is_active },
-  { "is_closing", couv_is_closing },
+  { "isActive", couv_is_active },
+  { "isClosing", couv_is_closing },
   { "ref", couv_ref },
   { "unref", couv_unref },
+  { NULL, NULL }
+};
+
+static const struct luaL_Reg handle_functions[] = {
+  { "guess", couv_handle_guess },
   { NULL, NULL }
 };
 
@@ -110,11 +114,14 @@ static int set_handle_type_constants(lua_State *L) {
 }
 
 int luaopen_couv_handle(lua_State *L) {
-  couv_newmetatable(L, COUV_HANDLE_MTBL_NAME, NULL);
-  lua_pop(L, 1);
-
+  lua_newtable(L);
   set_handle_type_constants(L);
-
   couvL_setfuncs(L, handle_functions, 0);
-  return 1;
+
+  couv_newmetatable(L, COUV_HANDLE_MTBL_NAME, NULL);
+  couvL_setfuncs(L, handle_methods, 0);
+  lua_setmetatable(L, -2);
+
+  lua_setfield(L, -2, "Handle");
+  return 0;
 }

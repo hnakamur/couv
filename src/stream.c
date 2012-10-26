@@ -251,25 +251,33 @@ static int couv_write2(lua_State *L) {
   return lua_yield(L, 0);
 }
 
-static const struct luaL_Reg stream_functions[] = {
+static const struct luaL_Reg stream_methods[] = {
   { "accept", couv_accept },
-  { "get_write_queue_size", couv_get_write_queue_size },
-  { "is_readable", couv_is_readable },
-  { "is_writable", couv_is_writable },
+  { "getWriteQueueSize", couv_get_write_queue_size },
+  { "isReadable", couv_is_readable },
+  { "isWritable", couv_is_writable },
   { "listen", couv_listen },
-  { "prim_read", couv_prim_read },
-  { "read_start", couv_read_start },
-  { "read_stop", couv_read_stop },
-  { "shutdown", couv_shutdown },
+  { "_read", couv_prim_read },
+  { "_shutdown", couv_shutdown },
+  { "startRead", couv_read_start },
+  { "stopRead", couv_read_stop },
   { "write", couv_write },
   { "write2", couv_write2 },
   { NULL, NULL }
 };
 
-int luaopen_couv_stream(lua_State *L) {
-  couv_newmetatable(L, COUV_STREAM_MTBL_NAME, COUV_HANDLE_MTBL_NAME);
-  lua_pop(L, 1);
+static const struct luaL_Reg stream_functions[] = {
+  { NULL, NULL }
+};
 
+int luaopen_couv_stream(lua_State *L) {
+  lua_newtable(L);
   couvL_setfuncs(L, stream_functions, 0);
-  return 1;
+
+  couv_newmetatable(L, COUV_STREAM_MTBL_NAME, COUV_HANDLE_MTBL_NAME);
+  couvL_setfuncs(L, stream_methods, 0);
+  lua_setmetatable(L, -2);
+
+  lua_setfield(L, -2, "Stream");
+  return 0;
 }

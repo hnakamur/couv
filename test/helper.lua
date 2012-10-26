@@ -28,8 +28,8 @@ if arg[1] == 'spawn_helper4' then
   local uv = require 'couv'
   function cb(handle)
   end
-  local timer = uv.timer_create()
-  uv.timer_start(timer, cb, 10000, 10000)
+  local timer = uv.Timer.new()
+  timer:start(cb, 10000, 10000)
   uv.run()
 end
 

@@ -125,7 +125,7 @@ static uv_stdio_container_t *couv_checkstdiocontainers(lua_State *L, int index,
   return stdio;
 }
 
-static int couv_spawn(lua_State *L) {
+static int couv_process_spawn(lua_State *L) {
   uv_loop_t *loop;
   uv_process_t *handle;
   uv_process_options_t options;
@@ -215,7 +215,7 @@ static int couv_process_kill(lua_State *L) {
   return 0;
 }
 
-static int couv_get_pid(lua_State *L) {
+static int couv_process_get_pid(lua_State *L) {
   uv_process_t *handle;
 
   handle = couvL_checkudataclass(L, 1, COUV_PROCESS_MTBL_NAME);
@@ -223,19 +223,23 @@ static int couv_get_pid(lua_State *L) {
   return 1;
 }
 
+static const struct luaL_Reg process_methods[] = {
+  { "getPid", couv_process_get_pid },
+  { "kill", couv_process_kill },
+  { NULL, NULL }
+};
+
 static const struct luaL_Reg process_functions[] = {
-  { "spawn", couv_spawn },
-  { "get_pid", couv_get_pid },
-  { "process_kill", couv_process_kill },
+  { "spawn", couv_process_spawn },
   { NULL, NULL }
 };
 
 static int set_process_flags_contants(lua_State *L) {
-  couvL_SET_FIELD(L, PROCESS_SETUID, number, UV_PROCESS_SETUID);
-  couvL_SET_FIELD(L, PROCESS_SETGID, number, UV_PROCESS_SETGID);
-  couvL_SET_FIELD(L, PROCESS_WINDOWS_VERBATIM_ARGUMENTS, number,
+  couvL_SET_FIELD(L, SETUID, number, UV_PROCESS_SETUID);
+  couvL_SET_FIELD(L, SETGID, number, UV_PROCESS_SETGID);
+  couvL_SET_FIELD(L, WINDOWS_VERBATIM_ARGUMENTS, number,
       UV_PROCESS_WINDOWS_VERBATIM_ARGUMENTS);
-  couvL_SET_FIELD(L, PROCESS_DETACHED, number, UV_PROCESS_DETACHED);
+  couvL_SET_FIELD(L, DETACHED, number, UV_PROCESS_DETACHED);
   return 0;
 }
 
@@ -250,12 +254,16 @@ static int set_stdio_flags_contants(lua_State *L) {
 }
 
 int luaopen_couv_process(lua_State *L) {
-  couv_newmetatable(L, COUV_PROCESS_MTBL_NAME, COUV_HANDLE_MTBL_NAME);
-  lua_pop(L, 1);
+  lua_newtable(L);
+  couvL_setfuncs(L, process_functions, 0);
 
   set_process_flags_contants(L);
   set_stdio_flags_contants(L);
 
-  couvL_setfuncs(L, process_functions, 0);
-  return 1;
+  couv_newmetatable(L, COUV_PROCESS_MTBL_NAME, COUV_HANDLE_MTBL_NAME);
+  couvL_setfuncs(L, process_methods, 0);
+  lua_setmetatable(L, -2);
+
+  lua_setfield(L, -2, "Process");
+  return 0;
 }

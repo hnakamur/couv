@@ -6,24 +6,24 @@ local TEST_PORT = 9123
 
 exports['udp.multicast_join'] = function(test)
   coroutine.wrap(function()
-    local server = uv.udp_create()
+    local server = uv.Udp.new()
 
-    local client = uv.udp_create()
+    local client = uv.Udp.new()
     local clientAddr = uv.ip4addr('127.0.0.1', TEST_PORT)
-    uv.udp_bind(client, clientAddr)
+    client:bind(clientAddr)
 
-    uv.udp_set_membership(client, '239.255.0.1', nil, uv.JOIN_GROUP);
-    uv.udp_recv_start(client)
+    client:setMembership('239.255.0.1', nil, uv.Udp.JOIN_GROUP);
+    client:startRecv()
 
-    uv.udp_send(server, {'PING'}, clientAddr)
+    server:send({'PING'}, clientAddr)
 
-    local nread, buf, addr = uv.udp_recv(client)
+    local nread, buf, addr = client:recv()
     test.ok(nread > 0)
     local msg = buf:toString(1, nread)
     test.equal(msg, 'PING')
 
-    uv.close(client)
-    uv.close(server)
+    client:close()
+    server:close()
   end)()
 
   uv.run()

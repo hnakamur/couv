@@ -13,8 +13,8 @@ for i = 1, NUM_TIMERS do
   if i % 1000 == 0 then
     timeout = timeout + 1
   end
-  timers[i] = uv.timer_create()
-  uv.timer_start(timers[i], timerCb, timeout, 0)
+  timers[i] = uv.Timer.new()
+  timers[i]:start(timerCb, timeout, 0)
 end
 
 local before = uv.hrtime()

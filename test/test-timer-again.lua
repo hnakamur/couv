@@ -10,31 +10,31 @@ exports['timer.again'] = function(test)
 
   local startTime = uv.now()
 
-  -- Verify that it is not possible to uv.timer_again a never-started timer. */
-  local dummy = uv.timer_create()
+  -- Verify that it is not possible to uv.Timer:again a never-started timer.
+  local dummy = uv.Timer.new()
   test.ok(dummy)
 
-  local ok, err = pcall(uv.timer_again, dummy)
+  local ok, err = pcall(dummy.again, dummy)
   test.ok(not ok)
   test.equal(string.sub(err, -#'EINVAL'), 'EINVAL')
 
-  local repeat1 = uv.timer_create()
-  local repeat2 = uv.timer_create()
+  local repeat1 = uv.Timer.new()
+  local repeat2 = uv.Timer.new()
 
   function repeat1Cb(handle)
     test.equal(handle, repeat1)
-    test.equal(uv.timer_get_repeat(repeat1), 50)
+    test.equal(repeat1:getRepeat(), 50)
 
     print(string.format("repeat1Cb called after %.1f ms",
         uv.now() - startTime))
 
     repeat1CbCalled = repeat1CbCalled + 1
-    uv.timer_again(repeat2)
+    repeat2:again()
 
     if uv.now() >= startTime + 500 then
-      uv.close(handle)
+      handle:close()
       closeCalled = closeCalled + 1
-      -- We're not calling uv.timer_again on repeat2 any more, so after this
+      -- We're not calling uv.Timer:again on repeat2 any more, so after this
       -- timer2Cb is expected.
       repeat2CbAllowed = true
     end
@@ -45,25 +45,24 @@ exports['timer.again'] = function(test)
     test.ok(repeat2CbAllowed)
     print(string.format("repeat2Cb called after %.1f ms", uv.now() - startTime))
     repeat2CbCalled = repeat2CbCalled + 1
-    if uv.timer_get_repeat(repeat2) == 0 then
-      test.ok(not uv.is_active(handle))
-      uv.close(handle)
+    if repeat2:getRepeat() == 0 then
+      test.ok(not handle:isActive())
+      handle:close()
       closeCalled = closeCalled + 1
     end
-    print(string.format("uv.timer_get_repeat %d ms",
-        uv.timer_get_repeat(repeat2)))
-    test.equal(uv.timer_get_repeat(repeat2), 100)
+    print(string.format("repeat2:getRepeat %d ms", repeat2:getRepeat()))
+    test.equal(repeat2:getRepeat(), 100)
 
     -- This shouldn't take effect immediately.
-    uv.timer_set_repeat(repeat2, 0)
+    repeat2:setRepeat(0)
   end
 
-  uv.timer_start(repeat1, repeat1Cb, 50, 0)
-  test.equal(uv.timer_get_repeat(repeat1), 0)
-  uv.timer_set_repeat(repeat1, 50)
+  repeat1:start(repeat1Cb, 50, 0)
+  test.equal(repeat1:getRepeat(), 0)
+  repeat1:setRepeat(50)
 
-  uv.timer_start(repeat2, repeat2Cb, 100, 100)
-  test.equal(uv.timer_get_repeat(repeat2), 100)
+  repeat2:start(repeat2Cb, 100, 100)
+  test.equal(repeat2:getRepeat(), 100)
 
   uv.run()
   test.equal(repeat1CbCalled, 10)

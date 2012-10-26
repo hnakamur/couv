@@ -6,57 +6,57 @@ local TEST_PORT = 9123
 
 exports['udp.options'] = function(test)
   coroutine.wrap(function()
-    local handle = uv.udp_create()
+    local handle = uv.Udp.new()
 
     -- don't keep the loop alive
-    uv.unref(handle)
+    handle:unref()
 
-    uv.udp_bind(handle, uv.ip4addr('0.0.0.0', TEST_PORT))
+    handle:bind(uv.ip4addr('0.0.0.0', TEST_PORT))
     test.ok(true)
 
-    uv.udp_set_broadcast(handle, true)
+    handle:setBroadcast(true)
     test.ok(true)
-    uv.udp_set_broadcast(handle, true)
+    handle:setBroadcast(true)
     test.ok(true)
-    uv.udp_set_broadcast(handle, false)
+    handle:setBroadcast(false)
     test.ok(true)
-    uv.udp_set_broadcast(handle, false)
+    handle:setBroadcast(false)
     test.ok(true)
 
     for i = 1, 255 do
-      uv.udp_set_ttl(handle, i)
+      handle:setTtl(i)
       test.ok(true)
     end
 
     local invalidTTLs = {-1, 0, 256}
     for _, ttl in ipairs(invalidTTLs) do
-      local ok, err = pcall(uv.udp_set_ttl, handle, ttl)
+      local ok, err = pcall(handle.setTtl, handle, ttl)
       test.ok(not ok)
       test.equal(string.sub(err, -#'EINVAL'), 'EINVAL')
     end
 
-    uv.udp_set_multicast_loop(handle, true)
+    handle:setMulticastLoop(true)
     test.ok(true)
-    uv.udp_set_multicast_loop(handle, true)
+    handle:setMulticastLoop(true)
     test.ok(true)
-    uv.udp_set_multicast_loop(handle, false)
+    handle:setMulticastLoop(false)
     test.ok(true)
-    uv.udp_set_multicast_loop(handle, false)
+    handle:setMulticastLoop(false)
     test.ok(true)
 
     -- values 0-255 should work
     for i = 0, 255 do
-      uv.udp_set_multicast_ttl(handle, i)
+      handle:setMulticastTtl(i)
       test.ok(true)
     end
 
     -- anything >255 should fail
-    local ok, err = pcall(uv.udp_set_multicast_ttl, handle, 256)
+    local ok, err = pcall(handle.setMulticastTtl, handle, 256)
     test.ok(not ok)
     test.equal(string.sub(err, -#'EINVAL'), 'EINVAL')
     -- don't test ttl=-1, it's a valid value on some platforms
 
-    uv.close(handle)
+    handle:close()
   end)()
 
   uv.run()
