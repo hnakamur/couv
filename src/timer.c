@@ -134,11 +134,11 @@ static const struct luaL_Reg timer_functions[] = {
 int luaopen_couv_timer(lua_State *L) {
   lua_newtable(L);
   couvL_setfuncs(L, timer_functions, 0);
+  lua_setfield(L, -2, "Timer");
 
   couv_newmetatable(L, COUV_TIMER_MTBL_NAME, COUV_HANDLE_MTBL_NAME);
   couvL_setfuncs(L, timer_methods, 0);
-  lua_setmetatable(L, -2);
+  lua_setfield(L, -2, "_Timer");
 
-  lua_setfield(L, -2, "Timer");
   return 0;
 }

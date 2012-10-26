@@ -227,11 +227,11 @@ static const struct luaL_Reg tcp_functions[] = {
 int luaopen_couv_tcp(lua_State *L) {
   lua_newtable(L);
   couvL_setfuncs(L, tcp_functions, 0);
+  lua_setfield(L, -2, "Tcp");
 
   couv_newmetatable(L, COUV_TCP_MTBL_NAME, COUV_STREAM_MTBL_NAME);
   couvL_setfuncs(L, tcp_methods, 0);
-  lua_setmetatable(L, -2);
+  lua_setfield(L, -2, "_Tcp");
 
-  lua_setfield(L, -2, "Tcp");
   return 0;
 }

@@ -155,54 +155,56 @@ end
 
 
 
-local streamMt = getmetatable(uv.Stream)
+native._Handle.close = function(...)
+  return error0(native._Handle._close(...))
+end
 
-streamMt.read = function(handle)
+
+native._Stream.read = function(handle)
   local nread, buf
   repeat
-    nread, buf = streamMt._read(handle)
+    nread, buf = native._Stream._read(handle)
   until nread
   return nread, buf
 end
 
-streamMt.shutdown = function(...)
-  return error0(streamMt._shutdown(...))
+native._Stream.shutdown = function(...)
+  return error0(native._Stream._shutdown(...))
+end
+
+native._Stream.write = function(...)
+  return error0(native._Stream._write(...))
 end
 
 
-local tcpMt = getmetatable(uv.Tcp)
-
-tcpMt.connect = function(...)
-  return error0(tcpMt._connect(...))
+native._Tcp.connect = function(...)
+  return error0(native._Tcp._connect(...))
 end
 
 
-local pipeMt = getmetatable(uv.Pipe)
-
-pipeMt.connect = function(...)
-  return error0(pipeMt._connect(...))
+native._Pipe.connect = function(...)
+  return error0(native._Pipe._connect(...))
 end
 
-pipeMt.read2 = function(...)
+native._Pipe.read2 = function(...)
   local nread, buf, pending
   repeat
-    nread, buf, pending = pipeMt._read2(...)
+    nread, buf, pending = native._Pipe._read2(...)
   until nread
   return nread, buf, pending
 end
 
-local udpMt = getmetatable(uv.Udp)
 
-udpMt.recv = function(handle)
+native._Udp.recv = function(handle)
   local nread, buf, addr
   repeat
-    nread, buf, addr = udpMt._recv(handle)
+    nread, buf, addr = native._Udp._recv(handle)
   until nread
   return nread, buf, addr
 end
 
-udpMt.send = function(...)
-  return error0(udpMt._send(...))
+native._Udp.send = function(...)
+  return error0(native._Udp._send(...))
 end
 
 -- for debug

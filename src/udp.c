@@ -363,10 +363,11 @@ int luaopen_couv_udp(lua_State *L) {
   couvL_SET_FIELD(L, JOIN_GROUP, number, UV_JOIN_GROUP);
   couvL_SET_FIELD(L, LEAVE_GROUP, number, UV_LEAVE_GROUP);
 
+  lua_setfield(L, -2, "Udp");
+
   couv_newmetatable(L, COUV_UDP_MTBL_NAME, COUV_HANDLE_MTBL_NAME);
   couvL_setfuncs(L, udp_methods, 0);
-  lua_setmetatable(L, -2);
+  lua_setfield(L, -2, "_Udp");
 
-  lua_setfield(L, -2, "Udp");
   return 0;
 }

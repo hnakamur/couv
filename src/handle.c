@@ -90,7 +90,7 @@ static int couv_handle_guess(lua_State *L) {
 }
 
 static const struct luaL_Reg handle_methods[] = {
-  { "close", couv_close },
+  { "_close", couv_close },
   { "isActive", couv_is_active },
   { "isClosing", couv_is_closing },
   { "ref", couv_ref },
@@ -117,11 +117,11 @@ int luaopen_couv_handle(lua_State *L) {
   lua_newtable(L);
   set_handle_type_constants(L);
   couvL_setfuncs(L, handle_functions, 0);
+  lua_setfield(L, -2, "Handle");
 
   couv_newmetatable(L, COUV_HANDLE_MTBL_NAME, NULL);
   couvL_setfuncs(L, handle_methods, 0);
-  lua_setmetatable(L, -2);
+  lua_setfield(L, -2, "_Handle");
 
-  lua_setfield(L, -2, "Handle");
   return 0;
 }

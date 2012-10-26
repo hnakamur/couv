@@ -256,14 +256,13 @@ static int set_stdio_flags_contants(lua_State *L) {
 int luaopen_couv_process(lua_State *L) {
   lua_newtable(L);
   couvL_setfuncs(L, process_functions, 0);
-
   set_process_flags_contants(L);
   set_stdio_flags_contants(L);
+  lua_setfield(L, -2, "Process");
 
   couv_newmetatable(L, COUV_PROCESS_MTBL_NAME, COUV_HANDLE_MTBL_NAME);
   couvL_setfuncs(L, process_methods, 0);
-  lua_setmetatable(L, -2);
+  lua_setfield(L, -2, "_Process");
 
-  lua_setfield(L, -2, "Process");
   return 0;
 }

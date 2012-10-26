@@ -261,7 +261,7 @@ static const struct luaL_Reg stream_methods[] = {
   { "_shutdown", couv_shutdown },
   { "startRead", couv_read_start },
   { "stopRead", couv_read_stop },
-  { "write", couv_write },
+  { "_write", couv_write },
   { "write2", couv_write2 },
   { NULL, NULL }
 };
@@ -273,11 +273,11 @@ static const struct luaL_Reg stream_functions[] = {
 int luaopen_couv_stream(lua_State *L) {
   lua_newtable(L);
   couvL_setfuncs(L, stream_functions, 0);
+  lua_setfield(L, -2, "Stream");
 
   couv_newmetatable(L, COUV_STREAM_MTBL_NAME, COUV_HANDLE_MTBL_NAME);
   couvL_setfuncs(L, stream_methods, 0);
-  lua_setmetatable(L, -2);
+  lua_setfield(L, -2, "_Stream");
 
-  lua_setfield(L, -2, "Stream");
   return 0;
 }

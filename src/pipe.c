@@ -199,11 +199,11 @@ static const struct luaL_Reg pipe_functions[] = {
 int luaopen_couv_pipe(lua_State *L) {
   lua_newtable(L);
   couvL_setfuncs(L, pipe_functions, 0);
+  lua_setfield(L, -2, "Pipe");
 
   couv_newmetatable(L, COUV_PIPE_MTBL_NAME, COUV_STREAM_MTBL_NAME);
   couvL_setfuncs(L, pipe_methods, 0);
-  lua_setmetatable(L, -2);
+  lua_setfield(L, -2, "_Pipe");
 
-  lua_setfield(L, -2, "Pipe");
   return 0;
 }

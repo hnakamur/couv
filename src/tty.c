@@ -151,11 +151,11 @@ static const struct luaL_Reg tty_functions[] = {
 int luaopen_couv_tty(lua_State *L) {
   lua_newtable(L);
   couvL_setfuncs(L, tty_functions, 0);
+  lua_setfield(L, -2, "Tty");
 
   couv_newmetatable(L, COUV_TTY_MTBL_NAME, COUV_STREAM_MTBL_NAME);
   couvL_setfuncs(L, tty_methods, 0);
-  lua_setmetatable(L, -2);
+  lua_setfield(L, -2, "_Tty");
 
-  lua_setfield(L, -2, "Tty");
   return 0;
 }
