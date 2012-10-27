@@ -4,8 +4,8 @@ local PIPENAME = "/tmp/couv-test-sock"
 
 coroutine.wrap(function()
   local handle = uv.Pipe.new()
-  if uv.fs_exists(PIPENAME) then
-    uv.fs_unlink(PIPENAME)
+  if uv.fs.exists(PIPENAME) then
+    uv.fs.unlink(PIPENAME)
   end
   handle:bind(PIPENAME)
   handle:listen(128, function(server)

@@ -10,15 +10,15 @@ end
 if arg[1] == 'spawn_helper3' then
   local uv = require 'couv'
   local buf = uv.Buffer.new(256)
-  local nread = uv.fs_read(0, buf)
-  uv.fs_write(1, buf, 1, nread)
+  local nread = uv.fs.read(0, buf)
+  uv.fs.write(1, buf, 1, nread)
   uv.run()
   os.exit(1)
 end
 
 if arg[1] == 'spawn_helper5' then
   local uv = require 'couv'
-  uv.fs_write(3, 'fourth stdio!\n')
+  uv.fs.write(3, 'fourth stdio!\n')
   uv.run()
   os.exit(1)
 end

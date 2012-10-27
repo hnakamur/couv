@@ -777,35 +777,37 @@ static int fs_write(lua_State *L) {
 }
 
 static const struct luaL_Reg fs_functions[] = {
-  { "fs_chmod", fs_chmod },
-  { "fs_chown", fs_chown },
-  { "fs_close", fs_close },
-  { "fs_exists", fs_exists },
-  { "fs_fchmod", fs_fchmod },
-  { "fs_fchown", fs_fchown },
-  { "fs_fstat", fs_fstat },
-  { "fs_fsync", fs_fsync },
-  { "fs_ftruncate", fs_ftruncate },
-  { "fs_futime", fs_futime },
-  { "fs_link", fs_link },
-  { "fs_lstat", fs_lstat },
-  { "fs_mkdir", fs_mkdir },
-  { "fs_open", fs_open },
-  { "fs_read", fs_read },
-  { "fs_readdir", fs_readdir },
-  { "fs_readlink", fs_readlink },
-  { "fs_rename", fs_rename },
-  { "fs_rmdir", fs_rmdir },
-  { "fs_stat", fs_stat },
-  { "fs_symlink", fs_symlink },
-  { "fs_unlink", fs_unlink },
-  { "fs_utime", fs_utime },
-  { "fs_write", fs_write },
+  { "chmod", fs_chmod },
+  { "chown", fs_chown },
+  { "close", fs_close },
+  { "exists", fs_exists },
+  { "fchmod", fs_fchmod },
+  { "fchown", fs_fchown },
+  { "fstat", fs_fstat },
+  { "fsync", fs_fsync },
+  { "ftruncate", fs_ftruncate },
+  { "futime", fs_futime },
+  { "link", fs_link },
+  { "lstat", fs_lstat },
+  { "mkdir", fs_mkdir },
+  { "open", fs_open },
+  { "read", fs_read },
+  { "readdir", fs_readdir },
+  { "readlink", fs_readlink },
+  { "rename", fs_rename },
+  { "rmdir", fs_rmdir },
+  { "stat", fs_stat },
+  { "symlink", fs_symlink },
+  { "unlink", fs_unlink },
+  { "utime", fs_utime },
+  { "write", fs_write },
   { NULL, NULL }
 };
 
 int luaopen_couv_fs(lua_State *L) {
+  lua_newtable(L);
   couvL_setfuncs(L, fs_functions, 0);
+  lua_setfield(L, -2, "fs");
 
   luaL_newmetatable(L, COUV_FS_STAT_MTBL_NAME);
   couvL_setfuncs(L, fs_stat_methods, 0);

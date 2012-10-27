@@ -9,7 +9,7 @@ local function warmup(path)
   coroutine.wrap(function()
     local ok, err = pcall(function()
       for i = 1, MAX_CONCURRENT_REQS do
-        uv.fs_stat(path)
+        uv.fs.stat(path)
       end
     end)
     if not ok then
@@ -20,7 +20,7 @@ local function warmup(path)
 
   -- warm up the OS dirent cache
   for i = 1, 16 do
-    uv.fs_stat(path)
+    uv.fs.stat(path)
   end
 end
 
@@ -29,7 +29,7 @@ local function syncBench(path)
 
   before = uv.hrtime()
   for i = 1, NUM_SYNC_REQS do
-    uv.fs_stat(path)
+    uv.fs.stat(path)
   end
   after = uv.hrtime()
 
@@ -47,7 +47,7 @@ local function asyncBench(path)
       coroutine.wrap(function()
         local ok, err = pcall(function()
           while count > 0 do
-            uv.fs_stat(path)
+            uv.fs.stat(path)
             count = count - 1
           end
         end)

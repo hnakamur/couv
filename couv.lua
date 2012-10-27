@@ -14,9 +14,6 @@ uv.Timer = native.Timer
 uv.Tty = native.Tty
 uv.Udp = native.Udp
 
--- fs
-uv.fs_exists = native.fs_exists
-
 -- core
 uv.chdir = native.chdir
 uv.cwd = native.cwd
@@ -55,101 +52,105 @@ local function error1(ret, err)
 end
 
 
+-- fs
+uv.fs = {}
+uv.fs.exists = native.fs.exists
+
 -- no return value functions
 
-uv.fs_chmod = function(...)
-  return error0(native.fs_chmod(...))
+uv.fs.chmod = function(...)
+  return error0(native.fs.chmod(...))
 end
 
-uv.fs_chown = function(...)
-  return error0(native.fs_chown(...))
+uv.fs.chown = function(...)
+  return error0(native.fs.chown(...))
 end
 
-uv.fs_close = function(...)
-  return error0(native.fs_close(...))
+uv.fs.close = function(...)
+  return error0(native.fs.close(...))
 end
 
-uv.fs_fchmod = function(...)
-  return error0(native.fs_fchmod(...))
+uv.fs.fchmod = function(...)
+  return error0(native.fs.fchmod(...))
 end
 
-uv.fs_fchown = function(...)
-  return error0(native.fs_fchown(...))
+uv.fs.fchown = function(...)
+  return error0(native.fs.fchown(...))
 end
 
-uv.fs_fsync = function(...)
-  return error0(native.fs_fsync(...))
+uv.fs.fsync = function(...)
+  return error0(native.fs.fsync(...))
 end
 
-uv.fs_ftruncate = function(...)
-  return error0(native.fs_ftruncate(...))
+uv.fs.ftruncate = function(...)
+  return error0(native.fs.ftruncate(...))
 end
 
-uv.fs_futime = function(...)
-  return error0(native.fs_futime(...))
+uv.fs.futime = function(...)
+  return error0(native.fs.futime(...))
 end
 
-uv.fs_link = function(...)
-  return error0(native.fs_link(...))
+uv.fs.link = function(...)
+  return error0(native.fs.link(...))
 end
 
-uv.fs_mkdir = function(...)
-  return error0(native.fs_mkdir(...))
+uv.fs.mkdir = function(...)
+  return error0(native.fs.mkdir(...))
 end
 
-uv.fs_rename = function(...)
-  return error0(native.fs_rename(...))
+uv.fs.rename = function(...)
+  return error0(native.fs.rename(...))
 end
 
-uv.fs_rmdir = function(...)
-  return error0(native.fs_rmdir(...))
+uv.fs.rmdir = function(...)
+  return error0(native.fs.rmdir(...))
 end
 
-uv.fs_symlink = function(...)
-  return error0(native.fs_symlink(...))
+uv.fs.symlink = function(...)
+  return error0(native.fs.symlink(...))
 end
 
-uv.fs_unlink = function(...)
-  return error0(native.fs_unlink(...))
+uv.fs.unlink = function(...)
+  return error0(native.fs.unlink(...))
 end
 
-uv.fs_utime = function(...)
-  return error0(native.fs_utime(...))
+uv.fs.utime = function(...)
+  return error0(native.fs.utime(...))
 end
 
 
 -- one return value functions
 
-uv.fs_open = function(...)
-  return error1(native.fs_open(...))
+uv.fs.open = function(...)
+  return error1(native.fs.open(...))
 end
 
-uv.fs_read = function(...)
-  return error1(native.fs_read(...))
+uv.fs.read = function(...)
+  return error1(native.fs.read(...))
 end
 
-uv.fs_write = function(...)
-  return error1(native.fs_write(...))
+uv.fs.write = function(...)
+  return error1(native.fs.write(...))
 end
 
-uv.fs_lstat = function(...)
-  return error1(native.fs_lstat(...))
+uv.fs.lstat = function(...)
+  return error1(native.fs.lstat(...))
 end
 
-uv.fs_fstat = function(...)
-  return error1(native.fs_fstat(...))
+uv.fs.fstat = function(...)
+  return error1(native.fs.fstat(...))
 end
 
-uv.fs_stat = function(...)
-  return error1(native.fs_stat(...))
+uv.fs.stat = function(...)
+  return error1(native.fs.stat(...))
 end
 
-uv.fs_readlink = function(...)
-  return error1(native.fs_readlink(...))
+uv.fs.readlink = function(...)
+  return error1(native.fs.readlink(...))
 end
 
-uv.fs_readdir = function(...)
-  return error1(native.fs_readdir(...))
+uv.fs.readdir = function(...)
+  return error1(native.fs.readdir(...))
 end
 
 

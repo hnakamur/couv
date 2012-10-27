@@ -69,17 +69,17 @@ exports['spawn.stdout_to_file'] = function(test)
   end
 
   local output = Buffer.new(1024)
-  local fd = uv.fs_open('stdout_file', 'w+', '644')
+  local fd = uv.fs.open('stdout_file', 'w+', '644')
   local process = uv.Process.spawn{
     args={uv.exepath(), 'test/helper.lua', 'spawn_helper2'},
     stdio={{P.IGNORE}, {P.INHERIT_FD, fd}}, exitCb=exitCb}
   test.ok(process:isActive())
   uv.run()
 
-  local bytesRead = uv.fs_read(fd, output, 1, #output, 0)
+  local bytesRead = uv.fs.read(fd, output, 1, #output, 0)
   test.equal(bytesRead, 12)
-  uv.fs_close(fd)
-  uv.fs_unlink('stdout_file')
+  uv.fs.close(fd)
+  uv.fs.unlink('stdout_file')
   test.done()
 end
 
