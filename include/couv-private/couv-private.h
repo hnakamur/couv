@@ -227,17 +227,7 @@ uv_loop_t *couv_loop(lua_State *L);
 int luaopen_couv_sockaddr(lua_State *L);
 int couv_sockaddr_push_raw(lua_State *L, struct sockaddr *addr);
 
-/*
- * fs
- */
 int luaopen_couv_fs(lua_State *L);
-
-typedef struct couv_fs_s {
-  int threadref;
-  uv_fs_t req;
-} couv_fs_t;
-
-
 int luaopen_couv_handle(lua_State *L);
 int luaopen_couv_pipe(lua_State *L);
 int luaopen_couv_process(lua_State *L);

@@ -261,16 +261,13 @@ static int fs_push_readdir_results(lua_State *L, int entry_count,
 static int fs_push_exists_results(lua_State *L, uv_fs_t* req) {
   int exists;
   int is_async;
-  couv_fs_t *w_req;
 
   exists = req->result == 0;
 
   is_async = req->cb != NULL;
   uv_fs_req_cleanup(req);
-  if (is_async) {
-    w_req = container_of(req, couv_fs_t, req);
-    couv_free(L, w_req);
-  }
+  if (is_async)
+    couv_free(L, req);
 
   lua_pushboolean(L, exists);
   return 1;
@@ -281,6 +278,10 @@ static void fs_exists_callback(uv_fs_t* req) {
   int nresults;
 
   L = req->data;
+
+  lua_pushnil(L);
+  couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_THREAD_REG_KEY(req));
+
   nresults = fs_push_exists_results(L, req);
   couv_resume(L, L, nresults);
 }
@@ -288,7 +289,6 @@ static void fs_exists_callback(uv_fs_t* req) {
 static int fs_error(lua_State *L, uv_fs_t* req) {
   int errcode;
   const char *errname;
-  couv_fs_t *w_req;
   int nresults;
   int is_async;
 
@@ -315,17 +315,14 @@ static int fs_error(lua_State *L, uv_fs_t* req) {
   }
 
   uv_fs_req_cleanup(req);
-  if (is_async) {
-    w_req = container_of(req, couv_fs_t, req);
-    couv_free(L, w_req);
-  }
+  if (is_async)
+    couv_free(L, req);
 
   return nresults;
 }
 
 static int fs_push_common_results(lua_State *L, uv_fs_t* req) {
   int nresults;
-  couv_fs_t *w_req;
   int is_async;
 
   if (req->result < 0)
@@ -364,51 +361,45 @@ static int fs_push_common_results(lua_State *L, uv_fs_t* req) {
 
   is_async = req->cb != NULL;
   uv_fs_req_cleanup(req);
-  if (is_async) {
-    w_req = container_of(req, couv_fs_t, req);
-    couv_free(L, w_req);
-  }
+  if (is_async)
+    couv_free(L, req);
 
   return nresults;
 }
 
 static void fs_common_callback(uv_fs_t* req) {
-  couv_fs_t *w_req;
   lua_State *L;
   int nresults;
 
   L = req->data;
 
-  w_req = container_of(req, couv_fs_t, req);
-  luaL_unref(L, LUA_REGISTRYINDEX, w_req->threadref);
+  lua_pushnil(L);
+  couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_THREAD_REG_KEY(req));
 
   nresults = fs_push_common_results(L, req);
   couv_resume(L, L, nresults);
 }
 
 static uv_fs_t *fs_alloc_req(lua_State *L) {
-  couv_fs_t *w_req;
+  uv_fs_t *req;
 
-  w_req = couv_alloc(L, sizeof(couv_fs_t));
-  if (!w_req)
+  req = couv_alloc(L, sizeof(uv_fs_t));
+  if (!req)
     return NULL;
-  w_req->req.data = L;
-  return &w_req->req;
+  req->data = L;
+  return req;
 }
 
 typedef int (*fs_push_results_t)(lua_State *L, uv_fs_t* req);
 
 static int fs_after_async_call(lua_State *L, uv_fs_t *req, int ret,
     fs_push_results_t push_func) {
-  couv_fs_t *w_req;
-
   if (ret < 0) {
     lua_pop(L, 1); /* pop coroutine. */
     return push_func(L, req);
   }
 
-  w_req = container_of(req, couv_fs_t, req);
-  w_req->threadref = luaL_ref(L, LUA_REGISTRYINDEX);
+  couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_THREAD_REG_KEY(req));
   return lua_yield(L, 0);
 }
 
