@@ -717,7 +717,8 @@ static int fs_utime(lua_State *L) {
 static int fs_read(lua_State *L) {
   uv_loop_t *loop = couv_loop(L);
   int fd = luaL_checkint(L, 1);
-  uv_buf_t *buf = couv_checkbuf(L, 2);
+  couv_buf_t *w_buf = couv_checkbuf(L, 2);
+  uv_buf_t *buf = &w_buf->buf;
   char *p = buf->base;
   int buf_pos = luaL_optint(L, 3, 1);
   int length = luaL_optint(L, 4, buf->len - buf_pos + 1);
