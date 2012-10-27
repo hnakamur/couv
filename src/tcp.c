@@ -80,17 +80,15 @@ static int tcp_open(lua_State *L) {
 
 static int tcp_bind(lua_State *L) {
   uv_tcp_t *handle;
-  struct sockaddr_in *ip4addr;
-  struct sockaddr_in6 *ip6addr;
+  struct sockaddr *addr;
   int r;
 
   handle = couvL_checkudataclass(L, 1, COUV_TCP_MTBL_NAME);
-  if ((ip4addr = couvL_testip4addr(L, 2)) != NULL)
-    r = uv_tcp_bind(handle, *ip4addr);
-  else if ((ip6addr = couvL_testip6addr(L, 2)) != NULL)
-    r = uv_tcp_bind6(handle, *ip6addr);
+  addr = couvL_checkudataclass(L, 2, COUV_SOCK_ADDR_MTBL_NAME);
+  if (addr->sa_family == AF_INET)
+    r = uv_tcp_bind(handle, *(struct sockaddr_in *)addr);
   else
-    return luaL_error(L, "must be ip4addr or ip6addr");
+    r = uv_tcp_bind6(handle, *(struct sockaddr_in6 *)addr);
   if (r < 0) {
     return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
   }
@@ -113,20 +111,17 @@ static void connect_cb(uv_connect_t *req, int status) {
 
 static int tcp_connect(lua_State *L) {
   uv_tcp_t *handle;
-  struct sockaddr_in *ip4addr;
-  struct sockaddr_in6 *ip6addr;
+  struct sockaddr *addr;
   uv_connect_t *req;
   int r;
 
-  req = couv_alloc(L, sizeof(uv_connect_t));
-
   handle = couvL_checkudataclass(L, 1, COUV_TCP_MTBL_NAME);
-  if ((ip4addr = couvL_testip4addr(L, 2)) != NULL)
-    r = uv_tcp_connect(req, handle, *ip4addr, connect_cb);
-  else if ((ip6addr = couvL_testip6addr(L, 2)) != NULL)
-    r = uv_tcp_connect6(req, handle, *ip6addr, connect_cb);
+  addr = couvL_checkudataclass(L, 2, COUV_SOCK_ADDR_MTBL_NAME);
+  req = couv_alloc(L, sizeof(uv_connect_t));
+  if (addr->sa_family == AF_INET)
+    r = uv_tcp_connect(req, handle, *(struct sockaddr_in *)addr, connect_cb);
   else
-    return luaL_error(L, "must be ip4addr or ip6addr");
+    r = uv_tcp_connect6(req, handle, *(struct sockaddr_in6 *)addr, connect_cb);
   if (r < 0) {
     return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
   }
@@ -189,7 +184,7 @@ static int tcp_getsockname(lua_State *L) {
   if (r < 0) {
     return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
   }
-  return couv_push_ipaddr_raw(L, (struct sockaddr *)&name);
+  return couv_sockaddr_push_raw(L, (struct sockaddr *)&name);
 }
 
 static int tcp_getpeername(lua_State *L) {
@@ -204,7 +199,7 @@ static int tcp_getpeername(lua_State *L) {
   if (r < 0) {
     return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
   }
-  return couv_push_ipaddr_raw(L, (struct sockaddr *)&name);
+  return couv_sockaddr_push_raw(L, (struct sockaddr *)&name);
 }
 
 static const struct luaL_Reg tcp_methods[] = {

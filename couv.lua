@@ -6,6 +6,9 @@ uv.Handle = native.Handle
 uv.Pipe = native.Pipe
 uv.Process = native.Process
 uv.Stream = native.Stream
+uv.SockAddr = native.SockAddr
+uv.SockAddrV4 = native.SockAddrV4
+uv.SockAddrV6 = native.SockAddrV6
 uv.Tcp = native.Tcp
 uv.Timer = native.Timer
 uv.Tty = native.Tty
@@ -26,10 +29,6 @@ uv.hrtime = native.hrtime
 uv.resident_set_memory = native.resident_set_memory
 uv.uptime = native.uptime
 uv.update_time = native.update_time
-
--- ipaddr
-uv.ip4addr = native.ip4addr
-uv.ip6addr = native.ip6addr
 
 -- loop
 uv.default_loop = native.default_loop

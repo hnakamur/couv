@@ -6,12 +6,12 @@ local TEST_PORT = 9123
 
 exports['udp.multicast-ttl'] = function(test)
   coroutine.wrap(function()
-    local addr = uv.ip4addr('239.255.0.1', TEST_PORT)
+    local addr = uv.SockAddrV4.new('239.255.0.1', TEST_PORT)
 
     local server = uv.Udp.new()
     test.ok(server)
 
-    server:bind(uv.ip4addr('0.0.0.0', 0))
+    server:bind(uv.SockAddrV4.new('0.0.0.0', 0))
     test.ok(true)
 
     server:setMulticastTtl(32)

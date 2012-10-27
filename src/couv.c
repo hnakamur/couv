@@ -142,7 +142,7 @@ int luaopen_couv_native(lua_State *L) {
 
   luaopen_couv_buffer(L);
   luaopen_couv_fs(L);
-  luaopen_couv_ipaddr(L);
+  luaopen_couv_sockaddr(L);
 
   /* order superclass to subclasses. */
   luaopen_couv_handle(L);

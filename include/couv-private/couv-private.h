@@ -218,24 +218,14 @@ uv_loop_t *couv_loop(lua_State *L);
 #define COUV_LOOP_REGISTRY_KEY "couv.loop"
 
 /*
- * ipaddr
+ * sockaddr
  */
-#define COUV_IP4ADDR_MTBL_NAME "couv.Ip4addr"
-#define couv_checkip4addr(L, index) \
-  (struct sockaddr_in *)luaL_checkudata(L, index, COUV_IP4ADDR_MTBL_NAME)
+#define COUV_SOCK_ADDR_MTBL_NAME "couv.SockAddr"
+#define COUV_SOCK_ADDR_V4_MTBL_NAME "couv.SockAddrV4"
+#define COUV_SOCK_ADDR_V6_MTBL_NAME "couv.SockAddrV6"
 
-#define COUV_IP6ADDR_MTBL_NAME "couv.Ip6addr"
-#define couv_checkip6addr(L, index) \
-  (struct sockaddr_in6 *)luaL_checkudata(L, index, COUV_IP6ADDR_MTBL_NAME)
-
-#define couvL_testip4addr(L, index) \
-  (struct sockaddr_in *)couvL_testudata(L, index, COUV_IP4ADDR_MTBL_NAME)
-#define couvL_testip6addr(L, index) \
-  (struct sockaddr_in6 *)couvL_testudata(L, index, COUV_IP6ADDR_MTBL_NAME)
-
-int luaopen_couv_ipaddr(lua_State *L);
-
-int couv_dbg_print_ip4addr(const char *header, struct sockaddr_in *addr);
+int luaopen_couv_sockaddr(lua_State *L);
+int couv_sockaddr_push_raw(lua_State *L, struct sockaddr *addr);
 
 /*
  * fs
@@ -257,7 +247,6 @@ int luaopen_couv_timer(lua_State *L);
 int luaopen_couv_tty(lua_State *L);
 int luaopen_couv_udp(lua_State *L);
 
-int couv_push_ipaddr_raw(lua_State *L, struct sockaddr *addr);
 
 #ifdef __cplusplus
 }

@@ -11,7 +11,7 @@ exports['udp.options'] = function(test)
     -- don't keep the loop alive
     handle:unref()
 
-    handle:bind(uv.ip4addr('0.0.0.0', TEST_PORT))
+    handle:bind(uv.SockAddrV4.new('0.0.0.0', TEST_PORT))
     test.ok(true)
 
     handle:setBroadcast(true)

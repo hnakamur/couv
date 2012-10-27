@@ -4,7 +4,7 @@ local TEST_PORT = 9123
 
 coroutine.wrap(function()
   local handle = uv.Tcp.new()
-  handle:bind(uv.ip6addr('::1', TEST_PORT))
+  handle:bind(uv.SockAddrV6.new('::1', TEST_PORT))
   handle:listen(128, function(server)
     coroutine.wrap(function()
       local stream = uv.Tcp.new()

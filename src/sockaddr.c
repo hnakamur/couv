@@ -1,138 +1,317 @@
 #include "couv-private.h"
 
+#define COUV_AF_UNSPEC 0
+#define COUV_AF_IPV4 4
+#define COUV_AF_IPV6 6
 
-int couv_dbg_print_ip4addr(const char *header, struct sockaddr_in *addr) {
-  char buf[sizeof "255.255.255.255"];
-  int r;
-  if (addr) {
-    unsigned char *p;
-    r = uv_ip4_name(addr, buf, sizeof(buf));
-    if (r < 0) {
-      printf("%s error in uv_ip4_name r=%d\n", header, r);
+/*
+ * helper functions
+ */
+
+static uv_err_code couv_inet_pton(int *af, const char *src, void *dst) {
+  uv_err_t err;
+
+  switch (*af) {
+  case AF_UNSPEC:
+    err = uv_inet_pton(AF_INET, src, dst);
+    if (err.code == UV_OK)
+      *af = AF_INET;
+    else {
+      err = uv_inet_pton(AF_INET6, src, dst);
+      if (err.code == UV_OK)
+        *af = AF_INET6;
     }
-    p = (unsigned char *)&addr->sin_port;
-    printf("%s addr host=%s, port=%d\n", header, buf,  p[0] << 8 | p[1]);
-  } else {
-    printf("%s addr=NULL\n", header);
+    break;
+  default:
+    err = uv_inet_pton(*af, src, dst);
+    break;
   }
-  return r;
+  return err.code;
 }
 
-int couv_ip4addr_host(lua_State *L) {
-  struct sockaddr_in *addr = couv_checkip4addr(L, 1);
-  char buf[sizeof "255.255.255.255"];
-  int r = uv_ip4_name(addr, buf, sizeof(buf));
-  if (r < 0) {
-    uv_loop_t *loop = couv_loop(L);
-    return luaL_error(L, couvL_uv_errname(uv_last_error(loop).code));
+static const char *couvL_checkip(lua_State *L, int index, int *af,
+    void *addr) {
+  uv_err_code err_code;
+  const char *str;
+
+  str = luaL_checkstring(L, index);
+  err_code = couv_inet_pton(af, str, addr);
+  luaL_argcheck(L, err_code == UV_OK, index, "must be valid IP address");
+  return str;
+}
+
+
+static int couvL_checkport(lua_State *L, int index) {
+  int port;
+
+  port = luaL_checkint(L, index);
+  luaL_argcheck(L, 0 <= port && port <= 65535, index,
+      "must be integer between 0 and 65535");
+  return port;
+}
+
+static int couvL_checkfamily(lua_State *L, int index) {
+  int family;
+  int af;
+
+  family = luaL_optint(L, index, COUV_AF_UNSPEC);
+  switch (family) {
+  case COUV_AF_UNSPEC:
+    af = AF_UNSPEC;
+    break;
+  case COUV_AF_IPV4:
+    af = AF_INET;
+    break;
+  case COUV_AF_IPV6:
+    af = AF_INET6;
+    break;
+  default:
+    af = -1;
+    break;
   }
-  lua_pushstring(L, buf);
-  return 1;
+  luaL_argcheck(L, af != -1, index, "must be SockAddr.V4, SockAddr.V6 or nil");
+  return af;
 }
 
-int couv_ip4addr_port(lua_State *L) {
-  struct sockaddr_in *addr = couv_checkip4addr(L, 1);
-  unsigned char *p = (unsigned char *)&addr->sin_port;
-  lua_pushnumber(L, p[0] << 8 | p[1]);
-  return 1;
-}
 
-static const struct luaL_Reg ip4addr_methods[] = {
-  { "host", couv_ip4addr_host },
-  { "port", couv_ip4addr_port },
-  { NULL, NULL }
-};
-
-
-int couv_ip6addr_host(lua_State *L) {
-  struct sockaddr_in6 *addr = couv_checkip6addr(L, 1);
-  char buf[sizeof "ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255"];
-  int r = uv_ip6_name(addr, buf, sizeof(buf));
-  if (r < 0) {
-    uv_loop_t *loop = couv_loop(L);
-    return luaL_error(L, couvL_uv_errname(uv_last_error(loop).code));
-  }
-  lua_pushstring(L, buf);
-  return 1;
-}
-
-int couv_ip6addr_port(lua_State *L) {
-  struct sockaddr_in6 *addr = couv_checkip6addr(L, 1);
-  unsigned char *p = (unsigned char *)&addr->sin6_port;
-  lua_pushnumber(L, p[0] << 8 | p[1]);
-  return 1;
-}
-
-static const struct luaL_Reg ip6addr_methods[] = {
-  { "host", couv_ip6addr_host },
-  { "port", couv_ip6addr_port },
-  { NULL, NULL }
-};
-
-static int couv_push_ip4addr_raw(lua_State *L, struct sockaddr_in *addr) {
+static int couv_sockaddrv4_push_raw(lua_State *L, struct sockaddr_in *addr) {
   struct sockaddr_in *ud_addr;
 
   ud_addr = lua_newuserdata(L, sizeof(struct sockaddr_in));
   *ud_addr = *addr;
-  luaL_getmetatable(L, COUV_IP4ADDR_MTBL_NAME);
+  luaL_getmetatable(L, COUV_SOCK_ADDR_V4_MTBL_NAME);
   lua_setmetatable(L, -2);
   return 1; 
 }
 
-static int couv_push_ip6addr_raw(lua_State *L, struct sockaddr_in6 *addr) {
+static int couv_sockaddrv6_push_raw(lua_State *L, struct sockaddr_in6 *addr) {
   struct sockaddr_in6 *ud_addr;
 
   ud_addr = lua_newuserdata(L, sizeof(struct sockaddr_in6));
   *ud_addr = *addr;
-  luaL_getmetatable(L, COUV_IP6ADDR_MTBL_NAME);
+  luaL_getmetatable(L, COUV_SOCK_ADDR_V6_MTBL_NAME);
   lua_setmetatable(L, -2);
   return 1; 
 }
 
-int couv_push_ipaddr_raw(lua_State *L, struct sockaddr *addr) {
+int couv_sockaddr_push_raw(lua_State *L, struct sockaddr *addr) {
   if (addr->sa_family == AF_INET)
-    return couv_push_ip4addr_raw(L, (struct sockaddr_in *)addr);
+    return couv_sockaddrv4_push_raw(L, (struct sockaddr_in *)addr);
   else if (addr->sa_family == AF_INET6)
-    return couv_push_ip6addr_raw(L, (struct sockaddr_in6 *)addr);
+    return couv_sockaddrv6_push_raw(L, (struct sockaddr_in6 *)addr);
   else
     return luaL_error(L, "ENOTSUP");
 }
 
-int couv_ip4addr(lua_State *L) {
-  const char *ip = luaL_checkstring(L, 1);
-  int port = luaL_checkint(L, 2);
-  struct sockaddr_in *addr = lua_newuserdata(L, sizeof(struct sockaddr_in));
-  luaL_getmetatable(L, COUV_IP4ADDR_MTBL_NAME);
+static int couv_sockaddrv4_new_addr_port(lua_State *L, struct in_addr *addr,
+    int port) {
+  struct sockaddr_in *addr4;
+
+  addr4 = lua_newuserdata(L, sizeof(struct sockaddr_in));
+  luaL_getmetatable(L, COUV_SOCK_ADDR_V4_MTBL_NAME);
   lua_setmetatable(L, -2);
-  *addr = uv_ip4_addr(ip, port);
-  return 1; 
+
+  memset(addr4, 0, sizeof(struct sockaddr_in));
+  addr4->sin_family = AF_INET;
+  addr4->sin_port = htons(port);
+  memcpy(&addr4->sin_addr, addr, sizeof(struct in_addr));
+
+  return 1;
 }
 
-int couv_ip6addr(lua_State *L) {
-  const char *ip = luaL_checkstring(L, 1);
-  int port = luaL_checkint(L, 2);
-  struct sockaddr_in6 *addr = lua_newuserdata(L, sizeof(struct sockaddr_in6));
-  luaL_getmetatable(L, COUV_IP6ADDR_MTBL_NAME);
+static int couv_sockaddrv6_new_addr_port(lua_State *L, struct in6_addr *addr,
+    int port) {
+  struct sockaddr_in6 *addr6;
+
+  addr6 = lua_newuserdata(L, sizeof(struct sockaddr_in6));
+  luaL_getmetatable(L, COUV_SOCK_ADDR_V6_MTBL_NAME);
   lua_setmetatable(L, -2);
-  *addr = uv_ip6_addr(ip, port);
-  return 1; 
+
+  memset(addr6, 0, sizeof(struct sockaddr_in6));
+  addr6->sin6_family = AF_INET6;
+  addr6->sin6_port = htons(port);
+  memcpy(&addr6->sin6_addr, addr, sizeof(struct in6_addr));
+
+  return 1;
 }
 
-static const struct luaL_Reg ipaddr_functions[] = {
-  { "ip4addr", couv_ip4addr },
-  { "ip6addr", couv_ip6addr },
+
+/*
+ * SockAddrV4 methods
+ */
+
+int couv_sockaddrv4_host(lua_State *L) {
+  struct sockaddr_in *addr;
+  char buf[sizeof "255.255.255.255"];
+  int r;
+
+  addr = couvL_checkudataclass(L, 1, COUV_SOCK_ADDR_V4_MTBL_NAME);
+  r = uv_ip4_name(addr, buf, sizeof(buf));
+  if (r < 0) {
+    return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+  }
+  lua_pushstring(L, buf);
+  return 1;
+}
+
+int couv_sockaddrv4_port(lua_State *L) {
+  struct sockaddr_in *addr;
+
+  addr = couvL_checkudataclass(L, 1, COUV_SOCK_ADDR_V4_MTBL_NAME);
+  lua_pushnumber(L, ntohs(addr->sin_port));
+  return 1;
+}
+
+static const struct luaL_Reg sockaddrv4_methods[] = {
+  { "host", couv_sockaddrv4_host },
+  { "port", couv_sockaddrv4_port },
   { NULL, NULL }
 };
 
-int luaopen_couv_ipaddr(lua_State *L) {
-  couvL_setfuncs(L, ipaddr_functions, 0);
 
-  luaL_newmetatable(L, COUV_IP4ADDR_MTBL_NAME);
-  couvL_setfuncs(L, ip4addr_methods, 0);
-  lua_setfield(L, -1, "__index");
+/*
+ * SockAddrV4 functions
+ */
 
-  luaL_newmetatable(L, COUV_IP6ADDR_MTBL_NAME);
-  couvL_setfuncs(L, ip6addr_methods, 0);
-  lua_setfield(L, -1, "__index");
+int couv_sockaddrv4_new(lua_State *L) {
+  int port;
+  int af;
+  unsigned char tmp[sizeof(struct in_addr)];
+
+  af = AF_INET;
+  couvL_checkip(L, 1, &af, tmp);
+  port = couvL_checkport(L, 2);
+  return couv_sockaddrv4_new_addr_port(L, (struct in_addr *)tmp, port);
+}
+
+static const struct luaL_Reg sockaddrv4_functions[] = {
+  { "new", couv_sockaddrv4_new },
+  { NULL, NULL }
+};
+
+
+/*
+ * SockAddrV6 methods
+ */
+
+int couv_sockaddrv6_host(lua_State *L) {
+  struct sockaddr_in6 *addr;
+  char buf[sizeof "ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255"];
+  int r;
+
+  addr = couvL_checkudataclass(L, 1, COUV_SOCK_ADDR_V6_MTBL_NAME);
+  r = uv_ip6_name(addr, buf, sizeof(buf));
+  if (r < 0) {
+    return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+  }
+  lua_pushstring(L, buf);
   return 1;
+}
+
+int couv_sockaddrv6_port(lua_State *L) {
+  struct sockaddr_in6 *addr;
+
+  addr = couvL_checkudataclass(L, 1, COUV_SOCK_ADDR_V6_MTBL_NAME);
+  lua_pushnumber(L, ntohs(addr->sin6_port));
+  return 1;
+}
+
+static const struct luaL_Reg sockaddrv6_methods[] = {
+  { "host", couv_sockaddrv6_host },
+  { "port", couv_sockaddrv6_port },
+  { NULL, NULL }
+};
+
+
+/*
+ * SockAddrV6 functions
+ */
+
+int couv_sockaddrv6_new(lua_State *L) {
+  int port;
+  int af;
+  unsigned char tmp[sizeof(struct in6_addr)];
+
+  af = AF_INET6;
+  couvL_checkip(L, 1, &af, tmp);
+  port = couvL_checkport(L, 2);
+  return couv_sockaddrv6_new_addr_port(L, (struct in6_addr *)tmp, port);
+}
+
+static const struct luaL_Reg sockaddrv6_functions[] = {
+  { "new", couv_sockaddrv6_new },
+  { NULL, NULL }
+};
+
+static int couv_sockaddr_is_v4(lua_State *L) {
+  struct sockaddr *addr;
+
+  addr = couvL_checkudataclass(L, 1, COUV_SOCK_ADDR_MTBL_NAME);
+  lua_pushboolean(L, addr->sa_family == AF_INET);
+  return 1; 
+}
+
+static int couv_sockaddr_is_v6(lua_State *L) {
+  struct sockaddr *addr;
+
+  addr = couvL_checkudataclass(L, 1, COUV_SOCK_ADDR_MTBL_NAME);
+  lua_pushboolean(L, addr->sa_family == AF_INET6);
+  return 1; 
+}
+
+static const struct luaL_Reg sockaddr_methods[] = {
+  { "isV4", couv_sockaddr_is_v4 },
+  { "isV6", couv_sockaddr_is_v6 },
+  { NULL, NULL }
+};
+
+int couv_sockaddr_create(lua_State *L) {
+  int port;
+  int af;
+  unsigned char tmp[sizeof(struct in6_addr)];
+
+  port = couvL_checkport(L, 2);
+  af  = couvL_checkfamily(L, 3);
+  couvL_checkip(L, 1, &af, tmp);
+
+  return af == AF_INET
+      ? couv_sockaddrv4_new_addr_port(L, (struct in_addr *)tmp, port)
+      : couv_sockaddrv6_new_addr_port(L, (struct in6_addr *)tmp, port);
+}
+
+static const struct luaL_Reg sockaddr_functions[] = {
+  { "create", couv_sockaddr_create },
+  { NULL, NULL }
+};
+
+int luaopen_couv_sockaddr(lua_State *L) {
+  lua_newtable(L);
+  couvL_setfuncs(L, sockaddr_functions, 0);
+  couvL_SET_FIELD(L, V4, number, COUV_AF_IPV4);
+  couvL_SET_FIELD(L, V6, number, COUV_AF_IPV6);
+  lua_setfield(L, -2, "SockAddr");
+
+  couv_newmetatable(L, COUV_SOCK_ADDR_MTBL_NAME, NULL);
+  couvL_setfuncs(L, sockaddr_methods, 0);
+  lua_setfield(L, -2, "_SockAddr");
+
+
+  lua_newtable(L);
+  couvL_setfuncs(L, sockaddrv4_functions, 0);
+  lua_setfield(L, -2, "SockAddrV4");
+
+  couv_newmetatable(L, COUV_SOCK_ADDR_V4_MTBL_NAME, COUV_SOCK_ADDR_MTBL_NAME);
+  couvL_setfuncs(L, sockaddrv4_methods, 0);
+  lua_setfield(L, -2, "_SockAddrV4");
+
+
+  lua_newtable(L);
+  couvL_setfuncs(L, sockaddrv6_functions, 0);
+  lua_setfield(L, -2, "SockAddrV6");
+
+  couv_newmetatable(L, COUV_SOCK_ADDR_V6_MTBL_NAME, COUV_SOCK_ADDR_MTBL_NAME);
+  couvL_setfuncs(L, sockaddrv6_methods, 0);
+  lua_setfield(L, -2, "_SockAddrV6");
+
+  return 0;
 }

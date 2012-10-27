@@ -8,7 +8,7 @@ exports['tcp.sockname'] = function(test)
   local connectPort
   coroutine.wrap(function()
     local handle = uv.Tcp.new()
-    handle:bind(uv.ip4addr('127.0.0.1', TEST_PORT))
+    handle:bind(uv.SockAddrV4.new('127.0.0.1', TEST_PORT))
     handle:listen(128, function(server)
       coroutine.wrap(function()
         local stream = uv.Tcp.new()
@@ -47,7 +47,7 @@ exports['tcp.sockname'] = function(test)
   
   coroutine.wrap(function()
     local handle = uv.Tcp.new()
-    handle:connect(uv.ip4addr('127.0.0.1', TEST_PORT))
+    handle:connect(uv.SockAddrV4.new('127.0.0.1', TEST_PORT))
     local sockname = handle:getsockname()
     test.ok(sockname)
     test.ok(sockname:port() > 0)
@@ -68,7 +68,7 @@ exports['udp.sockname'] = function(test)
   -- listener
   coroutine.wrap(function()
     local handle = uv.Udp.new()
-    handle:bind(uv.ip4addr('0.0.0.0', TEST_PORT))
+    handle:bind(uv.SockAddrV4.new('0.0.0.0', TEST_PORT))
 
     local sockname = handle:getsockname()
     test.equal(sockname:host(), '0.0.0.0')
@@ -82,7 +82,7 @@ exports['udp.sockname'] = function(test)
   -- sender
   coroutine.wrap(function()
     local handle = uv.Udp.new()
-    local serverAddr = uv.ip4addr('127.0.0.1', TEST_PORT)
+    local serverAddr = uv.SockAddrV4.new('127.0.0.1', TEST_PORT)
 
     handle:send({"PING"}, serverAddr)
 

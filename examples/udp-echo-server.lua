@@ -4,7 +4,7 @@ local TEST_PORT = 9123
 
 coroutine.wrap(function()
   local handle = uv.Udp.new()
-  handle:bind(uv.ip4addr('0.0.0.0', TEST_PORT))
+  handle:bind(uv.SockAddrV4.new('0.0.0.0', TEST_PORT))
   handle:startRecv()
 
   local nread, buf, addr

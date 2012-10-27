@@ -9,7 +9,7 @@ exports['udp.multicast_join'] = function(test)
     local server = uv.Udp.new()
 
     local client = uv.Udp.new()
-    local clientAddr = uv.ip4addr('127.0.0.1', TEST_PORT)
+    local clientAddr = uv.SockAddrV4.new('127.0.0.1', TEST_PORT)
     client:bind(clientAddr)
 
     client:setMembership('239.255.0.1', nil, uv.Udp.JOIN_GROUP);

@@ -93,19 +93,17 @@ static int udp_open(lua_State *L) {
 
 static int udp_bind(lua_State *L) {
   uv_udp_t *handle;
-  struct sockaddr_in *ip4addr;
-  struct sockaddr_in6 *ip6addr;
+  struct sockaddr *addr;
   unsigned flags;
   int r;
 
   handle = couvL_checkudataclass(L, 1, COUV_UDP_MTBL_NAME);
+  addr = couvL_checkudataclass(L, 2, COUV_SOCK_ADDR_MTBL_NAME);
   flags = luaL_optint(L, 3, 0);
-  if ((ip4addr = couvL_testip4addr(L, 2)) != NULL)
-    r = uv_udp_bind(handle, *ip4addr, flags);
-  else if ((ip6addr = couvL_testip6addr(L, 2)) != NULL)
-    r = uv_udp_bind6(handle, *ip6addr, flags);
+  if (addr->sa_family == AF_INET)
+    r = uv_udp_bind(handle, *(struct sockaddr_in *)addr, flags);
   else
-    return luaL_error(L, "must be ip4addr or ip6addr");
+    r = uv_udp_bind6(handle, *(struct sockaddr_in6 *)addr, flags);
   if (r < 0) {
     return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
   }
@@ -131,8 +129,7 @@ static void udp_send_cb(uv_udp_send_t* req, int status) {
 
 static int udp_send(lua_State *L) {
   uv_udp_t *handle;
-  struct sockaddr_in *ip4addr;
-  struct sockaddr_in6 *ip6addr;
+  struct sockaddr *addr;
   uv_buf_t *bufs;
   size_t bufcnt;
   couv_udp_send_t *holder;
@@ -141,14 +138,16 @@ static int udp_send(lua_State *L) {
 
   handle = couvL_checkudataclass(L, 1, COUV_UDP_MTBL_NAME);
   bufs = couv_checkbuforstrtable(L, 2, &bufcnt);
+  addr = couvL_checkudataclass(L, 3, COUV_SOCK_ADDR_MTBL_NAME);
   holder = couv_alloc_udp_send(L, bufs);
   req = &holder->req;
-  if ((ip4addr = couvL_testip4addr(L, 3)) != NULL)
-    r = uv_udp_send(req, handle, bufs, (int)bufcnt, *ip4addr, udp_send_cb);
-  else if ((ip6addr = couvL_testip6addr(L, 3)) != NULL)
-    r = uv_udp_send6(req, handle, bufs, (int)bufcnt, *ip6addr, udp_send_cb);
-  else
-    return luaL_error(L, "must be ip4addr or ip6addr");
+  if (addr->sa_family == AF_INET) {
+    r = uv_udp_send(req, handle, bufs, (int)bufcnt,
+        *(struct sockaddr_in *)addr, udp_send_cb);
+  } else {
+    r = uv_udp_send6(req, handle, bufs, (int)bufcnt,
+        *(struct sockaddr_in6 *)addr, udp_send_cb);
+  }
   if (r < 0) {
     return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
   }
@@ -230,7 +229,7 @@ static int udp_prim_recv(lua_State *L) {
   *w_buf = input->w_buf;
 
   ip4addr = lua_newuserdata(L, sizeof(struct sockaddr_in));
-  luaL_getmetatable(L, COUV_IP4ADDR_MTBL_NAME);
+  luaL_getmetatable(L, COUV_SOCK_ADDR_V4_MTBL_NAME);
   lua_setmetatable(L, -2);
   *ip4addr = input->addr.v4;
 
@@ -249,7 +248,7 @@ static int udp_getsockname(lua_State *L) {
   if (r < 0) {
     return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
   }
-  return couv_push_ipaddr_raw(L, (struct sockaddr *)&name);
+  return couv_sockaddr_push_raw(L, (struct sockaddr *)&name);
 }
 
 static int udp_set_membership(lua_State *L) {

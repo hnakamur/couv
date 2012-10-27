@@ -3,7 +3,7 @@ local uv = require 'couv'
 local TEST_PORT = 9123
 
 coroutine.wrap(function()
-  local addr = uv.ip4addr('127.0.0.1', TEST_PORT)
+  local addr = uv.SockAddrV4.new('127.0.0.1', TEST_PORT)
   local handle = uv.Udp.new()
 
   handle:startRecv()
