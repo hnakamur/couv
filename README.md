@@ -8,8 +8,6 @@
 * works on the LuaJIT 2.0, Lua 5.2.1.
 * embeddable in another event loop (not tested yet).
 
-couv APIs are not object-oriented right now. Maybe I change to object-oriented APIs in the future if I find a simple way to implement inheritance of userdata with metatable and perfomance loss is negligible.
-
 ## Rules
 * must be written in C89 (neither C++ nor C99) for MSVC compatibility.
 
@@ -25,10 +23,15 @@ make
 make test
 ```
 
+## Running tests with valgrind
+```
+valgrind --suppressions=/path/to/luajit-2.0/src/lj.supp luajit tool/checkit test/test-*.lua
+```
+
 ## License
 MIT License
 
 ## TODO
 * Add benchmarks.
+* fix errors reported by valgrind
 * Implement more C/lua functions for functions in libuv.
-* Decide whether or not we switch to object-oriented APIs in lua side.
