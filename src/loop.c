@@ -61,13 +61,13 @@ static int couv_run_once(lua_State *L) {
 }
 
 static const struct luaL_Reg loop_functions[] = {
-  { "default_loop", couv_default_loop },
-  { "get_loop", couv_get_loop },
+  { "defaultLoop", couv_default_loop },
+  { "getLoop", couv_get_loop },
   { "now", couv_now },
   { "run", couv_run },
-  { "run_once", couv_run_once },
-  { "set_loop", couv_set_loop },
-  { "update_time", couv_update_time },
+  { "runOnce", couv_run_once },
+  { "setLoop", couv_set_loop },
+  { "updateTime", couv_update_time },
   { NULL, NULL }
 };
 

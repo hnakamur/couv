@@ -28,12 +28,12 @@ uv.uptime = native.uptime
 uv.updateTime = native.updateTime
 
 -- loop
-uv.default_loop = native.default_loop
-uv.get_loop = native.get_loop
+uv.defaultLoop = native.defaultLoop
+uv.getLoop = native.getLoop
 uv.now = native.now
 uv.run = native.run
-uv.run_once = native.run_once
-uv.set_loop = native.set_loop
+uv.runOnce = native.runOnce
+uv.setLoop = native.setLoop
 
 
 -- utility functions
