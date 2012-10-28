@@ -18,14 +18,14 @@ uv.Udp = native.Udp
 uv.chdir = native.chdir
 uv.cwd = native.cwd
 uv.exepath = native.exepath
-uv.get_free_memory = native.get_free_memory
-uv.get_total_memory = native.get_total_memory
+uv.getFreeMemory = native.getFreeMemory
+uv.getTotalMemory = native.getTotalMemory
 uv.kill = native.kill
 uv.loadavg = native.loadavg
 uv.hrtime = native.hrtime
-uv.resident_set_memory = native.resident_set_memory
+uv.residentSetMemory = native.residentSetMemory
 uv.uptime = native.uptime
-uv.update_time = native.update_time
+uv.updateTime = native.updateTime
 
 -- loop
 uv.default_loop = native.default_loop
