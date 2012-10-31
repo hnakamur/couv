@@ -51,6 +51,39 @@ local function error1(ret, err)
   return ret
 end
 
+local function wait0()
+print("wait0 start")
+  err = coroutine.yield()
+print("wait0 after yield. err=", err)
+  if err then
+    error(err, 2)
+  end
+end
+
+function asyncCb(co, err, ret)
+print("asyncCb co=", co, "err=", err)
+--  coroutine.resume(co, err, ret)
+end
+
+--[[
+local function wait1()
+  err, ret = coroutine.yield()
+  if err then
+    error(err, 2)
+  end
+  return ret
+end
+
+uv.fs.chmod = function(path, mode, callback)
+  if callback == nil then
+    native.fs.chmod(path, mode, coroutine.resume)
+    return wait1()
+  else
+    return fs.chmod(path, mode, callback)
+  end
+end
+
+]]
 
 -- fs
 uv.fs = {}
@@ -172,8 +205,17 @@ native._Stream.shutdown = function(...)
   return error0(native._Stream._shutdown(...))
 end
 
+--[[
 native._Stream.write = function(...)
   return error0(native._Stream._write(...))
+end
+]]
+
+function native._Stream:write(bufs)
+--  error0(native._Stream._write(self, bufs, asyncCb))
+  native._Stream._write(self, bufs, asyncCb)
+print("after write")
+--  wait0()
 end
 
 

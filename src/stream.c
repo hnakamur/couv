@@ -193,20 +193,35 @@ static int couv_shutdown(lua_State *L) {
 static void write_cb(uv_write_t *req, int status) {
   lua_State *L;
   uv_stream_t *handle;
+  int nargs;
 
   handle = req->handle;
   L = handle->data;
 
-  if (status < 0) {
-    couv_free(L, req->data);
-    couv_free(L, req);
-    luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
-    return;
-  }
-
   couv_free(L, req->data);
   couv_free(L, req);
+
+#if 1
+printf("write_cb L=%lx\n", (unsigned long)L);
+printf("write_cb req=%lx, status=%d\n", (unsigned long)req, status);
+  lua_pushlightuserdata(L, handle);
+  couv_rawgetp(L, LUA_REGISTRYINDEX, COUV_WRITE_CB_REG_KEY(handle));
+printf("write_cb write_cb=%lx\n", (unsigned long)lua_topointer(L, -1));
+  lua_pushlightuserdata(L, handle);
+  couv_rawgetp(L, LUA_REGISTRYINDEX, COUV_THREAD_REG_KEY(handle));
+printf("write_cb thread=%lx\n", (unsigned long)lua_topointer(L, -1));
+  if (status < 0) {
+    lua_pushstring(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    nargs = 2;
+  } else
+    nargs = 1;
+printf("write_cb before lua_call nargs=%d\n", nargs);
+  lua_call(L, nargs, 0);
+#else
+  if (status < 0)
+    lua_pushstring(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
   couv_resume(L, L, 0);
+#endif
 }
 
 static int couv_write(lua_State *L) {
@@ -216,17 +231,31 @@ static int couv_write(lua_State *L) {
   size_t bufcnt;
   int r;
 
+printf("write L=%lx\n", (unsigned long)L);
   handle = couvL_checkudataclass(L, 1, COUV_STREAM_MTBL_NAME);
   bufs = couv_checkbuforstrtable(L, 2, &bufcnt);
 
+  luaL_checktype(L, 3, LUA_TFUNCTION);
+  lua_pushvalue(L, 3);
+printf("write write_cb=%lx\n", (unsigned long)lua_topointer(L, -1));
+  couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_WRITE_CB_REG_KEY(handle));
+
   req = couv_alloc(L, sizeof(uv_write_t));
   req->data = bufs;
+printf("write req=%lx\n", (unsigned long)req);
+
+  lua_pushvalue(L, 1);
+  couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_USERDATA_REG_KEY(handle));
 
   r = uv_write(req, handle, bufs, (int)bufcnt, write_cb);
   if (r < 0) {
     luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
   }
+#if 1
+  return 0;
+#else
   return lua_yield(L, 0);
+#endif
 }
 
 static int couv_write2(lua_State *L) {

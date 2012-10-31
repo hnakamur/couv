@@ -180,6 +180,7 @@ couv_stream_handle_data_t *couv_get_stream_handle_data(uv_stream_t *handle);
 #define COUV_LISTEN_CB_REG_KEY(h) (((char *)h) + 2)
 #define COUV_TIMER_CB_REG_KEY(h)  (((char *)h) + 2)
 #define COUV_EXIT_CB_REG_KEY(h)   (((char *)h) + 2)
+#define COUV_WRITE_CB_REG_KEY(h)  (((char *)h) + 3)
 
 void couv_clean_process_handle(lua_State *L, uv_process_t *handle);
 void couv_clean_tcp_handle(lua_State *L, uv_tcp_t *handle);
