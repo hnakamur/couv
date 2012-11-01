@@ -74,7 +74,7 @@ static int couvL_checksockfamily(lua_State *L, int index) {
 }
 
 
-static int couv_sockaddrv4_push_raw(lua_State *L, struct sockaddr_in *addr) {
+static int couvL_pushsockaddrv4(lua_State *L, struct sockaddr_in *addr) {
   struct sockaddr_in *ud_addr;
 
   ud_addr = lua_newuserdata(L, sizeof(struct sockaddr_in));
@@ -84,7 +84,7 @@ static int couv_sockaddrv4_push_raw(lua_State *L, struct sockaddr_in *addr) {
   return 1; 
 }
 
-static int couv_sockaddrv6_push_raw(lua_State *L, struct sockaddr_in6 *addr) {
+static int couvL_pushsockaddrv6(lua_State *L, struct sockaddr_in6 *addr) {
   struct sockaddr_in6 *ud_addr;
 
   ud_addr = lua_newuserdata(L, sizeof(struct sockaddr_in6));
@@ -94,11 +94,11 @@ static int couv_sockaddrv6_push_raw(lua_State *L, struct sockaddr_in6 *addr) {
   return 1; 
 }
 
-int couv_sockaddr_push_raw(lua_State *L, struct sockaddr *addr) {
+int couvL_pushsockaddr(lua_State *L, struct sockaddr *addr) {
   if (addr->sa_family == AF_INET)
-    return couv_sockaddrv4_push_raw(L, (struct sockaddr_in *)addr);
+    return couvL_pushsockaddrv4(L, (struct sockaddr_in *)addr);
   else if (addr->sa_family == AF_INET6)
-    return couv_sockaddrv6_push_raw(L, (struct sockaddr_in6 *)addr);
+    return couvL_pushsockaddrv6(L, (struct sockaddr_in6 *)addr);
   else
     return luaL_error(L, "ENOTSUP");
 }

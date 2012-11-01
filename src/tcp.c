@@ -179,7 +179,7 @@ static int tcp_getsockname(lua_State *L) {
   if (r < 0) {
     return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
   }
-  return couv_sockaddr_push_raw(L, (struct sockaddr *)&name);
+  return couvL_pushsockaddr(L, (struct sockaddr *)&name);
 }
 
 static int tcp_getpeername(lua_State *L) {
@@ -194,7 +194,7 @@ static int tcp_getpeername(lua_State *L) {
   if (r < 0) {
     return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
   }
-  return couv_sockaddr_push_raw(L, (struct sockaddr *)&name);
+  return couvL_pushsockaddr(L, (struct sockaddr *)&name);
 }
 
 static const struct luaL_Reg tcp_methods[] = {

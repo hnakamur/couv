@@ -224,7 +224,7 @@ uv_loop_t *couv_loop(lua_State *L);
 
 int luaopen_couv_sockaddr(lua_State *L);
 int couvL_tosockfamily(lua_State *L, int index);
-int couv_sockaddr_push_raw(lua_State *L, struct sockaddr *addr);
+int couvL_pushsockaddr(lua_State *L, struct sockaddr *addr);
 
 int luaopen_couv_fs(lua_State *L);
 int luaopen_couv_handle(lua_State *L);

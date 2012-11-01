@@ -136,7 +136,7 @@ static void getaddrinfo_cb(uv_getaddrinfo_t *req, int status,
       couvL_SET_FIELD(L, socktype, number, p->ai_socktype);
       couvL_SET_FIELD(L, protocol, number, p->ai_protocol);
 
-      couv_sockaddr_push_raw(L, p->ai_addr);
+      couvL_pushsockaddr(L, p->ai_addr);
       lua_setfield(L, -2, "addr");
 
       lua_rawseti(L, -2, i);

@@ -240,7 +240,7 @@ static int udp_getsockname(lua_State *L) {
   if (r < 0) {
     return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
   }
-  return couv_sockaddr_push_raw(L, (struct sockaddr *)&name);
+  return couvL_pushsockaddr(L, (struct sockaddr *)&name);
 }
 
 static int udp_set_membership(lua_State *L) {
