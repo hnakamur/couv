@@ -118,10 +118,108 @@ static int couv_uptime(lua_State *L) {
   return 1;
 }
 
+static void getaddrinfo_cb(uv_getaddrinfo_t *req, int status,
+    struct addrinfo *res) {
+  lua_State *L;
+  struct addrinfo *p;
+  int i;
+  int nargs;
+
+  L = req->data;
+
+  if (status == 0) {
+    lua_newtable(L);
+    for (p = res, i = 1; p; p = p->ai_next, ++i) {
+      lua_newtable(L);
+
+      couvL_SET_FIELD(L, family, number, p->ai_family);
+      couvL_SET_FIELD(L, socktype, number, p->ai_socktype);
+      couvL_SET_FIELD(L, protocol, number, p->ai_protocol);
+
+      couv_sockaddr_push_raw(L, p->ai_addr);
+      lua_setfield(L, -2, "addr");
+
+      lua_rawseti(L, -2, i);
+    }
+    uv_freeaddrinfo(res);
+    nargs = 1;
+  } else {
+    lua_pushnil(L);
+    lua_pushstring(L, couvL_uv_errname(uv_last_error(req->loop).code));
+    nargs = 2;
+  }
+  couv_free(L, req);
+  couv_resume(L, L, nargs);
+}
+
+static struct addrinfo *couvL_checkaddrinfohints(lua_State *L, int index,
+    struct addrinfo *hints) {
+  int hints_type;
+  struct addrinfo *ret;
+
+  ret = NULL;
+  hints_type = lua_type(L, index);
+  if (hints_type == LUA_TTABLE) {
+    lua_getfield(L, index, "family");
+    if (!lua_isnil(L, -1))
+      ret = hints;
+    hints->ai_family = couvL_tosockfamily(L, -1);
+    luaL_argcheck(L, hints->ai_family != -1, index,
+        "value at \"family\" key must be AF_UNSPEC, AF_INET or AF_INET6");
+
+    lua_getfield(L, index, "socktype");
+    if (!lua_isnil(L, -1))
+      ret = hints;
+    hints->ai_socktype = lua_tointeger(L, -1);
+
+    lua_getfield(L, index, "protocol");
+    if (!lua_isnil(L, -1))
+      ret = hints;
+    hints->ai_protocol = lua_tointeger(L, -1);
+
+    lua_getfield(L, index, "flags");
+    if (!lua_isnil(L, -1))
+      ret = hints;
+    hints->ai_flags = lua_tointeger(L, -1);
+  } else
+    luaL_argcheck(L, hints_type == LUA_TNIL || hints_type == LUA_TNONE, index,
+        "must be table or nil");
+  return ret;
+}
+
+static int couv_getaddrinfo(lua_State *L) {
+  const char *node;
+  const char *service;
+  struct addrinfo hints;
+  struct addrinfo *hints_ptr;
+  uv_loop_t *loop;
+  uv_getaddrinfo_t *req;
+  int r;
+
+  node = luaL_optstring(L, 1, NULL);
+  service = luaL_optstring(L, 2, NULL);
+  luaL_argcheck(L, node || service, 1, "node or service must not be nil");
+  memset(&hints, 0, sizeof(hints));
+  hints_ptr = couvL_checkaddrinfohints(L, 3, &hints);
+  if (couvL_is_mainthread(L))
+    luaL_error(L, "getaddrinfo must be called in coroutine.");
+  req = couv_alloc(L, sizeof(uv_getaddrinfo_t));
+  couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_THREAD_REG_KEY(req));
+  req->data = L;
+  loop = couv_loop(L);
+  r = uv_getaddrinfo(loop, req, getaddrinfo_cb, node, service, hints_ptr);
+  if (r < 0) {
+    couv_free(L, req);
+    luaL_error(L, couvL_uv_errname(uv_last_error(loop).code));
+  }
+  return lua_yield(L, 0);
+}
+
 static const struct luaL_Reg functions[] = {
   { "chdir", couv_chdir },
   { "cwd", couv_cwd },
   { "exepath", couv_exepath },
+  { "getaddrinfo", couv_getaddrinfo },
   { "getFreeMemory", couv_get_free_memory },
   { "getProcessTitle", couv_get_process_title },
   { "getTotalMemory", couv_get_total_memory },

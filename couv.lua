@@ -1,6 +1,21 @@
 local uv = {}
 local native = require 'couv_native'
 
+-- utility functions
+
+local function error0(err)
+  if err then
+    error(err, 2)
+  end
+end
+
+local function error1(ret, err)
+  if err then
+    error(err, 2)
+  end
+  return ret
+end
+
 uv.Buffer = native.Buffer
 uv.Handle = native.Handle
 uv.Pipe = native.Pipe
@@ -18,6 +33,9 @@ uv.Udp = native.Udp
 uv.chdir = native.chdir
 uv.cwd = native.cwd
 uv.exepath = native.exepath
+uv.getaddrinfo = function(...)
+  return error1(native.getaddrinfo(...))
+end
 uv.getFreeMemory = native.getFreeMemory
 uv.getTotalMemory = native.getTotalMemory
 uv.kill = native.kill
@@ -34,22 +52,6 @@ uv.now = native.now
 uv.run = native.run
 uv.runOnce = native.runOnce
 uv.setLoop = native.setLoop
-
-
--- utility functions
-
-local function error0(err)
-  if err then
-    error(err, 2)
-  end
-end
-
-local function error1(ret, err)
-  if err then
-    error(err, 2)
-  end
-  return ret
-end
 
 
 -- fs
