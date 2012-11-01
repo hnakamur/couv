@@ -50,27 +50,27 @@ static int couvL_checkport(lua_State *L, int index) {
   return port;
 }
 
-static int couvL_checkfamily(lua_State *L, int index) {
+int couvL_tosockfamily(lua_State *L, int index) {
   int family;
-  int af;
 
-  family = luaL_optint(L, index, COUV_AF_UNSPEC);
+  family = luaL_optint(L, index, AF_UNSPEC);
   switch (family) {
-  case COUV_AF_UNSPEC:
-    af = AF_UNSPEC;
-    break;
-  case COUV_AF_IPV4:
-    af = AF_INET;
-    break;
-  case COUV_AF_IPV6:
-    af = AF_INET6;
-    break;
+  case AF_UNSPEC:
+  case AF_INET:
+  case AF_INET6:
+    return family;
   default:
-    af = -1;
-    break;
+    return -1;
   }
-  luaL_argcheck(L, af != -1, index, "must be SockAddr.V4, SockAddr.V6 or nil");
-  return af;
+}
+
+static int couvL_checksockfamily(lua_State *L, int index) {
+  int family;
+
+  family = couvL_tosockfamily(L, index);
+  luaL_argcheck(L, family != -1, index,
+      "must be AF_UNSPEC, AF_INET or AF_INET6");
+  return family;
 }
 
 
@@ -271,7 +271,7 @@ int couv_sockaddr_create(lua_State *L) {
   unsigned char tmp[sizeof(struct in6_addr)];
 
   port = couvL_checkport(L, 2);
-  af  = couvL_checkfamily(L, 3);
+  af = couvL_checksockfamily(L, 3);
   couvL_checkip(L, 1, &af, tmp);
 
   return af == AF_INET
@@ -279,16 +279,30 @@ int couv_sockaddr_create(lua_State *L) {
       : couv_sockaddrv6_new_addr_port(L, (struct in6_addr *)tmp, port);
 }
 
+int couv_sockaddr_is_sockaddr(lua_State *L) {
+  struct sockaddr *addr;
+
+  addr = couvL_testudataclass(L, 1, COUV_SOCK_ADDR_MTBL_NAME);
+  lua_pushboolean(L, addr != NULL);
+  return 1; 
+}
+
 static const struct luaL_Reg sockaddr_functions[] = {
   { "create", couv_sockaddr_create },
+  { "isSockAddr", couv_sockaddr_is_sockaddr },
   { NULL, NULL }
 };
 
 int luaopen_couv_sockaddr(lua_State *L) {
   lua_newtable(L);
   couvL_setfuncs(L, sockaddr_functions, 0);
-  couvL_SET_FIELD(L, V4, number, COUV_AF_IPV4);
-  couvL_SET_FIELD(L, V6, number, COUV_AF_IPV6);
+  couvL_SET_FIELD(L, AF_UNSPEC, number, AF_UNSPEC);
+  couvL_SET_FIELD(L, AF_INET, number, AF_INET);
+  couvL_SET_FIELD(L, AF_INET6, number, AF_INET6);
+  couvL_SET_FIELD(L, SOCK_DGRAM, number, SOCK_DGRAM);
+  couvL_SET_FIELD(L, SOCK_STREAM, number, SOCK_STREAM);
+  couvL_SET_FIELD(L, IPPROTO_TCP, number, IPPROTO_TCP);
+  couvL_SET_FIELD(L, IPPROTO_UDP, number, IPPROTO_UDP);
   lua_setfield(L, -2, "SockAddr");
 
   couv_newmetatable(L, COUV_SOCK_ADDR_MTBL_NAME, NULL);

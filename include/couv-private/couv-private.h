@@ -225,6 +225,7 @@ uv_loop_t *couv_loop(lua_State *L);
 #define COUV_SOCK_ADDR_V6_MTBL_NAME "couv.SockAddrV6"
 
 int luaopen_couv_sockaddr(lua_State *L);
+int couvL_tosockfamily(lua_State *L, int index);
 int couv_sockaddr_push_raw(lua_State *L, struct sockaddr *addr);
 
 int luaopen_couv_fs(lua_State *L);

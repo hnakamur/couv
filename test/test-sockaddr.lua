@@ -26,12 +26,13 @@ exports['SockAddr'] = function(test)
   test.equal(addr:port(), 80)
   test.ok(addr:isV4())
 
-  addr = uv.SockAddr.create('127.0.0.1', 80, uv.SockAddr.V4)
+  addr = uv.SockAddr.create('127.0.0.1', 80, uv.SockAddr.AF_INET)
   test.equal(addr:host(), '127.0.0.1')
   test.equal(addr:port(), 80)
   test.ok(addr:isV4())
 
-  local ok, err = pcall(uv.SockAddr.create, '127.0.0.1', 80, uv.SockAddr.V6)
+  local ok, err = pcall(uv.SockAddr.create, '127.0.0.1', 80,
+      uv.SockAddr.AF_INET6)
   test.ok(not ok)
   test.ok(string.find(err, 'must be valid IP address', 1, false))
 
@@ -40,7 +41,7 @@ exports['SockAddr'] = function(test)
   test.equal(addr:port(), 80)
   test.ok(addr:isV6())
 
-  addr = uv.SockAddr.create('::1', 80, uv.SockAddr.V6)
+  addr = uv.SockAddr.create('::1', 80, uv.SockAddr.AF_INET6)
   test.equal(addr:host(), '::1')
   test.equal(addr:port(), 80)
   test.ok(addr:isV6())
