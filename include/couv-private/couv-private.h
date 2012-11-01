@@ -120,11 +120,9 @@ typedef struct couv_pipe_input_s {
  */
 #define COUV_UDP_HANDLE_DATA_FIELDS \
   ngx_queue_t input_queue;          \
-  int is_yielded_for_input;
 
 #define COUV_STREAM_HANDLE_DATA_FIELDS \
   ngx_queue_t input_queue;             \
-  int is_yielded_for_input;
 
 typedef struct couv_udp_handle_data_s {
   COUV_UDP_HANDLE_DATA_FIELDS 

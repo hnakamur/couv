@@ -50,7 +50,6 @@ static int tcp_new(lua_State *L) {
 
   handle->data = L;
   hdata = couv_get_stream_handle_data((uv_stream_t *)handle);
-  hdata->is_yielded_for_input = 0;
   ngx_queue_init(&hdata->input_queue);
 
   lua_pushvalue(L, -1);
@@ -61,7 +60,6 @@ static int tcp_new(lua_State *L) {
 static int tcp_open(lua_State *L) {
   uv_tcp_t *handle;
   uv_os_sock_t sock;
-  couv_stream_handle_data_t *hdata;
   int r;
 
   handle = couvL_checkudataclass(L, 1, COUV_TCP_MTBL_NAME);
@@ -72,9 +70,6 @@ static int tcp_open(lua_State *L) {
   }
 
   handle->data = L;
-  hdata = couv_get_stream_handle_data((uv_stream_t *)handle);
-  hdata->is_yielded_for_input = 0;
-
   return 0;
 }
 

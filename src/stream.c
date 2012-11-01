@@ -102,10 +102,8 @@ static void read_cb(uv_stream_t *handle, ssize_t nread, uv_buf_t buf) {
   hdata = couv_get_stream_handle_data(handle);
   ngx_queue_insert_tail(&hdata->input_queue, (ngx_queue_t *)input);
 
-  if (lua_status(L) == LUA_YIELD && hdata->is_yielded_for_input) {
-    hdata->is_yielded_for_input = 0;
+  if (lua_status(L) == LUA_YIELD)
     couv_resume(L, L, 0);
-  }
 }
 
 static int couv_read_start(lua_State *L) {
@@ -129,10 +127,8 @@ static int couv_prim_read(lua_State *L) {
   handle = couvL_checkudataclass(L, 1, COUV_STREAM_MTBL_NAME);
 
   hdata = couv_get_stream_handle_data(handle);
-  if (ngx_queue_empty(&hdata->input_queue)) {
-    hdata->is_yielded_for_input = 1;
+  if (ngx_queue_empty(&hdata->input_queue))
     return lua_yield(L, 0);
-  }
   input = (couv_stream_input_t *)ngx_queue_head(&hdata->input_queue);
   ngx_queue_remove(input);
 

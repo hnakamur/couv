@@ -52,7 +52,6 @@ static int tty_new(lua_State *L) {
 
   handle->data = L;
   hdata = couv_get_stream_handle_data((uv_stream_t *)handle);
-  hdata->is_yielded_for_input = 0;
   ngx_queue_init(&hdata->input_queue);
 
   lua_pushvalue(L, -1);

@@ -66,7 +66,6 @@ static int udp_new(lua_State *L) {
 
   handle->data = L;
   hdata = couv_get_udp_handle_data(handle);
-  hdata->is_yielded_for_input = 0;
   ngx_queue_init(&hdata->input_queue);
 
   lua_pushvalue(L, -1);
@@ -77,7 +76,6 @@ static int udp_new(lua_State *L) {
 static int udp_open(lua_State *L) {
   uv_udp_t *handle;
   uv_os_sock_t sock;
-  couv_udp_handle_data_t *hdata;
   int r;
 
   handle = couvL_checkudataclass(L, 1, COUV_UDP_MTBL_NAME);
@@ -86,8 +84,6 @@ static int udp_open(lua_State *L) {
   if (r < 0) {
     return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
   }
-  hdata = couv_get_udp_handle_data(handle);
-  hdata->is_yielded_for_input = 0;
   return 0;
 }
 
@@ -175,10 +171,8 @@ static void udp_recv_cb(uv_udp_t *handle, ssize_t nread, uv_buf_t buf,
   hdata = couv_get_udp_handle_data(handle);
   ngx_queue_insert_tail(&hdata->input_queue, (ngx_queue_t *)input);
 
-  if (lua_status(L) == LUA_YIELD && hdata->is_yielded_for_input) {
-    hdata->is_yielded_for_input = 0;
+  if (lua_status(L) == LUA_YIELD)
     couv_resume(L, L, 0);
-  }
 }
 
 static int udp_recv_start(lua_State *L) {
@@ -214,10 +208,8 @@ static int udp_prim_recv(lua_State *L) {
 
   handle = couvL_checkudataclass(L, 1, COUV_UDP_MTBL_NAME);
   hdata = couv_get_udp_handle_data(handle);
-  if (ngx_queue_empty(&hdata->input_queue)) {
-    hdata->is_yielded_for_input = 1;
+  if (ngx_queue_empty(&hdata->input_queue))
     return lua_yield(L, 0);
-  }
   input = (couv_udp_input_t *)ngx_queue_head(&hdata->input_queue);
   ngx_queue_remove(input);
 
