@@ -13,7 +13,8 @@ exports['getaddrinfo.basic'] = function(test)
       test.ok(type(address), 'table')
       test.ok(address.family == SockAddr.AF_INET or
           address.family == SockAddr.AF_INET6)
-      test.ok(address.socktype == SockAddr.SOCK_DGRAM or
+      test.ok(address.socktype == 0 or
+          address.socktype == SockAddr.SOCK_DGRAM or
           address.socktype == SockAddr.SOCK_STREAM or
           address.socktype == SockAddr.SOCK_DGRAM + SockAddr.SOCK_STREAM)
       test.ok(address.protocol == 0 or
@@ -64,7 +65,8 @@ exports['getaddrinfo.concurrent'] = function(test)
         test.ok(type(address), 'table')
         test.ok(address.family == SockAddr.AF_INET or
             address.family == SockAddr.AF_INET6)
-        test.ok(address.socktype == SockAddr.SOCK_DGRAM or
+        test.ok(address.socktype == 0 or
+            address.socktype == SockAddr.SOCK_DGRAM or
             address.socktype == SockAddr.SOCK_STREAM or
             address.socktype == SockAddr.SOCK_DGRAM + SockAddr.SOCK_STREAM)
         test.ok(address.protocol == 0 or
