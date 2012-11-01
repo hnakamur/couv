@@ -3,11 +3,13 @@ local uv = require 'couv'
 local exports = {}
 
 local TEST_PORT = 9123
-local TEST_PORT2 = 9124
 
 exports['tcp.sockname'] = function(test)
   local connectPort
   coroutine.wrap(function()
+    -- Wait 1 sec to avoid EADDRINUSE.
+    uv.sleep(1000)
+
     local handle = uv.Tcp.new()
     handle:bind(uv.SockAddrV4.new('127.0.0.1', TEST_PORT))
     handle:listen(128, function(server)
