@@ -67,10 +67,6 @@ int couv_newmetatable(lua_State *L, const char *tname,
   return 1;
 }
 
-int couv_absindex(lua_State *L, int idx) {
-  return idx < 0 ? lua_gettop(L) + idx + 1 : idx;
-}
-
 void *couvL_testudataclass(lua_State *L, int arg, const char *tname) {
   void *p;
 
@@ -103,11 +99,15 @@ void *couvL_checkudataclass(lua_State *L, int arg, const char *tname) {
 
   p = couvL_testudataclass(L, arg, tname);
   if (!p)
-    luaL_typerror(L, arg, tname);
+    luaL_error(L, "bad argument %d (%s expected)", arg, tname);
   return p;
 }
 
 #if LUA_VERSION_NUM == 501
+
+int couv_absindex(lua_State *L, int idx) {
+  return idx < 0 ? lua_gettop(L) + idx + 1 : idx;
+}
 
 void couvL_setfuncs(lua_State *L, const luaL_Reg *l, int nup) {
   for (; l->name; ++l) {
