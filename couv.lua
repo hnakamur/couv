@@ -42,6 +42,7 @@ uv.kill = native.kill
 uv.loadavg = native.loadavg
 uv.hrtime = native.hrtime
 uv.residentSetMemory = native.residentSetMemory
+uv.sleep = native.sleep
 uv.uptime = native.uptime
 uv.updateTime = native.updateTime
 

@@ -3,6 +3,7 @@ local uv = require 'couv'
 local exports = {}
 
 local TEST_PORT = 9123
+local TEST_PORT2 = 9124
 
 exports['tcp.sockname'] = function(test)
   local connectPort

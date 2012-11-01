@@ -215,6 +215,42 @@ static int couv_getaddrinfo(lua_State *L) {
   return lua_yield(L, 0);
 }
 
+static void sleep_close_cb(uv_handle_t *handle) {
+  lua_State *L;
+
+  L = handle->data;
+
+  lua_pushnil(L);
+  couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_THREAD_REG_KEY(handle));
+
+  couv_free(L, handle);
+  couv_resume(L, L, 0);
+}
+
+static void sleep_cb(uv_timer_t *handle, int status) {
+  uv_close((uv_handle_t *)handle, sleep_close_cb);
+}
+
+static int couv_sleep(lua_State *L) {
+  uv_loop_t *loop;
+  uv_timer_t *handle;
+  int64_t timeout;
+  int r;
+
+  timeout = luaL_checkinteger(L, 1);
+  if (couvL_is_mainthread(L))
+    luaL_error(L, "sleep must be called in coroutine.");
+  handle = couv_alloc(L, sizeof(uv_timer_t));
+  loop = couv_loop(L);
+  uv_timer_init(loop, handle);
+  handle->data = L;
+  couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_THREAD_REG_KEY(handle));
+  r = uv_timer_start(handle, sleep_cb, timeout, 0);
+  if (r < 0)
+    return luaL_error(L, couvL_uv_errname(uv_last_error(loop).code));
+  return lua_yield(L, 0);
+}
+
 static const struct luaL_Reg functions[] = {
   { "chdir", couv_chdir },
   { "cwd", couv_cwd },
@@ -228,6 +264,7 @@ static const struct luaL_Reg functions[] = {
   { "loadavg", couv_loadavg },
   { "setProcessTitle", couv_set_process_title },
   { "residentSetMemory", couv_resident_set_memory },
+  { "sleep", couv_sleep },
   { "uptime", couv_uptime },
   { NULL, NULL }
 };
