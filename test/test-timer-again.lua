@@ -49,6 +49,7 @@ exports['timer.again'] = function(test)
       test.ok(not handle:isActive())
       handle:close()
       closeCalled = closeCalled + 1
+      return
     end
     print(string.format("repeat2:getRepeat %d ms", repeat2:getRepeat()))
     test.equal(repeat2:getRepeat(), 100)
