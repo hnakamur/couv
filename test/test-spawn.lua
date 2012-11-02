@@ -192,18 +192,20 @@ exports['spawn.detached'] = function(test)
     end)()
   end
 
+  local process
   coroutine.wrap(function()
-    local process = uv.Process.spawn{
+    process = uv.Process.spawn{
         args={uv.exepath(), 'test/helper.lua', 'spawn_helper4'},
         flags=P.DETACHED,
         exitCb=exitCb}
     test.ok(process:isActive())
     process:unref()
-    uv.kill(process:getPid(), 0)
-    uv.kill(process:getPid(), 15)
   end)()
   uv.run()
-  test.equal(exitCbCalled, 1)
+  test.equal(exitCbCalled, 0)
+
+  uv.kill(process:getPid(), 0)
+  uv.kill(process:getPid(), 15)
   test.done()
 end
 
