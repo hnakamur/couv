@@ -3,7 +3,9 @@ if arg[1] == 'spawn_helper1' then
 end
 
 if arg[1] == 'spawn_helper2' then
-  print("hello world")
+  local uv = require 'couv'
+  uv.fs.write(1, 'hello world\n')
+  uv.run()
   os.exit(1)
 end
 
