@@ -47,7 +47,7 @@ static int tty_new(lua_State *L) {
   loop = couv_loop(L);
   r = uv_tty_init(loop, handle, fd, readable);
   if (r < 0) {
-    return luaL_error(L, couvL_uv_errname(uv_last_error(loop).code));
+    return luaL_error(L, couvL_uv_lasterrname(loop));
   }
 
   handle->data = L;
@@ -108,7 +108,7 @@ static int tty_set_mode(lua_State *L) {
   mode = luaL_checkint(L, 2);
   r = uv_tty_set_mode(handle, mode);
   if (r < 0) {
-    return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    return luaL_error(L, couvL_uv_lasterrname(couv_loop(L)));
   }
   return 0;
 }
@@ -127,7 +127,7 @@ static int tty_get_winsize(lua_State *L) {
   handle = couvL_checkudataclass(L, 1, COUV_TTY_MTBL_NAME);
   r = uv_tty_get_winsize(handle, &width, &height);
   if (r) {
-    return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    return luaL_error(L, couvL_uv_lasterrname(couv_loop(L)));
   }
   lua_pushnumber(L, width);
   lua_pushnumber(L, height);

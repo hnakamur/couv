@@ -148,7 +148,7 @@ int couv_sockaddrv4_host(lua_State *L) {
   addr = couvL_checkudataclass(L, 1, COUV_SOCK_ADDR_V4_MTBL_NAME);
   r = uv_ip4_name(addr, buf, sizeof(buf));
   if (r < 0) {
-    return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    return luaL_error(L, couvL_uv_lasterrname(couv_loop(L)));
   }
   lua_pushstring(L, buf);
   return 1;
@@ -202,7 +202,7 @@ int couv_sockaddrv6_host(lua_State *L) {
   addr = couvL_checkudataclass(L, 1, COUV_SOCK_ADDR_V6_MTBL_NAME);
   r = uv_ip6_name(addr, buf, sizeof(buf));
   if (r < 0) {
-    return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    return luaL_error(L, couvL_uv_lasterrname(couv_loop(L)));
   }
   lua_pushstring(L, buf);
   return 1;

@@ -20,7 +20,7 @@ static void connection_cb(uv_stream_t *handle, int status) {
   couv_rawgetp(L, LUA_REGISTRYINDEX, COUV_LISTEN_CB_REG_KEY(handle));
   couv_rawgetp(L, LUA_REGISTRYINDEX, COUV_USERDATA_REG_KEY(handle));
   if (status < 0) {
-    lua_pushstring(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    lua_pushstring(L, couvL_uv_lasterrname(couv_loop(L)));
     lua_call(L, 2, 0);
   } else {
     lua_call(L, 1, 0);
@@ -40,7 +40,7 @@ static int couv_listen(lua_State *L) {
 
   r = uv_listen(handle, backlog, connection_cb);
   if (r < 0) {
-    luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    luaL_error(L, couvL_uv_lasterrname(couv_loop(L)));
   }
   lua_pushvalue(L, 1);
   couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_USERDATA_REG_KEY(handle));
@@ -56,7 +56,7 @@ static int couv_accept(lua_State *L) {
   client = couvL_checkudataclass(L, 2, COUV_STREAM_MTBL_NAME);
   r = uv_accept(server, client);
   if (r < 0) {
-    luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    luaL_error(L, couvL_uv_lasterrname(couv_loop(L)));
   }
   return 0;
 }
@@ -113,7 +113,7 @@ static int couv_read_start(lua_State *L) {
   handle = couvL_checkudataclass(L, 1, COUV_STREAM_MTBL_NAME);
   r = uv_read_start(handle, couv_buf_alloc_cb, read_cb);
   if (r < 0) {
-    luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    luaL_error(L, couvL_uv_lasterrname(couv_loop(L)));
   }
   return 0;
 }
@@ -149,7 +149,7 @@ static int couv_read_stop(lua_State *L) {
   handle = couvL_checkudataclass(L, 1, COUV_STREAM_MTBL_NAME);
   r = uv_read_stop(handle);
   if (r < 0) {
-    luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    luaL_error(L, couvL_uv_lasterrname(couv_loop(L)));
   }
   return 0;
 }
@@ -164,7 +164,7 @@ static void shutdown_cb(uv_shutdown_t *req, int status) {
 
   if (status < 0) {
     couv_free(L, req);
-    luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    luaL_error(L, couvL_uv_lasterrname(couv_loop(L)));
     return;
   }
 
@@ -181,7 +181,7 @@ static int couv_shutdown(lua_State *L) {
   req = couv_alloc(L, sizeof(uv_shutdown_t));
   r = uv_shutdown(req, handle, shutdown_cb);
   if (r < 0) {
-    luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    luaL_error(L, couvL_uv_lasterrname(couv_loop(L)));
   }
   return lua_yield(L, 0);
 }
@@ -196,7 +196,7 @@ static void write_cb(uv_write_t *req, int status) {
   if (status < 0) {
     couv_free(L, req->data);
     couv_free(L, req);
-    luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    luaL_error(L, couvL_uv_lasterrname(couv_loop(L)));
     return;
   }
 
@@ -220,7 +220,7 @@ static int couv_write(lua_State *L) {
 
   r = uv_write(req, handle, bufs, (int)bufcnt, write_cb);
   if (r < 0) {
-    luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    luaL_error(L, couvL_uv_lasterrname(couv_loop(L)));
   }
   return lua_yield(L, 0);
 }
@@ -242,7 +242,7 @@ static int couv_write2(lua_State *L) {
 
   r = uv_write2(req, handle, bufs, (int)bufcnt, send_handle, write_cb);
   if (r < 0) {
-    luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    luaL_error(L, couvL_uv_lasterrname(couv_loop(L)));
   }
   return lua_yield(L, 0);
 }

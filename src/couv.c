@@ -145,7 +145,7 @@ static void getaddrinfo_cb(uv_getaddrinfo_t *req, int status,
     nargs = 1;
   } else {
     lua_pushnil(L);
-    lua_pushstring(L, couvL_uv_errname(uv_last_error(req->loop).code));
+    lua_pushstring(L, couvL_uv_lasterrname(req->loop));
     nargs = 2;
   }
   couv_free(L, req);
@@ -210,7 +210,7 @@ static int couv_getaddrinfo(lua_State *L) {
   r = uv_getaddrinfo(loop, req, getaddrinfo_cb, node, service, hints_ptr);
   if (r < 0) {
     couv_free(L, req);
-    luaL_error(L, couvL_uv_errname(uv_last_error(loop).code));
+    luaL_error(L, couvL_uv_lasterrname(loop));
   }
   return lua_yield(L, 0);
 }
@@ -247,7 +247,7 @@ static int couv_sleep(lua_State *L) {
   couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_THREAD_REG_KEY(handle));
   r = uv_timer_start(handle, sleep_cb, timeout, 0);
   if (r < 0)
-    return luaL_error(L, couvL_uv_errname(uv_last_error(loop).code));
+    return luaL_error(L, couvL_uv_lasterrname(loop));
   return lua_yield(L, 0);
 }
 

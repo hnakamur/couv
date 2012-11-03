@@ -61,7 +61,7 @@ static int udp_new(lua_State *L) {
   loop = couv_loop(L);
   r = uv_udp_init(loop, handle);
   if (r < 0) {
-    return luaL_error(L, couvL_uv_errname(uv_last_error(loop).code));
+    return luaL_error(L, couvL_uv_lasterrname(loop));
   }
 
   handle->data = L;
@@ -82,7 +82,7 @@ static int udp_open(lua_State *L) {
   sock = (uv_os_sock_t)luaL_checkinteger(L, 2);
   r = uv_udp_open(handle, sock);
   if (r < 0) {
-    return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    return luaL_error(L, couvL_uv_lasterrname(couv_loop(L)));
   }
   return 0;
 }
@@ -101,7 +101,7 @@ static int udp_bind(lua_State *L) {
   else
     r = uv_udp_bind6(handle, *(struct sockaddr_in6 *)addr, flags);
   if (r < 0) {
-    return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    return luaL_error(L, couvL_uv_lasterrname(couv_loop(L)));
   }
   return 0;
 }
@@ -114,7 +114,7 @@ static void udp_send_cb(uv_udp_send_t* req, int status) {
   holder = container_of(req, couv_udp_send_t, req);
   L = req->handle->data;
   if (status < 0) {
-    lua_pushstring(L, couvL_uv_errname(uv_last_error(req->handle->loop).code));
+    lua_pushstring(L, couvL_uv_lasterrname(req->handle->loop));
     nresults = 1;
   } else
     nresults = 0;
@@ -145,7 +145,7 @@ static int udp_send(lua_State *L) {
         *(struct sockaddr_in6 *)addr, udp_send_cb);
   }
   if (r < 0) {
-    return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    return luaL_error(L, couvL_uv_lasterrname(couv_loop(L)));
   }
   return lua_yield(L, 0);
 }
@@ -182,7 +182,7 @@ static int udp_recv_start(lua_State *L) {
   handle = couvL_checkudataclass(L, 1, COUV_UDP_MTBL_NAME);
   r = uv_udp_recv_start(handle, couv_buf_alloc_cb, udp_recv_cb);
   if (r < 0) {
-    return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    return luaL_error(L, couvL_uv_lasterrname(couv_loop(L)));
   }
   return 0;
 }
@@ -194,7 +194,7 @@ static int udp_recv_stop(lua_State *L) {
   handle = couvL_checkudataclass(L, 1, COUV_UDP_MTBL_NAME);
   r = uv_udp_recv_stop(handle);
   if (r < 0) {
-    return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    return luaL_error(L, couvL_uv_lasterrname(couv_loop(L)));
   }
   return 0;
 }
@@ -238,7 +238,7 @@ static int udp_getsockname(lua_State *L) {
   namelen = sizeof(name);
   r = uv_udp_getsockname(handle, (struct sockaddr *)&name, &namelen);
   if (r < 0) {
-    return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    return luaL_error(L, couvL_uv_lasterrname(couv_loop(L)));
   }
   return couvL_pushsockaddr(L, (struct sockaddr *)&name);
 }
@@ -263,7 +263,7 @@ static int udp_set_membership(lua_State *L) {
   membership = luaL_checkint(L, 4);
   r = uv_udp_set_membership(handle, multicast_addr, interface_addr, membership);
   if (r < 0) {
-    return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    return luaL_error(L, couvL_uv_lasterrname(couv_loop(L)));
   }
   return 0;
 }
@@ -277,7 +277,7 @@ static int udp_set_multicast_loop(lua_State *L) {
   on = lua_toboolean(L, 2);
   r = uv_udp_set_multicast_loop(handle, on);
   if (r < 0) {
-    return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    return luaL_error(L, couvL_uv_lasterrname(couv_loop(L)));
   }
   return 0;
 }
@@ -291,7 +291,7 @@ static int udp_set_multicast_ttl(lua_State *L) {
   ttl = luaL_checkint(L, 2);
   r = uv_udp_set_multicast_ttl(handle, ttl);
   if (r < 0) {
-    return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    return luaL_error(L, couvL_uv_lasterrname(couv_loop(L)));
   }
   return 0;
 }
@@ -305,7 +305,7 @@ static int udp_set_broadcast(lua_State *L) {
   on = lua_toboolean(L, 2);
   r = uv_udp_set_broadcast(handle, on);
   if (r < 0) {
-    return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    return luaL_error(L, couvL_uv_lasterrname(couv_loop(L)));
   }
   return 0;
 }
@@ -319,7 +319,7 @@ static int udp_set_ttl(lua_State *L) {
   ttl = luaL_checkint(L, 2);
   r = uv_udp_set_ttl(handle, ttl);
   if (r < 0) {
-    return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    return luaL_error(L, couvL_uv_lasterrname(couv_loop(L)));
   }
   return 0;
 }

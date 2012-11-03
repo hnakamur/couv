@@ -32,7 +32,7 @@ static int couv_timer_create(lua_State *L) {
   loop = couv_loop(L);
   r = uv_timer_init(loop, handle);
   if (r < 0) {
-    return luaL_error(L, couvL_uv_errname(uv_last_error(loop).code));
+    return luaL_error(L, couvL_uv_lasterrname(loop));
   }
   handle->data = L;
   return 1;
@@ -45,7 +45,7 @@ static void timer_cb(uv_timer_t *handle, int status) {
   couv_rawgetp(L, LUA_REGISTRYINDEX, COUV_TIMER_CB_REG_KEY(handle));
   couv_rawgetp(L, LUA_REGISTRYINDEX, COUV_USERDATA_REG_KEY(handle));
   if (status < 0) {
-    lua_pushstring(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    lua_pushstring(L, couvL_uv_lasterrname(couv_loop(L)));
     lua_call(L, 2, 0);
   } else {
     lua_call(L, 1, 0);
@@ -66,7 +66,7 @@ static int timer_start(lua_State *L) {
   repeat = luaL_optinteger(L, 4, 0);
   r = uv_timer_start(handle, timer_cb, timeout, repeat);
   if (r < 0) {
-    return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    return luaL_error(L, couvL_uv_lasterrname(couv_loop(L)));
   }
   lua_pushvalue(L, 1);
   couv_rawsetp(L, LUA_REGISTRYINDEX, COUV_USERDATA_REG_KEY(handle));
@@ -80,7 +80,7 @@ static int timer_stop(lua_State *L) {
   handle = couvL_checkudataclass(L, 1, COUV_TIMER_MTBL_NAME);
   r = uv_timer_stop(handle);
   if (r < 0) {
-    return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    return luaL_error(L, couvL_uv_lasterrname(couv_loop(L)));
   }
   return 0;
 }
@@ -92,7 +92,7 @@ static int timer_again(lua_State *L) {
   handle = couvL_checkudataclass(L, 1, COUV_TIMER_MTBL_NAME);
   r = uv_timer_again(handle);
   if (r < 0) {
-    return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    return luaL_error(L, couvL_uv_lasterrname(couv_loop(L)));
   }
   return 0;
 }

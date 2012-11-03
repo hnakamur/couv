@@ -47,7 +47,7 @@ static int pipe_new(lua_State *L) {
   loop = couv_loop(L);
   r = uv_pipe_init(loop, handle, ipc);
   if (r < 0) {
-    return luaL_error(L, couvL_uv_errname(uv_last_error(loop).code));
+    return luaL_error(L, couvL_uv_lasterrname(loop));
   }
 
   handle->data = L;
@@ -65,7 +65,7 @@ static void connect_cb(uv_connect_t *req, int status) {
 
   L = req->handle->data;
   if (status < 0) {
-    lua_pushstring(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    lua_pushstring(L, couvL_uv_lasterrname(couv_loop(L)));
     nresults = 1;
   }
 
@@ -97,7 +97,7 @@ static int pipe_bind(lua_State *L) {
   name = luaL_checkstring(L, 2);
   r = uv_pipe_bind(handle, name);
   if (r < 0) {
-    return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    return luaL_error(L, couvL_uv_lasterrname(couv_loop(L)));
   }
   return 0;
 }
@@ -111,7 +111,7 @@ static int pipe_open(lua_State *L) {
   file = luaL_checkint(L, 2);
   r = uv_pipe_open(handle, file);
   if (r < 0) {
-    return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    return luaL_error(L, couvL_uv_lasterrname(couv_loop(L)));
   }
   return 0;
 }
@@ -146,7 +146,7 @@ static int couv_read2_start(lua_State *L) {
   handle = couvL_checkudataclass(L, 1, COUV_PIPE_MTBL_NAME);
   r = uv_read2_start(handle, couv_buf_alloc_cb, read2_cb);
   if (r < 0) {
-    luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    luaL_error(L, couvL_uv_lasterrname(couv_loop(L)));
   }
   return 0;
 }

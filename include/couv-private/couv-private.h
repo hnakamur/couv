@@ -55,6 +55,7 @@ void couv_free(lua_State *L, void *ptr);
 int couvL_is_mainthread(lua_State *L);
 
 const char *couvL_uv_errname(int uv_errcode);
+#define couvL_uv_lasterrname(loop) couvL_uv_errname(uv_last_error(loop).code)
 
 void *couvL_checkudataclass(lua_State *L, int arg, const char *tname);
 void *couvL_testudataclass(lua_State *L, int arg, const char *tname);

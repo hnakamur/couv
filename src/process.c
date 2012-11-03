@@ -186,7 +186,7 @@ static int couv_process_spawn(lua_State *L) {
   loop = couv_loop(L);
   r = uv_spawn(loop, handle, options);
   if (r < 0)
-    return luaL_error(L, couvL_uv_errname(uv_last_error(loop).code));
+    return luaL_error(L, couvL_uv_lasterrname(loop));
   if (options.args)
     couv_free(L, options.args);
   if (options.env)
@@ -210,7 +210,7 @@ static int couv_process_kill(lua_State *L) {
   signum = luaL_checkint(L, 2);
   r = uv_process_kill(handle, signum);
   if (r < 0)
-    return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    return luaL_error(L, couvL_uv_lasterrname(couv_loop(L)));
 
   return 0;
 }

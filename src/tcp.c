@@ -45,7 +45,7 @@ static int tcp_new(lua_State *L) {
   loop = couv_loop(L);
   r = uv_tcp_init(loop, handle);
   if (r < 0) {
-    return luaL_error(L, couvL_uv_errname(uv_last_error(loop).code));
+    return luaL_error(L, couvL_uv_lasterrname(loop));
   }
 
   handle->data = L;
@@ -66,7 +66,7 @@ static int tcp_open(lua_State *L) {
   sock = (uv_os_sock_t)luaL_checkinteger(L, 2);
   r = uv_tcp_open(handle, sock);
   if (r < 0) {
-    return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    return luaL_error(L, couvL_uv_lasterrname(couv_loop(L)));
   }
 
   handle->data = L;
@@ -85,7 +85,7 @@ static int tcp_bind(lua_State *L) {
   else
     r = uv_tcp_bind6(handle, *(struct sockaddr_in6 *)addr);
   if (r < 0) {
-    return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    return luaL_error(L, couvL_uv_lasterrname(couv_loop(L)));
   }
   return 0;
 }
@@ -96,7 +96,7 @@ static void connect_cb(uv_connect_t *req, int status) {
 
   L = req->handle->data;
   if (status < 0) {
-    lua_pushstring(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    lua_pushstring(L, couvL_uv_lasterrname(couv_loop(L)));
     nresults = 1;
   }
 
@@ -118,7 +118,7 @@ static int tcp_connect(lua_State *L) {
   else
     r = uv_tcp_connect6(req, handle, *(struct sockaddr_in6 *)addr, connect_cb);
   if (r < 0) {
-    return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    return luaL_error(L, couvL_uv_lasterrname(couv_loop(L)));
   }
   return lua_yield(L, 0);
 }
@@ -132,7 +132,7 @@ static int tcp_nodelay(lua_State *L) {
   enable = lua_toboolean(L, 2);
   r = uv_tcp_nodelay(handle, enable);
   if (r < 0) {
-    return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    return luaL_error(L, couvL_uv_lasterrname(couv_loop(L)));
   }
   return 0;
 }
@@ -148,7 +148,7 @@ static int tcp_keepalive(lua_State *L) {
   delay = luaL_optinteger(L, 3, 0);
   r = uv_tcp_keepalive(handle, enable, delay);
   if (r < 0) {
-    return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    return luaL_error(L, couvL_uv_lasterrname(couv_loop(L)));
   }
   return 0;
 }
@@ -162,7 +162,7 @@ static int tcp_simultaneous_accepts(lua_State *L) {
   enable = lua_toboolean(L, 2);
   r = uv_tcp_simultaneous_accepts(handle, enable);
   if (r < 0) {
-    return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    return luaL_error(L, couvL_uv_lasterrname(couv_loop(L)));
   }
   return 0;
 }
@@ -177,7 +177,7 @@ static int tcp_getsockname(lua_State *L) {
   namelen = sizeof(name);
   r = uv_tcp_getsockname(handle, (struct sockaddr *)&name, &namelen);
   if (r < 0) {
-    return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    return luaL_error(L, couvL_uv_lasterrname(couv_loop(L)));
   }
   return couvL_pushsockaddr(L, (struct sockaddr *)&name);
 }
@@ -192,7 +192,7 @@ static int tcp_getpeername(lua_State *L) {
   namelen = sizeof(name);
   r = uv_tcp_getpeername(handle, (struct sockaddr *)&name, &namelen);
   if (r < 0) {
-    return luaL_error(L, couvL_uv_errname(uv_last_error(couv_loop(L)).code));
+    return luaL_error(L, couvL_uv_lasterrname(couv_loop(L)));
   }
   return couvL_pushsockaddr(L, (struct sockaddr *)&name);
 }
