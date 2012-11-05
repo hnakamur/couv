@@ -31,6 +31,7 @@ uv.Udp = native.Udp
 
 -- core
 uv.chdir = native.chdir
+uv.cpuInfo = native.cpuInfo
 uv.cwd = native.cwd
 uv.exepath = native.exepath
 uv.getaddrinfo = function(...)

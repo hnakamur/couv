@@ -11,6 +11,51 @@ static int couv_chdir(lua_State *L) {
   return 0;
 }
 
+static int couv_cpu_info(lua_State *L) {
+  uv_err_t err;
+  uv_cpu_info_t *cpu_infos;
+  int count;
+  int i;
+
+  err = uv_cpu_info(&cpu_infos, &count);
+  if (err.code != UV_OK)
+    return luaL_error(L, couvL_uv_errname(err.code));
+
+  lua_createtable(L, count, 0);
+  for (i = 0; i < count; ++i) {
+    uv_cpu_info_t *cpu_info;
+
+    cpu_info = &cpu_infos[i];
+
+    lua_newtable(L);
+
+    lua_pushstring(L, cpu_info->model);
+    lua_setfield(L, -2, "model");
+
+    lua_pushnumber(L, cpu_info->speed);
+    lua_setfield(L, -2, "speed");
+
+    lua_pushnumber(L, cpu_info->cpu_times.user);
+    lua_setfield(L, -2, "user");
+
+    lua_pushnumber(L, cpu_info->cpu_times.nice);
+    lua_setfield(L, -2, "nice");
+
+    lua_pushnumber(L, cpu_info->cpu_times.sys);
+    lua_setfield(L, -2, "sys");
+
+    lua_pushnumber(L, cpu_info->cpu_times.idle);
+    lua_setfield(L, -2, "idle");
+
+    lua_pushnumber(L, cpu_info->cpu_times.irq);
+    lua_setfield(L, -2, "irq");
+
+    lua_rawseti(L, -2, i + 1);
+  }
+  uv_free_cpu_info(cpu_infos, count);
+  return 1;
+}
+
 static int couv_cwd(lua_State *L) {
   char buf[1024];
   uv_err_t err;
@@ -286,6 +331,7 @@ static int couv_sleep(lua_State *L) {
 
 static const struct luaL_Reg functions[] = {
   { "chdir", couv_chdir },
+  { "cpuInfo", couv_cpu_info },
   { "cwd", couv_cwd },
   { "exepath", couv_exepath },
   { "getaddrinfo", couv_getaddrinfo },
