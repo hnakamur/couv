@@ -1,8 +1,9 @@
 local uv = require 'couv'
 
 local MSG = "PING\n"
+local TIME = 5000
 
-local startTime = uv.hrtime()
+local startTime = uv.now()
 
 function exitCb(process, exitStatus, termSignal)
   process:close()
@@ -30,7 +31,7 @@ function timerCb()
           pongCount = pongCount + 1
           handle:write({MSG})
         end
-      until uv.hrtime() - startTime > 5e9
+      until uv.now() - startTime > TIME
       handle:write({'QUIT'})
       handle:close()
       print(string.format("ping_pongs: %d roundtrips/s", pongCount))
