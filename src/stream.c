@@ -158,18 +158,20 @@ static int couv_read_stop(lua_State *L) {
 static void shutdown_cb(uv_shutdown_t *req, int status) {
   lua_State *L;
   uv_stream_t *handle;
+  int nargs;
 
   handle = req->handle;
   L = handle->data;
 
-  if (status < 0) {
-    couv_free(L, req);
-    luaL_error(L, couvL_uv_lasterrname(couv_loop(L)));
-    return;
-  }
-
   couv_free(L, req);
-  couv_resume(L, L, 0);
+
+  if (status < 0) {
+    lua_pushstring(L, couvL_uv_lasterrname(couv_loop(L)));
+    nargs = 1;
+  } else
+    nargs = 0;
+
+  couv_resume(L, L, nargs);
 }
 
 static int couv_shutdown(lua_State *L) {
@@ -189,20 +191,21 @@ static int couv_shutdown(lua_State *L) {
 static void write_cb(uv_write_t *req, int status) {
   lua_State *L;
   uv_stream_t *handle;
+  int nargs;
 
   handle = req->handle;
   L = handle->data;
 
-  if (status < 0) {
-    couv_free(L, req->data);
-    couv_free(L, req);
-    luaL_error(L, couvL_uv_lasterrname(couv_loop(L)));
-    return;
-  }
-
   couv_free(L, req->data);
   couv_free(L, req);
-  couv_resume(L, L, 0);
+
+  if (status < 0) {
+    lua_pushstring(L, couvL_uv_lasterrname(couv_loop(L)));
+    nargs = 1;
+  } else
+    nargs = 0;
+
+  couv_resume(L, L, nargs);
 }
 
 static int couv_write(lua_State *L) {
