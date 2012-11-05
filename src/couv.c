@@ -45,6 +45,39 @@ static int couv_get_free_memory(lua_State *L) {
   return 1;
 }
 
+static int couv_interface_addresses(lua_State *L) {
+  uv_err_t err;
+  uv_interface_address_t *addresses;
+  int count;
+  int i;
+
+  err = uv_interface_addresses(&addresses, &count);
+  if (err.code != UV_OK)
+    return luaL_error(L, couvL_uv_errname(err.code));
+
+  lua_createtable(L, count, 0);
+  for (i = 0; i < count; ++i) {
+    uv_interface_address_t *address;
+
+    address = &addresses[i];
+
+    lua_newtable(L);
+
+    lua_pushstring(L, address->name);
+    lua_setfield(L, -2, "name");
+
+    lua_pushboolean(L, address->is_internal);
+    lua_setfield(L, -2, "isInternal");
+
+    couvL_pushsockaddr(L, (struct sockaddr *)&address->address);
+    lua_setfield(L, -2, "address");
+
+    lua_rawseti(L, -2, i + 1);
+  }
+  uv_free_interface_addresses(addresses, count);
+  return 1;
+}
+
 static int couv_get_total_memory(lua_State *L) {
   lua_pushnumber(L, uv_get_total_memory());
   return 1;
@@ -259,6 +292,7 @@ static const struct luaL_Reg functions[] = {
   { "getFreeMemory", couv_get_free_memory },
   { "getProcessTitle", couv_get_process_title },
   { "getTotalMemory", couv_get_total_memory },
+  { "interfaceAddresses", couv_interface_addresses },
   { "hrtime", couv_hrtime },
   { "kill", couv_kill },
   { "loadavg", couv_loadavg },

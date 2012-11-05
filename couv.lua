@@ -38,6 +38,7 @@ uv.getaddrinfo = function(...)
 end
 uv.getFreeMemory = native.getFreeMemory
 uv.getTotalMemory = native.getTotalMemory
+uv.interfaceAddresses = native.interfaceAddresses
 uv.kill = native.kill
 uv.loadavg = native.loadavg
 uv.hrtime = native.hrtime
