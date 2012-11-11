@@ -85,7 +85,7 @@ src/udp.o: src/udp.c $(HEADERS)
 
 .PHONY: test clean
 
-test:
+test: $(TARGET)
 	$(LUA_E) tool/checkit test/test-*.lua
 
 clean:
