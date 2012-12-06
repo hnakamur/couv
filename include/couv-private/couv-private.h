@@ -117,6 +117,33 @@ typedef struct couv_pipe_input_s {
 } couv_pipe_input_t;
 
 /*
+ * IO Results
+ */
+#define COUV_IO_RESULT_QUEUE_REG_KEY(L)  (((char *)L) + 1)
+
+typedef enum {
+  COUV_WRITE_OP
+} couv_io_op_code;
+
+#define COUV_IO_RESULT_FIELDS \
+  ngx_queue_t *prev; \
+  ngx_queue_t *next; \
+  couv_io_op_code op_code; \
+  int status; \
+  uv_err_code err;
+
+typedef struct couv_io_result_s {
+  COUV_IO_RESULT_FIELDS
+} couv_io_result_t;
+
+typedef struct couv_write_result_s {
+  COUV_IO_RESULT_FIELDS
+  uv_write_t *req;
+} couv_write_result_t;
+
+ngx_queue_t *get_io_result_queue(lua_State *L);
+
+/*
  * handle data.
  */
 #define COUV_UDP_HANDLE_DATA_FIELDS \

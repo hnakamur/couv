@@ -12,6 +12,7 @@ OBJS= \
   src/buffer.o \
   src/fs.o \
   src/handle.o \
+  src/io_result_queue.o \
   src/sockaddr.o \
   src/loop.o \
   src/pipe.o \

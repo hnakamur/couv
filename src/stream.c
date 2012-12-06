@@ -191,11 +191,30 @@ static int couv_shutdown(lua_State *L) {
 static void write_cb(uv_write_t *req, int status) {
   lua_State *L;
   uv_stream_t *handle;
+/*
   int nargs;
+*/
+  ngx_queue_t *res_queue;
+  couv_write_result_t *res;
 
   handle = req->handle;
   L = handle->data;
 
+  res = couv_alloc(L, sizeof(couv_write_result_t));
+  if (!res)
+    luaL_error(L, "ENOMEM");
+
+  res->op_code = COUV_WRITE_OP;
+  res->req = req;
+  res->status = status;
+  res->err = status < 0 ? uv_last_error(couv_loop(L)).code : UV_OK;
+
+  res_queue = get_io_result_queue(L);
+  ngx_queue_insert_tail(res_queue, (ngx_queue_t *)res);
+
+  if (lua_status(L) == LUA_YIELD)
+    couv_resume(L, L, 0);
+/*
   couv_free(L, req->data);
   couv_free(L, req);
 
@@ -206,6 +225,7 @@ static void write_cb(uv_write_t *req, int status) {
     nargs = 0;
 
   couv_resume(L, L, nargs);
+*/
 }
 
 static int couv_write(lua_State *L) {
